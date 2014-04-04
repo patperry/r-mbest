@@ -1,0 +1,85 @@
+context("firthglm.fit")
+
+test_that("succeeds on dataset 1", {
+    data <- readRDS("firth-binomial1.rds")
+    model <- firthglm.fit(data$x, data$y, family=binomial())
+    coef <- c(11.2, 12.6, -6.8, 0.7, 14.6, -2.4)
+
+    expect_that(model$converged, is_true())
+    expect_that(model$boundary, is_false())
+    expect_that(as.numeric(round(model$coefficients, 1)), equals(coef))
+})
+
+
+test_that("succeeds on dataset 2", {
+    data <- readRDS("firth-binomial2.rds")
+    model <- firthglm.fit(data$x, data$y, family=binomial())
+    coef <- c(-10.3, 1.6, -1.4, 0.5, 3.1, 0.8)
+
+    expect_that(model$converged, is_true())
+    expect_that(model$boundary, is_false())
+    expect_that(as.numeric(round(model$coefficients, 1)), equals(coef))
+})
+
+
+test_that("succeeds on dataset 3", {
+    data <- readRDS("firth-binomial3.rds")
+    model <- firthglm.fit(data$x, data$y, family=binomial())
+    coef <- c(12.1, 0.0, -2.9, NA, 0.1, -1.1 )
+
+    expect_that(model$converged, is_true())
+    expect_that(model$boundary, is_false())
+    expect_that(as.numeric(round(model$coefficients, 1)), equals(coef))
+})
+
+
+test_that("succeeds on dataset 4", {
+    data <- readRDS("firth-binomial4.rds")
+    model <- firthglm.fit(data$x, data$y, family=binomial())
+    coef <- c(-99.8, 18.0, 2.3, NA, 3.9, 12.5)
+
+    expect_that(model$converged, is_true())
+    expect_that(model$boundary, is_false())
+    expect_that(as.numeric(round(model$coefficients, 1)), equals(coef))
+})
+
+
+test_that("succeeds on dataset 5", {
+    data <- readRDS("firth-binomial5.rds")
+    model <- firthglm.fit(data$x, data$y, family=binomial())
+    coef <- c(-6.0, 7.2, 21.7, 4.9, 7.6, 10.6, 7.0, 9.0, 5.4, -0.7, 4.9)
+
+    expect_that(model$converged, is_true())
+    expect_that(model$boundary, is_false())
+    expect_that(as.numeric(round(model$coefficients, 1)), equals(coef))
+})
+
+
+test_that("succeeds on dataset 6", {
+    data <- readRDS("firth-binomial6.rds")
+    model <- firthglm.fit(data$x, data$y, family=binomial())
+    coef <- c(-1.1, -0.2, -0.4, 0.1,  0.4, -0.1, -1.4,  0.7,  0.8, 0.9,
+              -0.4,  0.6, -0.2, 0.2, -0.6,  0.2,  2.3, -1.7, -1.2)
+
+    expect_that(model$converged, is_true())
+    expect_that(model$boundary, is_false())
+    expect_that(as.numeric(round(model$coefficients, 1)), equals(coef))
+})
+
+test_that("succeeds on dataset 7", {
+    data <- readRDS("firth-binomial7.rds")
+    model <- firthglm.fit(data$x, data$y, family=binomial())
+    coef <- c(-7.1, 2.1, 5.7)
+
+    expect_that(model$converged, is_true())
+    expect_that(model$boundary, is_false())
+    expect_that(as.numeric(round(model$coefficients, 1)), equals(coef))
+})
+
+test_that("succeeds on rank degenerate case", {
+    x <- matrix(c(-1, 1, -1, 1, 1, 1, 1, -1, 1, -1), nrow=2)
+    y <- c(1, 1)
+
+    model <- firthglm.fit(x, y, family=binomial())
+    expect_that(model$converged, is_true())
+})
