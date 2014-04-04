@@ -14,7 +14,7 @@ test_that("succeeds on dataset 1", {
 test_that("succeeds on dataset 2", {
     data <- readRDS("firth-binomial2.rds")
     model <- firthglm.fit(data$x, data$y, family=binomial())
-    coef <- c(-10.3, 1.6, -1.4, 0.5, 3.1, 0.8)
+    coef <- c(-10.3, 1.6, -1.3, 0.5, 3.1, 0.8)
 
     expect_that(model$converged, is_true())
     expect_that(model$boundary, is_false())
@@ -25,7 +25,7 @@ test_that("succeeds on dataset 2", {
 test_that("succeeds on dataset 3", {
     data <- readRDS("firth-binomial3.rds")
     model <- firthglm.fit(data$x, data$y, family=binomial())
-    coef <- c(12.1, 0.0, -2.9, NA, 0.1, -1.1 )
+    coef <- c(12.1, 0.0, -2.9, NA, 0.1, -1.1)
 
     expect_that(model$converged, is_true())
     expect_that(model$boundary, is_false())

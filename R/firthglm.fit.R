@@ -220,7 +220,9 @@ firthglm.fit <- function(x, y, weights = rep(1, nobs), start = NULL, etastart = 
         pos <- search.eta >= 0 & (1/search.eta != -Inf) # handle negative zero
         step.max <- min((ifelse(pos, etamax, etamin) - eta0) / search.eta)
 
-        step0 <- min(1.0, 0.5 * step.max)
+        step0 <- min(1.0,
+                     0.5 * step.max,
+                     10 * min((abs(eta0) + 0.1) / (abs(search.eta) + 0.1)))
         step.min <- .Machine$double.eps * step0
 
         lsctrl <- linesearch.control(value.tol = ftol, deriv.tol = gtol,
