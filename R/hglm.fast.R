@@ -110,6 +110,114 @@ hglm.fast <- function(formula, group, family = gaussian, data,
 }
 
 
+vcov.hglm <- function(object, ...)
+{
+    object$coefficient.mean.cov
+}
+
+
+summary.hglm <- function(object, ...)
+{
+    # fixed effects
+    vcov <- vcov(object)
+    coefs <- cbind("Estimate" = object$coefficient.mean,
+                   "Std. Error" = sqrt(diag(vcov)))
+    coefs <- cbind(coefs, (cf3 <- coefs[,1]/coefs[,2]), deparse.level=0)
+    colnames(coefs)[3] <- "z value"
+    coefs <- cbind(coefs, "Pr(>|z|)" =
+                          2*pnorm(abs(coefs[,3]), lower.tail = FALSE))
+
+    # random effects
+    ranef <- object$coefficient.cov
+    stddev <- sqrt(diag(ranef))
+    cor <- scale(ranef, center=FALSE, scale=stddev) / stddev
+    attr(cor, "scaled:scale") <- NULL
+    attr(ranef, "stddev") <- stddev
+    attr(ranef, "correlation") <- cor
+
+    varcor <- list()
+    varcor[[as.character(object$call[["group"]])]] <- ranef
+    attr(varcor, "sc") <- sqrt(object$dispersion)
+    attr(varcor, "useSc") <- !(object$family$family %in% c("binomial", "poisson"))
+    class(varcor) <- "VarCorr.hglm"
+
+    structure(list(call = object$call, family = object$family,
+                   coefficients = coefs, dispersion = model$dispersion,
+                   vcov = vcov, varcor = varcor),
+              class = "summary.hglm")
+}
+
+print.VarCorr.hglm <- function (x, digits = max(3, getOption("digits") - 2),
+                                var.print = FALSE, ...)
+{
+    dims <- sapply(x, ncol)
+    pmax <- max(1L, max(dims))
+
+    table <- matrix("", sum(dims + attr(x, "useSc")), pmax + 3L)
+
+    rownames(table) <- rep("", nrow(table))
+    colnames(table) <- c("Groups", "Name", "Variance", "Std.Dev", rep("", pmax - 1L))
+    if (pmax > 1L) {
+        colnames(table)[5L] <- "Corr"
+    }
+
+    off <- 0L
+    for (i in seq_along(x)) {
+        xx <- x[[i]]
+        stddev <- attr(xx, "stddev")
+        cor <- attr(xx, "correlation")
+        p <- ncol(cor)
+
+        tab <- matrix("", p, p + 3L)
+        tab[1L,1L] <- names(x)[[i]]
+        tab[,2L] <- names(stddev)
+        tab[,3L] <- format(diag(xx), digits = digits, ...)
+        tab[,4L] <- format(stddev, digits = digits, ...)
+
+        if (p > 1L) {
+            cor.str <- format(cor, digits = max(2L, digits - 2L), ...)
+            cor.str[row(cor.str) <= col(cor.str)] <- ""
+            tab[,5L:(p+3L)] <- cor.str[,-p]
+        }
+        table[off + seq_len(p), seq_len(p + 3L)] <- tab
+        off <- off + p
+    }
+
+    if (attr(x, "useSc")) {
+        sigma <- attr(x, "sc")
+        table[off + 1L, 1L] <- "Residual"
+        table[off + 1L, 3L] <- format(sigma^2, digits = digits, ...)
+        table[off + 1L, 4L] <- format(sigma, digits = digits, ...)
+    }
+
+    if (!var.print) {
+        table <- table[,-3L]
+    }
+
+    print.table(table)
+}
+
+
+
+print.summary.hglm <- function(x, digits = max(3L, getOption("digits") - 3L),
+                               signif.stars = getOption("show.signif.stars"), ...)
+{
+    cat("\nCall:\n", paste(deparse(x$call), sep = "\n", collapse = "\n"),
+        "\n", sep = "")
+
+    cat("\nRandom effects:\n")
+    print(x$varcor, var.print=TRUE)
+
+    cat("\nFixed effects:\n")
+    printCoefmat(x$coefficients, digits = digits, signif.stars = signif.stars,
+                 na.print = "NA", ...)
+
+    cat("\n")
+}
+
+
+
+
 
 print.hglm <- function(x, digits = max(3L, getOption("digits") - 3L),
                        signif.stars = getOption("show.signif.stars"), ...)
