@@ -110,17 +110,39 @@ hglm.fast <- function(formula, group, family = gaussian, data,
 }
 
 
+fixef.hglm <- function(object, ...)
+{
+    object$coefficient.mean
+}
+
 vcov.hglm <- function(object, ...)
 {
     object$coefficient.mean.cov
 }
 
+VarCorr.hglm <- function(x, sigma = 1, rdig = 3)
+{
+    vc <- x$coefficient.cov
+    stddev <- sqrt(diag(vc))
+    cor <- scale(vc, center=FALSE, scale=stddev) / stddev
+
+    attr(cor, "scaled:scale") <- NULL
+    attr(vc, "stddev") <- stddev
+    attr(vc, "correlation") <- cor
+
+    varcor <- list()
+    varcor[[as.character(x$call[["group"]])]] <- vc
+    attr(varcor, "sc") <- sigma * sqrt(x$dispersion)
+    attr(varcor, "useSc") <- !(x$family$family %in% c("binomial", "poisson"))
+    class(varcor) <- "VarCorr.hglm"
+    varcor
+}
 
 summary.hglm <- function(object, ...)
 {
     # fixed effects
     vcov <- vcov(object)
-    coefs <- cbind("Estimate" = object$coefficient.mean,
+    coefs <- cbind("Estimate" = fixef(object),
                    "Std. Error" = sqrt(diag(vcov)))
     coefs <- cbind(coefs, (cf3 <- coefs[,1]/coefs[,2]), deparse.level=0)
     colnames(coefs)[3] <- "z value"
@@ -128,18 +150,7 @@ summary.hglm <- function(object, ...)
                           2*pnorm(abs(coefs[,3]), lower.tail = FALSE))
 
     # random effects
-    ranef <- object$coefficient.cov
-    stddev <- sqrt(diag(ranef))
-    cor <- scale(ranef, center=FALSE, scale=stddev) / stddev
-    attr(cor, "scaled:scale") <- NULL
-    attr(ranef, "stddev") <- stddev
-    attr(ranef, "correlation") <- cor
-
-    varcor <- list()
-    varcor[[as.character(object$call[["group"]])]] <- ranef
-    attr(varcor, "sc") <- sqrt(object$dispersion)
-    attr(varcor, "useSc") <- !(object$family$family %in% c("binomial", "poisson"))
-    class(varcor) <- "VarCorr.hglm"
+    varcor <- VarCorr(object)
 
     structure(list(call = object$call, family = object$family,
                    coefficients = coefs, dispersion = model$dispersion,
