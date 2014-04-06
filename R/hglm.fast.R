@@ -138,6 +138,21 @@ VarCorr.hglm <- function(x, sigma = 1, rdig = 3)
     varcor
 }
 
+ranef.hglm <- function(object, condVar = FALSE, ...)
+{
+    if (condVar)
+        warning("condVar is not implemented")
+
+    coef <- object$coefficients
+    coef <- scale(coef, center=fixef(object), scale=FALSE)
+    attr(coef, "scaled:center") <- NULL
+
+    re <- list()
+    re[[as.character(object$call[["group"]])]] <- coef
+    class(re) <- "ranef.hglm"
+    re
+}
+
 summary.hglm <- function(object, ...)
 {
     # fixed effects
