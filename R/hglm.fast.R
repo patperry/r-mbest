@@ -143,7 +143,38 @@ ranef.hglm <- function(object, condVar = FALSE, ...)
     if (condVar)
         warning("condVar is not implemented")
 
-    coef <- object$coefficients
+    x <- object$x
+    nvars <- ncol(x)
+    xnames <- colnames(x)
+
+    group <- object$group
+    ngroups <- nlevels(group)
+    gnames <- as.character(levels(group))
+
+    R <- object$R
+    pivot <- object$pivot
+    rank <- object$rank
+    r1 <- seq_len(rank)
+
+    x1 <- t(backsolve(R, t(x[,pivot[r1],drop=FALSE]), transpose=TRUE))
+    coef.mean1 <- drop(R %*% object$coefficient.mean[pivot])
+    coef.cov1 <- R %*% object$coefficient.cov[pivot,pivot,drop=FALSE] %*% t(R)
+
+    eb <- ebayes.group.est(x=x1, group=group, offset=object$offset,
+                           family=object$family,
+                           coefficients=object$coefficients,
+                           subspace=object$subspace,
+                           precision=object$precision,
+                           dispersion=rep(object$dispersion, ngroups),
+                           coefficient.mean=coef.mean1,
+                           coefficient.cov=coef.cov1)
+
+    # change back to original coordinates
+    coef <- matrix(NA, ngroups, nvars)
+    coef[,pivot[r1]] <- t(backsolve(R, t(eb$coefficients)))
+    colnames(coef) <- xnames
+    rownames(coef) <- gnames
+
     coef <- scale(coef, center=fixef(object), scale=FALSE)
     attr(coef, "scaled:center") <- NULL
 

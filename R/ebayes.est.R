@@ -82,7 +82,6 @@ ebayes.group.est <- function(x, group, offset = rep(0, nobs), family = gaussian(
 
     for (i in seq_len(ngroups)) {
         j <- subset[[i]]
-
         eb <- ebayes.est(x = x[j,,drop=FALSE], offset = offset[j], family = family,
                          coefficients[i,], subspace = subspace[[i]],
                          precision = precision[[i]], dispersion = dispersion[i],

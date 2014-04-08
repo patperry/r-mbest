@@ -111,36 +111,23 @@ hglm.fast.fit <- function(x, y, group, weights = rep(1, nobs), start = NULL,
     mean.cov <- est$mean.cov
     cov <- est$cov
 
-    # compute empirical bayes coefficient estimates
-    x1 <- t(backsolve(R, t(x[,pivot[r1],drop=FALSE]), transpose=TRUE))
-    eb <- ebayes.group.est(x = x1, group = group, offset = offset, family = family,
-                           coef, subspace, precision, dispersion,
-                           coefficient.mean = mean, coefficient.cov = cov)
-
     # change back to original coordinates
-    coef.eb <- matrix(NA, ngroups, nvars)
     coef.mean <- rep(NA, nvars)
     coef.mean.cov <- matrix(NA, nvars, nvars)
     coef.cov <- matrix(NA, nvars, nvars)
     coef.mean[pivot[r1]] <- backsolve(R, mean)
     coef.mean.cov[pivot[r1],pivot[r1]] <- backsolve(R, t(backsolve(R, mean.cov)))
     coef.cov[pivot[r1],pivot[r1]] <- backsolve(R, t(backsolve(R, cov)))
-    coef.eb[,pivot[r1]] <- t(backsolve(R, t(eb$coefficients)))
 
     # set coordinate names
-    colnames(coef.eb) <- names(coef.mean) <- xnames
-    rownames(coef.eb) <- levels(group)
+    names(coef.mean) <- xnames
     dimnames(coef.mean.cov) <- dimnames(coef.cov) <- list(xnames, xnames)
-
-    # set fitted value names
-    fitted.values <- eb$fitted.values
-    names(fitted.values) <- ynames
 
     z <- list(family = family, coefficient.mean = coef.mean,
               coefficient.mean.cov = coef.mean.cov, coefficient.cov = coef.cov,
+              coefficients = coef, subspace = subspace, precision = precision,
               dispersion = dispersion.tot, df.residual = df.residual.tot,
-              coefficients = coef.eb, fitted.values = fitted.values,
-              rank = rank, pivot = pivot, y = y, group = group,
+              R = R, rank = rank, pivot = pivot, x = x, y = y, group = group,
               prior.weights = weights, offset = offset)
     z
 }
