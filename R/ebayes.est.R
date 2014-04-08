@@ -13,19 +13,13 @@
 # limitations under the License.
 
 
-ebayes.est <- function(x, offset = rep(0, nobs), family = gaussian(),
-                       coefficient, subspace, precision, dispersion,
+ebayes.est <- function(coefficients, subspace, precision, dispersion,
                        coefficient.mean, coefficient.cov)
 {
-    x <- as.matrix(x)
-    nobs <- nrow(x)
-    if (is.null(offset))
-        offset <- rep(0, nobs)
-
-    r <- length(precision)
-    coef <- coefficient
+    coef <- coefficients
     coef.mu <- coefficient.mean
     coef.cov <- coefficient.cov
+    r <- length(precision)
 
     if (r == 0L) {
         coef.eb <- coefficient.mean
@@ -43,55 +37,28 @@ ebayes.est <- function(x, offset = rep(0, nobs), family = gaussian(),
         coef.eb <- coef.mu + coef.cov %*% w.diff
     }
 
-    eta <- offset + x %*% coef.eb
-    mu <- family$linkinv(eta)
-
-    list(coefficients = coef.eb, fitted.values = mu)
+    coef.eb
 }
 
 
-ebayes.group.est <- function(x, group, offset = rep(0, nobs), family = gaussian(),
-                             coefficients, subspace, precision, dispersion,
+ebayes.group.est <- function(coefficients, subspace, precision, dispersion,
                              coefficient.mean, coefficient.cov)
 {
-    x <- as.matrix(x)
-    xnames <- dimnames(x)[[2L]]
-    nobs <- nrow(x)
-    nvars <- ncol(x)
-
-    group <- as.factor(group)
-    levels <- levels(group)
-    ngroups <- length(levels)
+    ngroups <- nrow(coefficients)
+    nvars <- ncol(coefficients)
 
     coefficients.eb <- matrix(NA, ngroups, nvars)
-    colnames(coefficients.eb) <- xnames
-    rownames(coefficients.eb) <- levels
-
-    yhat <- numeric(nobs)
-
-    group.int <- as.integer(group)
-    group.size <- tabulate(group.int, ngroups)
-    subset <- lapply(group.size, integer)
-    group.pos <- integer(ngroups)
-    for (o in seq_len(nobs)) {
-        i <- group.int[o]
-        j <- group.pos[i] + 1L
-        subset[[i]][j] <- o
-        group.pos[i] <- j
-    }
+    dimnames(coefficients.eb) <- dimnames(coefficients)
 
     for (i in seq_len(ngroups)) {
-        j <- subset[[i]]
-        eb <- ebayes.est(x = x[j,,drop=FALSE], offset = offset[j], family = family,
-                         coefficients[i,], subspace = subspace[[i]],
+        eb <- ebayes.est(coefficients[i,], subspace = subspace[[i]],
                          precision = precision[[i]], dispersion = dispersion[i],
                          coefficient.mean = coefficient.mean,
                          coefficient.cov = coefficient.cov)
 
-        coefficients.eb[i,] <- eb$coefficients
-        yhat[j] <- eb$fitted.values
+        coefficients.eb[i,] <- eb
     }
 
-    list(coefficients = coefficients.eb, fitted.values = yhat)
+    coefficients.eb
 }
 

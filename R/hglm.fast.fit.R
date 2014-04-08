@@ -127,7 +127,7 @@ hglm.fast.fit <- function(x, y, group, weights = rep(1, nobs), start = NULL,
               coefficient.mean.cov = coef.mean.cov, coefficient.cov = coef.cov,
               coefficients = coef, subspace = subspace, precision = precision,
               dispersion = dispersion.tot, df.residual = df.residual.tot,
-              R = R, rank = rank, pivot = pivot, x = x, y = y, group = group,
+              R = R, rank = rank, pivot = pivot, y = y, group = group,
               prior.weights = weights, offset = offset)
     z
 }
