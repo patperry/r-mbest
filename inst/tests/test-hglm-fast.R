@@ -42,8 +42,10 @@ test_that("succeeds on sleepstudy", {
 
 
 test_that("succeeds on cbpp", {
-    model <- hglm.fast(cbind(incidence, size - incidence) ~ period, herd,
-                       data=cbpp, family=binomial)
+    suppressWarnings({
+        model <- hglm.fast(cbind(incidence, size - incidence) ~ period, herd,
+                           data=cbpp, family=binomial)
+    })
 
     # fixef
     fixef0 <- c("(Intercept)" = -1.2, "period2" = -0.8, "period3" = -0.9,
