@@ -213,7 +213,6 @@ ranef.hglm <- function(object, condVar = FALSE, ...)
         for (i in seq_len(ngroups)) {
             (cov.eb[pivot.random[r1.random],pivot.random[r1.random],i]
                 <- backsolve(R.random, t(backsolve(R.random, cov.eb1[,,i]))))
-            browser()
         }
 
         attr(coef, "postVar") <- cov.eb
