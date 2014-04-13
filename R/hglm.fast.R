@@ -94,7 +94,7 @@ hglm.fast <- function(formula, group, family = gaussian, data,
     etastart <- model.extract(mf, "etastart")
 
     # group-specific estimates
-    z <- hglm.fast.fit(x = X, y = Y, group = group, weights = weights,
+    z <- hglm.fast.fit(x.fixed = X, x.random = X, y = Y, group = group, weights = weights,
                        start = start, etastart = etastart, mustart = mustart,
                        offset = offset, family = family, control = control,
                        method = method, intercept = attr(mt, "intercept") > 0L,
@@ -152,11 +152,24 @@ ranef.hglm <- function(object, condVar = FALSE, ...)
     pivot <- object$pivot
     rank <- object$rank
     r1 <- seq_len(rank)
+    nfixed <- length(object$coefficient.mean)
+    nrandom <- nvars - nfixed
+    fixed <- seq_len(nfixed)
+    random <- nfixed + seq_len(nrandom)
 
-    coef.mean1 <- drop(R %*% object$coefficient.mean[pivot])
-    coef.cov1 <- R %*% object$coefficient.cov[pivot,pivot,drop=FALSE] %*% t(R)
+    R.fixed <- R[fixed,fixed,drop=FALSE]
+    pivot.fixed <- pivot[fixed]
+    coef.mean1 <- drop(R.fixed %*% object$coefficient.mean[pivot.fixed])
+
+    R.random <- R[random,random,drop=FALSE]
+    pivot.random <- pivot[random] - nfixed
+    coef.cov1 <- (R.random
+                  %*% object$coefficient.cov[pivot.random,
+                                             pivot.random,
+                                             drop=FALSE] %*% t(R.random))
 
     coef1 <- ebayes.group.est(coefficients=object$coefficients,
+                              nfixed=nfixed,
                               subspace=object$subspace,
                               precision=object$precision,
                               dispersion=rep(object$dispersion, ngroups),
@@ -164,13 +177,10 @@ ranef.hglm <- function(object, condVar = FALSE, ...)
                               coefficient.cov=coef.cov1)
 
     # change back to original coordinates
-    coef <- matrix(NA, ngroups, nvars)
-    coef[,pivot[r1]] <- t(backsolve(R, t(coef1)))
-    colnames(coef) <- xnames
+    coef <- matrix(NA, ngroups, nrandom)
+    coef[,pivot.random] <- t(backsolve(R.random, t(coef1)))
+    colnames(coef) <- colnames(object$coefficient.cov)
     rownames(coef) <- gnames
-
-    coef <- scale(coef, center=fixef(object), scale=FALSE)
-    attr(coef, "scaled:center") <- NULL
 
     re <- list()
     re[[as.character(object$call[["group"]])]] <- coef

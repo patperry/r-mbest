@@ -13,16 +13,20 @@
 # limitations under the License.
 
 
-ebayes.est <- function(coefficients, subspace, precision, dispersion,
+ebayes.est <- function(coefficients, nfixed, subspace, precision, dispersion,
                        coefficient.mean, coefficient.cov)
 {
     coef <- coefficients
     coef.mu <- coefficient.mean
     coef.cov <- coefficient.cov
     r <- length(precision)
+    nrandom <- nrow(coef.cov)
+
+    fixed <- seq_len(nfixed)
+    random <- nfixed + seq_len(nrandom)
 
     if (r == 0L) {
-        coef.eb <- coefficient.mean
+        coef.eb <- numeric(nrandom)
     } else {
         # implementation trick to avoid 1/li:
         # U (U^T Sigma U + a L^{-1})^{-1} U^T
@@ -31,27 +35,33 @@ ebayes.est <- function(coefficients, subspace, precision, dispersion,
         u <- subspace
         s <- sqrt(precision)
         us <- u %*% diag(s, r, r)
-        cov.ii <- t(us) %*% coef.cov %*% us
+        u1s <- us[fixed,,drop=FALSE]
+        u2s <- us[random,,drop=FALSE]
+
+        cov.ii <- t(u2s) %*% coef.cov %*% u2s
         h <- cov.ii + diag(dispersion, r, r)
-        w.diff <- us %*% solve(h, t(us) %*% (coef - coef.mu))
-        coef.eb <- coef.mu + coef.cov %*% w.diff
+        w.diff <- u2s %*% solve(h, (t(u1s) %*% (coef[fixed] - coef.mu)
+                                    + t(u2s) %*% coef[random]))
+        coef.eb <- coef.cov %*% w.diff
     }
 
     coef.eb
 }
 
 
-ebayes.group.est <- function(coefficients, subspace, precision, dispersion,
+ebayes.group.est <- function(coefficients, nfixed, subspace, precision, dispersion,
                              coefficient.mean, coefficient.cov)
 {
     ngroups <- nrow(coefficients)
-    nvars <- ncol(coefficients)
+    nvars <- ncol(coefficients) - nfixed
 
     coefficients.eb <- matrix(NA, ngroups, nvars)
     dimnames(coefficients.eb) <- dimnames(coefficients)
 
     for (i in seq_len(ngroups)) {
-        eb <- ebayes.est(coefficients[i,], subspace = subspace[[i]],
+        eb <- ebayes.est(coefficients[i,],
+                         nfixed = nfixed,
+                         subspace = subspace[[i]],
                          precision = precision[[i]], dispersion = dispersion[i],
                          coefficient.mean = coefficient.mean,
                          coefficient.cov = coefficient.cov)

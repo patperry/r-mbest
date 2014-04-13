@@ -13,19 +13,25 @@
 # limitations under the License.
 
 
-hglm.fast.fit <- function(x, y, group, weights = rep(1, nobs), start = NULL,
+hglm.fast.fit <- function(x.fixed, x.random, y, group, weights = rep(1, nobs), start = NULL,
                           etastart = NULL, mustart = NULL,
                           offset = rep(0, nobs), family = gaussian(), 
                           control = list(), method = "firthglm.fit",
                           intercept = TRUE, standardize = TRUE, steps = 1)
 {
-    x <- as.matrix(x)
+    x.fixed <- as.matrix(x.fixed)
+    x.random <- as.matrix(x.random)
+    x <- cbind(x.fixed, x.random)
     xnames <- dimnames(x)[[2L]]
     ynames <- if (is.matrix(y)) 
         rownames(y)
     else names(y)
     nobs <- NROW(y)
     nvars <- ncol(x)
+    nfixed <- ncol(x.fixed)
+    nrandom <- ncol(x.random)
+    fixed <- (seq_len(nvars) <= ncol(x.fixed))
+    random <- !fixed
 
     # group-specific estimates
     m <- rdglm.group.fit(x = x, y = y, group = group, weights = weights,
@@ -68,20 +74,42 @@ hglm.fast.fit <- function(x, y, group, weights = rep(1, nobs), start = NULL,
         # cov(R x) = R cov(x) R^T
         # [cov(R x)]^{-1} = R^{-T} [cov(x)]^{-1} R^{-1}
         suppressWarnings({
-            R <- chol(prec.avg, pivot = TRUE)
+            R.fixed <- chol(prec.avg[fixed,fixed], pivot = TRUE)
+            R.random <- chol(prec.avg[random,random], pivot = TRUE)
         })
 
-        pivot <- attr(R, "pivot")
-        rank <- attr(R, "rank")
-        r1 <- seq_len(rank)
-        R <- R[r1,r1,drop=FALSE]
-
+        #pivot <- attr(R, "pivot")
+        #rank <- attr(R, "rank")
+        #r1.fixed <- seq_len(attr(R.fixed, "rank"))
+        #r1.random <- seq_len(attr(R.random, "rank"))
+        #R.fixed <- R.fixed[r1.fixed,r1.fixed,drop=FALSE]
+        #R.random <- R.random[r1.random,r1.random,drop=FALSE]
     } else {
-        R <- diag(nvars)
-        pivot <- seq_len(nvars)
-        rank <- nvars
-        r1 <- seq_len(rank)
+        R.fixed <- diag(nfixed)
+        attr(R.fixed, "pivot") <- seq_len(nfixed)
+        attr(R.fixed, "rank") <- nfixed
+        R.random <- diag(nrandom)
+        attr(R.random, "pivot") <- seq_len(nrandom)
+        attr(R.random, "rank") <- nrandom
+
+        #pivot <- seq_len(nvars)
+        #rank <- nvars
+        #r1 <- seq_len(rank)
     }
+
+    rank.fixed <- attr(R.fixed, "rank")
+    rank.random <- attr(R.random, "rank")
+    rank <- rank.fixed + rank.random
+
+    pivot <- c(which(fixed)[attr(R.fixed, "pivot")],
+               which(random)[attr(R.random, "pivot")])
+    R <- matrix(0, rank, rank)
+    r1.fixed <- seq_len(rank.fixed)
+    r1.random <- seq_len(rank.random)
+    R[r1.fixed, r1.fixed] <- R.fixed[r1.fixed, r1.fixed]
+    (R[rank.fixed + r1.random, rank.fixed + r1.random]
+        <- R.random[r1.random, r1.random])
+    r1 <- seq_len(rank)
 
     # compute standardized coeficients:
     #   coef[i,] <- R %*% m$coefficients[i,pivot[r1]]
@@ -103,25 +131,33 @@ hglm.fast.fit <- function(x, y, group, weights = rep(1, nobs), start = NULL,
     est0 <- NULL
     suppressWarnings({
         for (s in seq_len(steps)) {
-            est0 <- moment.est(coef, subspace, precision, dispersion, start.cov=est0$cov)
+            est0 <- moment.est(coef, nfixed=rank.fixed,
+                               subspace, precision, dispersion, start.cov=est0$cov)
         }
     })
-    est <- moment.est(coef, subspace, precision, dispersion, start.cov=est0$cov)
+    est <- moment.est(coef, nfixed = rank.fixed, subspace, precision, dispersion,
+                      start.cov=est0$cov)
     mean <- est$mean
     mean.cov <- est$mean.cov
     cov <- est$cov
 
     # change back to original coordinates
-    coef.mean <- rep(NA, nvars)
-    coef.mean.cov <- matrix(NA, nvars, nvars)
-    coef.cov <- matrix(NA, nvars, nvars)
-    coef.mean[pivot[r1]] <- backsolve(R, mean)
-    coef.mean.cov[pivot[r1],pivot[r1]] <- backsolve(R, t(backsolve(R, mean.cov)))
-    coef.cov[pivot[r1],pivot[r1]] <- backsolve(R, t(backsolve(R, cov)))
+    coef.mean <- rep(NA, nfixed)
+    coef.mean.cov <- matrix(NA, nfixed, nfixed)
+    coef.cov <- matrix(NA, nrandom, nrandom)
+    (coef.mean[attr(R.fixed, "pivot")[r1.fixed]]
+        <- backsolve(R.fixed, mean))
+    (coef.mean.cov[attr(R.fixed, "pivot")[r1.fixed],
+                   attr(R.fixed, "pivot")[r1.fixed]]
+        <- backsolve(R.fixed, t(backsolve(R.fixed, mean.cov))))
+    (coef.cov[attr(R.random, "pivot")[r1.random],
+              attr(R.random, "pivot")[r1.random]]
+        <- backsolve(R.random, t(backsolve(R.random, cov))))
 
     # set coordinate names
-    names(coef.mean) <- xnames
-    dimnames(coef.mean.cov) <- dimnames(coef.cov) <- list(xnames, xnames)
+    names(coef.mean) <- xnames[fixed]
+    dimnames(coef.mean.cov) <- list(xnames[fixed], xnames[fixed])
+    dimnames(coef.cov) <- list(xnames[random], xnames[random])
 
     z <- list(family = family, coefficient.mean = coef.mean,
               coefficient.mean.cov = coef.mean.cov, coefficient.cov = coef.cov,

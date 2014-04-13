@@ -13,11 +13,12 @@
 # limitations under the License.
 
 
-moment.est <- function(coefficients, subspace, precision, dispersion,
+moment.est <- function(coefficients, nfixed, subspace, precision, dispersion,
                        start.cov = NULL)
 {
     ngroups <- nrow(coefficients)
     dim <- ncol(coefficients)
+    nrandom <- dim - nfixed
     names <- colnames(coefficients)
 
     if (ngroups == 0L || dim == 0L){
@@ -26,13 +27,24 @@ moment.est <- function(coefficients, subspace, precision, dispersion,
         return(cov)
     }
 
+    fixed <- seq_len(nfixed)
+    random  <- nfixed + seq_len(nrandom)
+
+    if (is.null(start.cov))
+        start.cov <- diag(nrandom)
+
     # compute mean estimate and covariance bias correction
-    wt <- array(0, dim=c(ngroups, dim, dim))
-    wtb <- matrix(0, ngroups, dim)
-    bias <- array(0, dim=c(ngroups, dim, dim))
+    weight11 <- array(0, dim=c(ngroups, nfixed, nfixed))
+    weight12 <- array(0, dim=c(ngroups, nfixed, nrandom))
+    weight22 <- array(0, dim=c(ngroups, nrandom, nrandom))
+
+    weight1.coef <- matrix(0, ngroups, nfixed)
+    bias <- array(0, dim=c(ngroups, nrandom, nrandom))
 
     for (i in seq_len(ngroups)) {
         u <- subspace[[i]]
+        u1 <- u[fixed,,drop=FALSE]
+        u2 <- u[random,,drop=FALSE]
         l <- precision[[i]]
         sigma2 <- dispersion[i]
         r <- length(l)
@@ -41,43 +53,55 @@ moment.est <- function(coefficients, subspace, precision, dispersion,
             next
         }
 
-        if (is.null(start.cov)) {
-            w <- u %*% diag(l / (l + sigma2), r, r) %*% t(u)
-            bias.i <- u %*% diag(sigma2 * l
-                                 / (l + sigma2)^2, r, r) %*% t(u)
-        } else {
-            # implementation trick to avoid 1/li:
-            # W = U (U^T Sigma U + a L^{-1})^{-1} U^T
-            #   = U L^{1/2} (L^{1/2} U^T Sigma U L^{1/2} + a I)^{-1} L^{1/2} U^T
-            #   = Us (Us^T Sigma Us + a I)^{-1} Us^T
-            #
-            # B = W U (a L^{-1}) U^T W
-            #
-            #   = U S (S U^T Sigma U S + a I)^{-1} S U^T
-            #     U (a S^{-2}) U^T
-            #     U S (S U^T Sigma U S + a I)^{-1} S U^T
-            #
-            #   =  a U S (S U^T Sigma U S + a I)^{-2} S U^T
-            #
-            s <- sqrt(l)
-            us <- u %*% diag(s, r, r)
-            cov.ii <- t(us) %*% start.cov %*% us
-            h <- cov.ii + diag(sigma2, r, r)
-            h.sqrt <- chol(h)
-            hi.us.t <- backsolve(h.sqrt, t(us), transpose=TRUE)
-            w <- t(hi.us.t) %*% hi.us.t
+        # implementation trick to avoid 1/li:
+        #
+        # S = L^{1/2}
+        #
+        # W = (U2^T Sigma U2 + a L^{-1})^{-1}
+        #   = [L^{-1/2} (L^{1/2} U2^T Sigma U2 L^{1/2} + a I) L^{-1/2}]^{-1}
+        #   = S (S U2^T Sigma U2 S + A I)^{-1} S
+        #
+        # W[kl] = U[k] W U[l]^T
+        #       = (U[k] S) (U2s^T Sigma U2s + a I)^{-1} (U[l] S)^T
+        #
+        # B = U2 W (a L^{-1}) W U2^T
+        #
+        #   = U2 S (S U2^T Sigma U2 S + A I)^{-1} S
+        #        (a S^(-2))
+        #        S (S U2^T Sigma U2 S + A I)^{-1} S U2^T
+        #
+        #   =  a U2 S (S U2^T Sigma U2 S + a I)^{-2} S U2^T
+        #
+        s <- sqrt(l)
+        us <- u %*% diag(s, r, r)
+        u1s <- us[fixed,,drop=FALSE]
+        u2s <- us[random,,drop=FALSE]
 
-            h2i.us.t <- backsolve(h.sqrt, hi.us.t)
-            bias.i <- sigma2 * t(h2i.us.t) %*% h2i.us.t
-        }
+        cov22 <- t(u2s) %*% start.cov %*% u2s
+        w.inv <- cov22 + diag(sigma2, r, r)
+        R <- chol(w.inv)
+        R.u1s.t <- backsolve(R, t(u1s), transpose=TRUE)
+        R.u2s.t <- backsolve(R, t(u2s), transpose=TRUE)
 
-        wt[i,,] <- w
-        wtb[i,] <- w %*% coefficients[i,]
-        bias[i,,] <- bias.i
+        w11 <- t(R.u1s.t) %*% R.u1s.t
+        w12 <- t(R.u1s.t) %*% R.u2s.t
+        w22 <- t(R.u2s.t) %*% R.u2s.t
+
+        R2.u2s.t <- backsolve(R, R.u2s.t)
+        B <- sigma2 * t(R2.u2s.t) %*% R2.u2s.t
+
+        w1b <- (w11 %*% coefficients[i,fixed]
+                + w12 %*% coefficients[i,random])
+
+        weight11[i,,] <- w11
+        weight12[i,,] <- w12
+        weight22[i,,] <- w22
+        weight1.coef[i,] <- w1b
+        bias[i,,] <- B
     }
 
-    wtot <- apply(wt, c(2,3), mean)
-    mean <- pseudo.solve(wtot, colMeans(wtb))
+    wtot <- apply(weight11, c(2,3), mean)
+    mean <- pseudo.solve(wtot, colMeans(weight1.coef))
     if (attr(mean, "deficient")) {
         warning("cannot solve mean moment equation due to rank deficiency")
     }
@@ -85,21 +109,24 @@ moment.est <- function(coefficients, subspace, precision, dispersion,
     attr(mean, "deficient") <- attr(mean.cov, "deficient") <- NULL
 
     # compute covariance estimate
-    wt2 <- array(NA, dim=c(ngroups, dim^2, dim^2))
-    wtb2 <- array(NA, dim=c(ngroups, dim, dim))
+    weight22.2 <- array(NA, dim=c(ngroups, nrandom^2, nrandom^2))
+    weight22.coef.2 <- array(NA, dim=c(ngroups, nrandom, nrandom))
 
     for (i in seq_len(ngroups)) {
-        w <- matrix(wt[i,,], dim, dim)
-        wt2[i,,] <- kronecker(w, w)
+        w12 <- matrix(weight12[i,,], nfixed, nrandom)
+        w22 <- matrix(weight22[i,,], nrandom, nrandom)
 
-        diff <- w %*% (coefficients[i,] - mean)
-        wtb2[i,,] <- diff %*% t(diff)
+        weight22.2[i,,] <- kronecker(w22, w22)
+
+        diff <- (t(w12) %*% (coefficients[i,fixed] - mean)
+                 + w22 %*% coefficients[i,random])
+        weight22.coef.2[i,,] <- diff %*% t(diff)
     }
 
-    wtot2 <- apply(wt2, c(2,3), mean)
+    wtot2 <- apply(weight22.2, c(2,3), mean)
 
     #wt.cov <- apply(wtb2 - bias, c(2, 3), mean)
-    wt.cov <- apply(wtb2, c(2, 3), mean)
+    wt.cov <- apply(weight22.coef.2, c(2, 3), mean)
     wt.bias <- apply(bias, c(2, 3), mean)
 
     cov.vec <- pseudo.solve(wtot2, as.vector(wt.cov))
@@ -107,8 +134,8 @@ moment.est <- function(coefficients, subspace, precision, dispersion,
     if (attr(cov.vec, "deficient")) {
         warning("cannot solve covariance moment equation due to rank deficiency")
     }
-    cov <- matrix(cov.vec, dim, dim)
-    bias <- matrix(bias.vec, dim, dim)
+    cov <- matrix(cov.vec, nrandom, nrandom)
+    bias <- matrix(bias.vec, nrandom, nrandom)
 
     cov <- 0.5 * (cov + t(cov)) # ensure symmetry
     bias <- 0.5 * (bias + t(bias))
@@ -134,7 +161,8 @@ moment.est <- function(coefficients, subspace, precision, dispersion,
                     , sep=""))
     attr(cov, "modified") <- NULL
 
-    names(mean) <- names
-    dimnames(mean.cov) <- dimnames(cov) <- list(names, names)
+    names(mean) <- names[fixed]
+    dimnames(mean.cov) <- list(names[fixed], names[fixed])
+    dimnames(cov) <- list(names[random], names[random])
     list(mean=mean, mean.cov=mean.cov, cov=cov)
 }
