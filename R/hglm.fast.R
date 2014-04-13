@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-hglm.fast <- function(formula, group, family = gaussian, data,
+hglm.fast <- function(formula, formula.random, group, family = gaussian, data,
                       weights, subset, na.action, start = NULL, etastart,
                       mustart, offset, control = list(), contrasts = NULL,
                       method = "firthglm.fit", standardize = TRUE, steps = 1,
@@ -45,6 +45,16 @@ hglm.fast <- function(formula, group, family = gaussian, data,
     mf[[1L]] <- quote(stats::model.frame)
     mf <- eval(mf, parent.frame())
 
+    # random effects model frame
+    mf.random <- match.call(expand.dots=FALSE)
+    m.random <- match(c("formula.random", "data", "subset", "na.action"),
+                      names(mf.random), 0L)
+    mf.random <- mf.random[c(1L, m.random)]
+    mf.random$drop.unused.levels <- TRUE
+    mf.random[[1L]] <- quote(stats::model.frame)
+    names(mf.random)[match("formula.random", names(mf.random))] <- "formula"
+    mf.random <- eval(mf.random, parent.frame())
+
     # method
     if (!is.character(method) && !is.function(method))
         stop("invalid 'method' argument")
@@ -64,8 +74,14 @@ hglm.fast <- function(formula, group, family = gaussian, data,
 
     # design matrix
     mt <- attr(mf, "terms")
-    X <- if (!is.empty.model(mt))
+    X.fixed <- if (!is.empty.model(mt))
         model.matrix(mt, mf, contrasts)
+    else matrix(, NROW(Y), 0L)
+
+    # random effect design matrix
+    mt.random <- attr(mf.random, "terms")
+    X.random <- if (!is.empty.model(mt.random))
+        model.matrix(mt.random, mf.random, contrasts)
     else matrix(, NROW(Y), 0L)
 
     # group
@@ -94,14 +110,17 @@ hglm.fast <- function(formula, group, family = gaussian, data,
     etastart <- model.extract(mf, "etastart")
 
     # group-specific estimates
-    z <- hglm.fast.fit(x.fixed = X, x.random = X, y = Y, group = group, weights = weights,
-                       start = start, etastart = etastart, mustart = mustart,
-                       offset = offset, family = family, control = control,
-                       method = method, intercept = attr(mt, "intercept") > 0L,
+    z <- hglm.fast.fit(x.fixed = X.fixed, x.random = X.random, y = Y, group = group,
+                       weights = weights, start = start, etastart = etastart,
+                       mustart = mustart, offset = offset, family = family,
+                       control = control, method = method,
+                       intercept = attr(mt, "intercept") > 0L,
                        standardize = standardize, steps = steps)
     z$call <- call
-    if (x)
-        z$x <- X
+    if (x) {
+        z$x.fixed <- X.fixed
+        z$x.random <- X.random
+    }
     if (!y)
         z$y <- NULL
     class(z) <- "hglm"
@@ -285,14 +304,15 @@ print.summary.hglm <- function(x, digits = max(3L, getOption("digits") - 3L),
 print.hglm <- function(x, digits = max(3L, getOption("digits") - 3L),
                        signif.stars = getOption("show.signif.stars"), ...)
 {
-    names <- names(x$coefficient.mean)
+    names.fixed <- names(x$coefficient.mean)
+    names.random <- colnames(x$coefficient.cov)
 
     # random effects
     var <- pmax(0, diag(x$coefficient.cov))
     sd <- sqrt(var)
     random <- cbind(var, sd)
     colnames(random) <- c("Variance", "Std. Dev.")
-    rownames(random) <- names
+    rownames(random) <- names.random
 
     # fixed effects
     est <- x$coefficient.mean
@@ -305,7 +325,7 @@ print.hglm <- function(x, digits = max(3L, getOption("digits") - 3L),
     }
     fixed <- cbind(est, est.se, tstat, pval)
     colnames(fixed) <- c("Estimate", "Std. Error", "t value", "Pr(> |t|)")
-    rownames(fixed) <- names
+    rownames(fixed) <- names.fixed
 
     cat("\nCall:\n", paste(deparse(x$call), sep = "\n", collapse = "\n"),
         "\n", sep = "")
