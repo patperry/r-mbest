@@ -14,19 +14,28 @@
 
 
 ebayes.est <- function(coefficients, nfixed, subspace, precision, dispersion,
-                       coefficient.mean, coefficient.cov)
+                       coefficient.mean, coefficient.cov,
+                       coefficient.cov.sqrt, postVar = FALSE)
 {
     coef <- coefficients
     coef.mu <- coefficient.mean
     coef.cov <- coefficient.cov
     r <- length(precision)
-    nrandom <- nrow(coef.cov)
 
+    if (postVar) {
+        R <- coefficient.cov.sqrt
+        pivot <- attr(R, "pivot")
+        rank <- attr(R, "rank")
+        R <- R[seq_len(rank),,drop=FALSE]
+    }
+
+    nrandom <- nrow(coef.cov)
     fixed <- seq_len(nfixed)
     random <- nfixed + seq_len(nrandom)
 
     if (r == 0L) {
         coef.eb <- numeric(nrandom)
+        cov.eb <- coef.cov
     } else {
         # implementation trick to avoid 1/li:
         # U (U^T Sigma U + a L^{-1})^{-1} U^T
@@ -43,14 +52,25 @@ ebayes.est <- function(coefficients, nfixed, subspace, precision, dispersion,
         w.diff <- u2s %*% solve(h, (t(u1s) %*% (coef[fixed] - coef.mu)
                                     + t(u2s) %*% coef[random]))
         coef.eb <- coef.cov %*% w.diff
+
+        if (postVar) {
+            Ru2s <- R %*% u2s[pivot,,drop=FALSE]
+            C <- chol(diag(dispersion, rank, rank) + tcrossprod(Ru2s))
+            R.post <- matrix(0, rank, nrandom)
+            R.post[,pivot] <- backsolve(C, R, transpose=TRUE)
+            cov.eb <- dispersion * crossprod(R.post)
+        }
     }
+
+    if (postVar)
+        attr(coef.eb, "postVar") <- cov.eb
 
     coef.eb
 }
 
 
 ebayes.group.est <- function(coefficients, nfixed, subspace, precision, dispersion,
-                             coefficient.mean, coefficient.cov)
+                             coefficient.mean, coefficient.cov, postVar = FALSE)
 {
     ngroups <- nrow(coefficients)
     nvars <- ncol(coefficients) - nfixed
@@ -58,16 +78,39 @@ ebayes.group.est <- function(coefficients, nfixed, subspace, precision, dispersi
     coefficients.eb <- matrix(NA, ngroups, nvars)
     dimnames(coefficients.eb) <- dimnames(coefficients)
 
+    if (postVar) {
+        suppressWarnings({
+            coefficient.cov.sqrt <- chol(coefficient.cov, pivot=TRUE)
+        })
+    } else {
+        coefficient.cov.sqrt <- NULL
+    }
+
+    if (postVar) {
+        cov.eb <- array(NA, c(nvars, nvars, ngroups))
+        dimnames(cov.eb) <- list(colnames(coefficients),
+                                 colnames(coefficients),
+                                 rownames(coefficients))
+    }
+
     for (i in seq_len(ngroups)) {
         eb <- ebayes.est(coefficients[i,],
                          nfixed = nfixed,
                          subspace = subspace[[i]],
                          precision = precision[[i]], dispersion = dispersion[i],
                          coefficient.mean = coefficient.mean,
-                         coefficient.cov = coefficient.cov)
+                         coefficient.cov = coefficient.cov,
+                         coefficient.cov.sqrt = coefficient.cov.sqrt,
+                         postVar = postVar)
 
         coefficients.eb[i,] <- eb
+        if (postVar) {
+            cov.eb[,,i] <- attr(eb, "postVar")
+        }
     }
+
+    if (postVar)
+        attr(coefficients.eb, "postVar") <- cov.eb
 
     coefficients.eb
 }

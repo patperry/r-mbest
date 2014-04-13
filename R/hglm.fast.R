@@ -159,9 +159,6 @@ VarCorr.hglm <- function(x, sigma = 1, rdig = 3)
 
 ranef.hglm <- function(object, condVar = FALSE, ...)
 {
-    if (condVar)
-        warning("condVar is not implemented")
-
     nvars <- ncol(object$coefficients)
     xnames <- names(object$coefficient.mean)
     ngroups <- nrow(object$coefficients)
@@ -195,13 +192,32 @@ ranef.hglm <- function(object, condVar = FALSE, ...)
                               precision=object$precision,
                               dispersion=rep(object$dispersion, ngroups),
                               coefficient.mean=coef.mean1,
-                              coefficient.cov=coef.cov1)
+                              coefficient.cov=coef.cov1,
+                              postVar=condVar)
 
     # change back to original coordinates
+    r1.random <- seq_len(rank.random)
     coef <- matrix(NA, ngroups, nrandom)
-    coef[,pivot.random[seq_len(rank.random)]] <- t(backsolve(R.random, t(coef1)))
+    coef[,pivot.random[r1.random]] <- t(backsolve(R.random, t(coef1)))
     colnames(coef) <- colnames(object$coefficient.cov)
     rownames(coef) <- gnames
+    coef <- as.data.frame(coef)
+
+    if (condVar) {
+        cov.eb1 <- attr(coef1, "postVar")
+        cov.eb <- array(NA, c(nrandom, nrandom, ngroups))
+        dimnames(cov.eb) <- list(colnames(object$coefficient.cov),
+                                 colnames(object$coefficient.cov),
+                                 gnames)
+
+        for (i in seq_len(ngroups)) {
+            (cov.eb[pivot.random[r1.random],pivot.random[r1.random],i]
+                <- backsolve(R.random, t(backsolve(R.random, cov.eb1[,,i]))))
+            browser()
+        }
+
+        attr(coef, "postVar") <- cov.eb
+    }
 
     re <- list()
     re[[as.character(object$call[["group"]])]] <- coef

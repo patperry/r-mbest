@@ -37,7 +37,7 @@ test_that("succeeds on sleepstudy", {
                                        335, 337, 349, 350, 351, 352, 369, 370,
                                        371, 372))
     colnames(ranef0) <- c("(Intercept)", "Days")
-    expect_that(round(ranef(model)[["Subject"]], 1), equals(ranef0))
+    expect_that(round(as.matrix(ranef(model)[["Subject"]]), 1), equals(ranef0))
 })
 
 
@@ -85,5 +85,5 @@ test_that("succeeds on cbpp", {
                      15, 4)
     rownames(ranef0) <- as.character(1:15)
     colnames(ranef0) <- c("(Intercept)", "period2", "period3", "period4")
-    expect_that(round(ranef(model)[["herd"]], 1), equals(ranef0))
+    expect_that(round(as.matrix(ranef(model)[["herd"]]), 1), equals(ranef0))
 })
