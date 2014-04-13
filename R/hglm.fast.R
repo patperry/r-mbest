@@ -151,11 +151,13 @@ ranef.hglm <- function(object, condVar = FALSE, ...)
     R <- object$R
     pivot <- object$pivot
     rank <- object$rank
+    rank.fixed <- object$rank.fixed
+    rank.random <- object$rank.random
     r1 <- seq_len(rank)
     nfixed <- length(object$coefficient.mean)
     nrandom <- nvars - nfixed
-    fixed <- seq_len(nfixed)
-    random <- nfixed + seq_len(nrandom)
+    fixed <- seq_len(rank.fixed)
+    random <- rank.fixed + seq_len(rank.random)
 
     R.fixed <- R[fixed,fixed,drop=FALSE]
     pivot.fixed <- pivot[fixed]
@@ -169,7 +171,7 @@ ranef.hglm <- function(object, condVar = FALSE, ...)
                                              drop=FALSE] %*% t(R.random))
 
     coef1 <- ebayes.group.est(coefficients=object$coefficients,
-                              nfixed=nfixed,
+                              nfixed=rank.fixed,
                               subspace=object$subspace,
                               precision=object$precision,
                               dispersion=rep(object$dispersion, ngroups),
@@ -178,7 +180,7 @@ ranef.hglm <- function(object, condVar = FALSE, ...)
 
     # change back to original coordinates
     coef <- matrix(NA, ngroups, nrandom)
-    coef[,pivot.random] <- t(backsolve(R.random, t(coef1)))
+    coef[,pivot.random[seq_len(rank.random)]] <- t(backsolve(R.random, t(coef1)))
     colnames(coef) <- colnames(object$coefficient.cov)
     rownames(coef) <- gnames
 

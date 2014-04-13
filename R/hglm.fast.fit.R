@@ -101,15 +101,19 @@ hglm.fast.fit <- function(x.fixed, x.random, y, group, weights = rep(1, nobs), s
     rank.random <- attr(R.random, "rank")
     rank <- rank.fixed + rank.random
 
-    pivot <- c(which(fixed)[attr(R.fixed, "pivot")],
-               which(random)[attr(R.random, "pivot")])
-    R <- matrix(0, rank, rank)
     r1.fixed <- seq_len(rank.fixed)
     r1.random <- seq_len(rank.random)
+    r1 <- seq_len(rank)
+
+    pivot.fixed <- which(fixed)[attr(R.fixed, "pivot")]
+    pivot.random <- which(random)[attr(R.random, "pivot")]
+    pivot <- c(pivot.fixed[r1.fixed],  pivot.random[r1.random],
+               pivot.fixed[-r1.fixed], pivot.random[-r1.random])
+
+    R <- matrix(0, rank, rank)
     R[r1.fixed, r1.fixed] <- R.fixed[r1.fixed, r1.fixed]
     (R[rank.fixed + r1.random, rank.fixed + r1.random]
         <- R.random[r1.random, r1.random])
-    r1 <- seq_len(rank)
 
     # compute standardized coeficients:
     #   coef[i,] <- R %*% m$coefficients[i,pivot[r1]]
@@ -135,7 +139,7 @@ hglm.fast.fit <- function(x.fixed, x.random, y, group, weights = rep(1, nobs), s
                                subspace, precision, dispersion, start.cov=est0$cov)
         }
     })
-    est <- moment.est(coef, nfixed = rank.fixed, subspace, precision, dispersion,
+    est <- moment.est(coef, nfixed=rank.fixed, subspace, precision, dispersion,
                       start.cov=est0$cov)
     mean <- est$mean
     mean.cov <- est$mean.cov
@@ -163,7 +167,8 @@ hglm.fast.fit <- function(x.fixed, x.random, y, group, weights = rep(1, nobs), s
               coefficient.mean.cov = coef.mean.cov, coefficient.cov = coef.cov,
               coefficients = coef, subspace = subspace, precision = precision,
               dispersion = dispersion.tot, df.residual = df.residual.tot,
-              R = R, rank = rank, pivot = pivot, y = y, group = group,
+              R = R, rank = rank, rank.fixed = rank.fixed,
+              rank.random = rank.random, pivot = pivot, y = y, group = group,
               prior.weights = weights, offset = offset)
     z
 }
