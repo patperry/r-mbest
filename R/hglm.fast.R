@@ -139,6 +139,11 @@ vcov.hglm <- function(object, ...)
     object$coefficient.mean.cov
 }
 
+sigma.hglm <- function(object, ...)
+{
+    sqrt(object$dispersion)
+}
+
 VarCorr.hglm <- function(x, sigma = 1, rdig = 3)
 {
     vc <- x$coefficient.cov
@@ -151,7 +156,7 @@ VarCorr.hglm <- function(x, sigma = 1, rdig = 3)
 
     varcor <- list()
     varcor[[as.character(x$call[["group"]])]] <- vc
-    attr(varcor, "sc") <- sigma * sqrt(x$dispersion)
+    attr(varcor, "sc") <- sigma * sigma(x)
     attr(varcor, "useSc") <- !(x$family$family %in% c("binomial", "poisson"))
     class(varcor) <- "VarCorr.hglm"
     varcor

@@ -1,4 +1,5 @@
 importFrom("nlme", fixef,ranef,VarCorr)
+importFrom("lme4", sigma)
 
 export(hglm)
 export(hglm.fit)
@@ -8,6 +9,7 @@ S3method(print, hglm)
 S3method(print, summary.hglm)
 S3method(print, VarCorr.hglm)
 S3method(ranef, hglm)
+S3method(sigma, hglm)
 S3method(summary, hglm)
 S3method(VarCorr, hglm)
 S3method(vcov, hglm)
