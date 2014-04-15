@@ -16,8 +16,8 @@
 hglm.fast.fit <- function(x, z, y, group, weights = rep(1, nobs), start = NULL,
                           etastart = NULL, mustart = NULL,
                           offset = rep(0, nobs), family = gaussian(), 
-                          control = list(), method = "firthglm.fit",
-                          intercept = TRUE, standardize = TRUE, steps = 1)
+                          control = list(), standardize = TRUE, steps = 1,
+                          method = "firthglm.fit", intercept = TRUE)
 {
     x <- as.matrix(x)
     z <- as.matrix(z)
@@ -32,6 +32,15 @@ hglm.fast.fit <- function(x, z, y, group, weights = rep(1, nobs), start = NULL,
     nvars <- nfixed + nrandom
     fixed <- (seq_len(nvars) <= nfixed)
     random <- !fixed
+
+    if (!is.null(start)) {
+        if (length(start) != nfixed) {
+            stop(gettextf("length of 'start' should equal %d and correspond to initial coefs for %s",
+                          nfixed, paste(deparse(xnames), collapse=", ")),
+                 domain=NA)
+        }
+        start <- c(start, numeric(nrandom))
+    }
 
     # group-specific estimates
     m <- rdglm.group.fit(x = cbind(x, z), y = y, group = group, weights = weights,

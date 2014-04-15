@@ -13,11 +13,12 @@
 # limitations under the License.
 
 
-hglm.fast <- function(formula, family = gaussian, data,
-                      weights, subset, na.action, start = NULL, etastart,
-                      mustart, offset, control = list(), contrasts = NULL,
-                      model = TRUE, method = "firthglm.fit", standardize = TRUE, steps = 1,
-                      x = FALSE, y = TRUE, z = FALSE, group = TRUE)
+hglm.fast <- function(formula, family = gaussian, data, weights, subset,
+                      na.action, start = NULL, etastart, mustart, offset,
+                      control = list(), standardize = TRUE, steps = 1,
+                      model = TRUE, method = "firthglm.fit",
+                      x = FALSE, z = FALSE, y = TRUE, group = TRUE,
+                      contrasts = NULL)
 {
     # call
     call <- match.call()
@@ -124,9 +125,9 @@ hglm.fast <- function(formula, family = gaussian, data,
     fit <- hglm.fast.fit(x = X, z = Z, y = Y, group = Group,
                          weights = weights, start = start, etastart = etastart,
                          mustart = mustart, offset = offset, family = family,
-                         control = control, method = method,
-                         intercept = attr(mt.fixed, "intercept") > 0L,
-                         standardize = standardize, steps = steps)
+                         control = control, standardize = standardize,
+                         steps = steps, method = method,
+                         intercept = attr(mt.fixed, "intercept") > 0L)
     fit$contrasts.fixed <- attr(X, "contrasts")
     fit$contrasts.random <- attr(Z, "contrasts")
 
