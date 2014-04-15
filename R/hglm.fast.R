@@ -12,11 +12,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+hglm.fast.control <- function(standardize = TRUE, steps = 1,
+                              fit.method = "firthglm.fit",
+                              fit.control = list(...), ...)
+{
+    if (!is.logical(standardize) || is.na(standardize))
+        stop("value of 'standardize' must be TRUE or FALSE")
+    if (!is.numeric(steps) || steps < 0)
+        stop("number of steps must be >= 0")
+
+    if (!is.character(fit.method) && !is.function(fit.method))
+        stop("invalid 'fit.method' argument")
+    if (identical(fit.method, "firthglm.fit"))
+        fit.control <- do.call("firthglm.control", fit.control)
+    if (identical(fit.method, "glm.fit"))
+        fit.control <- do.call("glm.control", fit.control)
+
+    list(standardize = standardize, steps = steps,
+         fit.method = fit.method, fit.control = fit.control)
+}
+
 
 hglm.fast <- function(formula, family = gaussian, data, weights, subset,
                       na.action, start = NULL, etastart, mustart, offset,
-                      control = list(), standardize = TRUE, steps = 1,
-                      model = TRUE, method = "firthglm.fit",
+                      control = list(), model = TRUE, method = "hglm.fast.fit",
                       x = FALSE, z = FALSE, y = TRUE, group = TRUE,
                       contrasts = NULL)
 {
@@ -52,10 +71,8 @@ hglm.fast <- function(formula, family = gaussian, data, weights, subset,
         return(mf)
     if (!is.character(method) && !is.function(method))
         stop("invalid 'method' argument")
-    if (identical(method, "firthglm.fit"))
-        control <- do.call("firthglm.control", control)
-    if (identical(method, "glm.fit"))
-        control <- do.call("glm.control", control)
+    if (identical(method, "hglm.fast.fit"))
+        control <- do.call("hglm.fast.control", control)
 
     # terms
     mt <- attr(mf, "terms")
@@ -122,12 +139,12 @@ hglm.fast <- function(formula, family = gaussian, data, weights, subset,
     etastart <- model.extract(mf, "etastart")
 
     # group-specific estimates
-    fit <- hglm.fast.fit(x = X, z = Z, y = Y, group = Group,
-                         weights = weights, start = start, etastart = etastart,
-                         mustart = mustart, offset = offset, family = family,
-                         control = control, standardize = standardize,
-                         steps = steps, method = method,
-                         intercept = attr(mt.fixed, "intercept") > 0L)
+    fit <- eval(call(if (is.function(method)) "method" else method,
+                     x = X, z = Z, y = Y, group = Group,
+                     weights = weights, start = start, etastart = etastart,
+                     mustart = mustart, offset = offset, family = family,
+                     control = control,
+                     intercept = attr(mt.fixed, "intercept") > 0L))
     fit$contrasts.fixed <- attr(X, "contrasts")
     fit$contrasts.random <- attr(Z, "contrasts")
 

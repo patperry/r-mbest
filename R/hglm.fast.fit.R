@@ -13,12 +13,12 @@
 # limitations under the License.
 
 
-hglm.fast.fit <- function(x, z, y, group, weights = rep(1, nobs), start = NULL,
-                          etastart = NULL, mustart = NULL,
+hglm.fast.fit <- function(x, z, y, group, weights = rep(1, nobs),
+                          start = NULL, etastart = NULL, mustart = NULL,
                           offset = rep(0, nobs), family = gaussian(), 
-                          control = list(), standardize = TRUE, steps = 1,
-                          method = "firthglm.fit", intercept = TRUE)
+                          control = list(), intercept = TRUE)
 {
+    control <- do.call("hglm.fast.control", control)
     x <- as.matrix(x)
     z <- as.matrix(z)
     xnames <- dimnames(x)[[2L]]
@@ -45,8 +45,9 @@ hglm.fast.fit <- function(x, z, y, group, weights = rep(1, nobs), start = NULL,
     # group-specific estimates
     m <- rdglm.group.fit(x = cbind(x, z), y = y, group = group, weights = weights,
                          start = start, etastart = etastart, mustart = mustart,
-                         offset = offset, family = family, control = control,
-                         method = method, intercept = intercept)
+                         offset = offset, family = family,
+                         control = control$fit.control, method = control$fit.method,
+                         intercept = intercept)
     ngroups <- m$ngroups
 
     # compute pooled dispersion estimates
@@ -69,7 +70,7 @@ hglm.fast.fit <- function(x, z, y, group, weights = rep(1, nobs), start = NULL,
     }
 
     # change coordinates so that average precision is identity
-    if (standardize) {
+    if (control$standardize) {
         # compute averge precision of estimates
         prec.avg <- matrix(0, nvars, nvars)
 
@@ -143,7 +144,7 @@ hglm.fast.fit <- function(x, z, y, group, weights = rep(1, nobs), start = NULL,
     # compute coefficient mean and covariance estimates
     est0 <- NULL
     suppressWarnings({
-        for (s in seq_len(steps)) {
+        for (s in seq_len(control$steps)) {
             est0 <- moment.est(coef, nfixed=rank.fixed,
                                subspace, precision, dispersion, start.cov=est0$cov)
         }
