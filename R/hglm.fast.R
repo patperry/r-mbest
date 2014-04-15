@@ -272,17 +272,17 @@ predict.hglm <- function(object, newdata = NULL,
         eta.se <- NULL
     }
 
-    residual.scale <- as.vector(sqrt(object$dispersion))
+    fit <- switch(type, link = eta, response =  family(object)$linkinv(eta))
 
-    if (type == "link") {
-        fit <- eta
-        se.fit <- eta.se
-    } else if (type == "response") {
-        fit <- family(object)$linkinv(eta)
-        se.fit <- eta.se * abs(family(object)$mu.eta(eta))
+    if (!se.fit) {
+        pred <- fit
+    } else {
+        residual.scale <- as.vector(sqrt(object$dispersion))
+        se.fit <- switch(type,
+                         link = eta.se,
+                         response = eta.se * abs(family(object)$mu.eta(eta)))
+        pred <- list(fit = fit, se.fit = se.fit, residual.scale = residual.scale)
     }
-
-    pred <- list(fit = fit, se.fit = se.fit, residual.scale = residual.scale)
     pred
 }
 
