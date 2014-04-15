@@ -45,6 +45,8 @@ hglm.fast <- function(formula, family = gaussian, data,
     mf[[1L]] <- quote(stats::model.frame)
     mf$formula <- lme4::subbars(mf$formula)
     mf <- eval(mf, parent.frame())
+    if (identical(method, "model.frame"))
+        return(mf)
 
     # method
     if (!is.character(method) && !is.function(method))
@@ -90,6 +92,7 @@ hglm.fast <- function(formula, family = gaussian, data,
         else matrix(, NROW(Y), 0L)
     } else { # length(bars) == 0L
         Group <- factor(character(NROW(Y)))
+        mt.random <- terms(~ -1, data=data)
         Z <- matrix(, NROW(Y), 0L)
     }
 
@@ -119,7 +122,11 @@ hglm.fast <- function(formula, family = gaussian, data,
                          control = control, method = method,
                          intercept = attr(mt.fixed, "intercept") > 0L,
                          standardize = standardize, steps = steps)
+    fit$contrasts.fixed <- attr(X, "contrasts")
+    fit$contrasts.random <- attr(Z, "contrasts")
     fit$call <- call
+    fit$terms.fixed <- mt.fixed
+    fit$terms.random <- mt.random
     if (model)
         fit$model <- mf
     fit$na.action <- attr(mf, "na.action")
@@ -134,6 +141,46 @@ hglm.fast <- function(formula, family = gaussian, data,
     class(fit) <- "hglm"
 
     fit
+}
+
+
+terms.hglm <- function(x, type=c("fixed", "random"), ...)
+{
+    type <- match.arg(type)
+    switch(type, fixed = x$terms.fixed, random = x$terms.random)
+}
+
+
+model.frame.hglm <- function(formula, ...)
+{
+    dots <- list(...)
+    nargs <- dots[match(c("data", "na.action", "subset"), names(dots), 0L)]
+    if (length(nargs) || is.null(formula$model)) {
+        fcall <- formula$call
+        fcall$method <- "model.frame"
+        fcall[[1L]] <- quote(hglm.fast)
+        fcall[names(nargs)] <- nargs
+        env <- environment(formula$terms)
+        if (is.null(env))
+            env <- parent.frame()
+        eval(fcall, env)
+    }
+    else formula$model
+}
+
+
+model.matrix.hglm <- function(object, type=c("fixed", "random"), ...)
+{
+    type <- match.arg(type)
+    contrasts <- switch(type,
+                        fixed = object$contrasts.fixed,
+                        random = object$contrasts.random)
+    mf <- model.frame(object)
+    mt <- terms(object, type)
+
+    if (!is.empty.model(mt))
+        model.matrix(mt, mf, contrasts)
+    else matrix(, nobs(object), 0L)
 }
 
 

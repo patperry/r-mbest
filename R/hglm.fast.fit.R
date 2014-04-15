@@ -169,7 +169,7 @@ hglm.fast.fit <- function(x, z, y, group, weights = rep(1, nobs), start = NULL,
                 dispersion = dispersion.tot, df.residual = df.residual.tot,
                 R = R, rank = rank, rank.fixed = rank.fixed,
                 rank.random = rank.random, pivot = pivot, y = y, group = group,
-                prior.weights = weights, offset = offset)
+                prior.weights = weights, offset = offset, nobs = nobs)
     fit
 }
 
