@@ -17,7 +17,7 @@ hglm.fast <- function(formula, family = gaussian, data,
                       weights, subset, na.action, start = NULL, etastart,
                       mustart, offset, control = list(), contrasts = NULL,
                       model = TRUE, method = "firthglm.fit", standardize = TRUE, steps = 1,
-                      x = FALSE, y = TRUE, group = TRUE)
+                      x = FALSE, y = TRUE, z = FALSE, group = TRUE)
 {
     # call
     call <- match.call()
@@ -65,7 +65,7 @@ hglm.fast <- function(formula, family = gaussian, data,
 
     # design matrix
     mt.fixed <- terms(lme4::nobars(formula), data=data)
-    X.fixed <- if (!is.empty.model(mt.fixed))
+    X <- if (!is.empty.model(mt.fixed))
         model.matrix(mt.fixed, mf, contrasts)
     else matrix(, NROW(Y), 0L)
 
@@ -85,12 +85,12 @@ hglm.fast <- function(formula, family = gaussian, data,
 
         mt.random <- terms(eval(substitute(~trms, list(trms = b[[2L]]))),
                            data = data)
-        X.random <- if (!is.empty.model(mt.random))
+        Z <- if (!is.empty.model(mt.random))
             model.matrix(mt.random, mf, contrasts)
         else matrix(, NROW(Y), 0L)
     } else { # length(bars) == 0L
         Group <- factor(character(NROW(Y)))
-        X.random <- matrix(, NROW(Y), 0L)
+        Z <- matrix(, NROW(Y), 0L)
     }
 
     # weights
@@ -113,27 +113,27 @@ hglm.fast <- function(formula, family = gaussian, data,
     etastart <- model.extract(mf, "etastart")
 
     # group-specific estimates
-    z <- hglm.fast.fit(x = X.fixed, x.random = X.random, y = Y, group = Group,
-                       weights = weights, start = start, etastart = etastart,
-                       mustart = mustart, offset = offset, family = family,
-                       control = control, method = method,
-                       intercept = attr(mt.fixed, "intercept") > 0L,
-                       standardize = standardize, steps = steps)
-    z$call <- call
+    fit <- hglm.fast.fit(x = X, z = Z, y = Y, group = Group,
+                         weights = weights, start = start, etastart = etastart,
+                         mustart = mustart, offset = offset, family = family,
+                         control = control, method = method,
+                         intercept = attr(mt.fixed, "intercept") > 0L,
+                         standardize = standardize, steps = steps)
+    fit$call <- call
     if (model)
-        z$model <- mf
-    z$na.action <- attr(mf, "na.action")
-    if (x) {
-        z$x.fixed <- X.fixed
-        z$x.random <- X.random
-    }
+        fit$model <- mf
+    fit$na.action <- attr(mf, "na.action")
+    if (x)
+        fit$x <- X
+    if (z)
+        fit$z <- Z
     if (!y)
-        z$y <- NULL
+        fit$y <- NULL
     if (!group)
-        z$group <- NULL
-    class(z) <- "hglm"
+        fit$group <- NULL
+    class(fit) <- "hglm"
 
-    z
+    fit
 }
 
 

@@ -13,28 +13,28 @@
 # limitations under the License.
 
 
-hglm.fast.fit <- function(x.fixed, x.random, y, group, weights = rep(1, nobs), start = NULL,
+hglm.fast.fit <- function(x, z, y, group, weights = rep(1, nobs), start = NULL,
                           etastart = NULL, mustart = NULL,
                           offset = rep(0, nobs), family = gaussian(), 
                           control = list(), method = "firthglm.fit",
                           intercept = TRUE, standardize = TRUE, steps = 1)
 {
-    x.fixed <- as.matrix(x.fixed)
-    x.random <- as.matrix(x.random)
-    x <- cbind(x.fixed, x.random)
+    x <- as.matrix(x)
+    z <- as.matrix(z)
     xnames <- dimnames(x)[[2L]]
+    znames <- dimnames(z)[[2L]]
     ynames <- if (is.matrix(y)) 
         rownames(y)
     else names(y)
     nobs <- NROW(y)
-    nvars <- ncol(x)
-    nfixed <- ncol(x.fixed)
-    nrandom <- ncol(x.random)
-    fixed <- (seq_len(nvars) <= ncol(x.fixed))
+    nfixed <- ncol(x)
+    nrandom <- ncol(z)
+    nvars <- nfixed + nrandom
+    fixed <- (seq_len(nvars) <= nfixed)
     random <- !fixed
 
     # group-specific estimates
-    m <- rdglm.group.fit(x = x, y = y, group = group, weights = weights,
+    m <- rdglm.group.fit(x = cbind(x, z), y = y, group = group, weights = weights,
                          start = start, etastart = etastart, mustart = mustart,
                          offset = offset, family = family, control = control,
                          method = method, intercept = intercept)
@@ -159,17 +159,17 @@ hglm.fast.fit <- function(x.fixed, x.random, y, group, weights = rep(1, nobs), s
         <- backsolve(R.random, t(backsolve(R.random, cov))))
 
     # set coordinate names
-    names(coef.mean) <- xnames[fixed]
-    dimnames(coef.mean.cov) <- list(xnames[fixed], xnames[fixed])
-    dimnames(coef.cov) <- list(xnames[random], xnames[random])
+    names(coef.mean) <- xnames
+    dimnames(coef.mean.cov) <- list(xnames, xnames)
+    dimnames(coef.cov) <- list(znames, znames)
 
-    z <- list(family = family, coefficient.mean = coef.mean,
-              coefficient.mean.cov = coef.mean.cov, coefficient.cov = coef.cov,
-              coefficients = coef, subspace = subspace, precision = precision,
-              dispersion = dispersion.tot, df.residual = df.residual.tot,
-              R = R, rank = rank, rank.fixed = rank.fixed,
-              rank.random = rank.random, pivot = pivot, y = y, group = group,
-              prior.weights = weights, offset = offset)
-    z
+    fit <- list(family = family, coefficient.mean = coef.mean,
+                coefficient.mean.cov = coef.mean.cov, coefficient.cov = coef.cov,
+                coefficients = coef, subspace = subspace, precision = precision,
+                dispersion = dispersion.tot, df.residual = df.residual.tot,
+                R = R, rank = rank, rank.fixed = rank.fixed,
+                rank.random = rank.random, pivot = pivot, y = y, group = group,
+                prior.weights = weights, offset = offset)
+    fit
 }
 
