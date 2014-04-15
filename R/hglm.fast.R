@@ -13,11 +13,11 @@
 # limitations under the License.
 
 
-hglm.fast <- function(formula, formula.random, group, family = gaussian, data,
+hglm.fast <- function(formula, family = gaussian, data,
                       weights, subset, na.action, start = NULL, etastart,
                       mustart, offset, control = list(), contrasts = NULL,
-                      method = "firthglm.fit", standardize = TRUE, steps = 1,
-                      x = FALSE, y = TRUE)
+                      model = TRUE, method = "firthglm.fit", standardize = TRUE, steps = 1,
+                      x = FALSE, y = TRUE, group = TRUE)
 {
     # call
     call <- match.call()
@@ -38,22 +38,13 @@ hglm.fast <- function(formula, formula.random, group, family = gaussian, data,
 
     # model frame
     mf <- match.call(expand.dots=FALSE)
-    m <- match(c("formula", "group", "data", "subset", "weights", "na.action",
+    m <- match(c("formula", "data", "subset", "weights", "na.action",
                  "etastart", "mustart", "offset"), names(mf), 0L)
     mf <- mf[c(1L, m)]
     mf$drop.unused.levels <- TRUE
     mf[[1L]] <- quote(stats::model.frame)
+    mf$formula <- lme4::subbars(mf$formula)
     mf <- eval(mf, parent.frame())
-
-    # random effects model frame
-    mf.random <- match.call(expand.dots=FALSE)
-    m.random <- match(c("formula.random", "data", "subset", "na.action"),
-                      names(mf.random), 0L)
-    mf.random <- mf.random[c(1L, m.random)]
-    mf.random$drop.unused.levels <- TRUE
-    mf.random[[1L]] <- quote(stats::model.frame)
-    names(mf.random)[match("formula.random", names(mf.random))] <- "formula"
-    mf.random <- eval(mf.random, parent.frame())
 
     # method
     if (!is.character(method) && !is.function(method))
@@ -73,22 +64,34 @@ hglm.fast <- function(formula, formula.random, group, family = gaussian, data,
     }
 
     # design matrix
-    mt <- attr(mf, "terms")
-    X.fixed <- if (!is.empty.model(mt))
-        model.matrix(mt, mf, contrasts)
+    mt.fixed <- terms(lme4::nobars(formula), data=data)
+    X.fixed <- if (!is.empty.model(mt.fixed))
+        model.matrix(mt.fixed, mf, contrasts)
     else matrix(, NROW(Y), 0L)
 
-    # random effect design matrix
-    mt.random <- attr(mf.random, "terms")
-    X.random <- if (!is.empty.model(mt.random))
-        model.matrix(mt.random, mf.random, contrasts)
-    else matrix(, NROW(Y), 0L)
+    # grouping factor and random effect design matrix
+    bars <- lme4::findbars(formula)
+    if (length(bars) >= 2L)
+        stop("Can specify at most one random effect term")
+    if (length(bars) == 1L) {
+        b <- bars[[1L]]
+        mf1 <- mf
+        for (v in all.vars(b[[3L]])) {
+            mf1[[v]] <- factor(mf1[[v]])
+        }
+        Group <- eval(substitute(factor(fac), list(fac = b[[3L]])), mf1)
+        if (all(is.na(Group)))
+            stop("Invalid grouping factor specification, ", deparse(b[[3L]]))
 
-    # group
-    group <- as.factor(model.extract(mf, "group"))
-    if (length(group) != NROW(Y))
-        stop(gettextf("number of groups is %d should equal %d (number of observations)", 
-            length(group), NROW(Y)), domain = NA)
+        mt.random <- terms(eval(substitute(~trms, list(trms = b[[2L]]))),
+                           data = data)
+        X.random <- if (!is.empty.model(mt.random))
+            model.matrix(mt.random, mf, contrasts)
+        else matrix(, NROW(Y), 0L)
+    } else { # length(bars) == 0L
+        Group <- factor(character(NROW(Y)))
+        X.random <- matrix(, NROW(Y), 0L)
+    }
 
     # weights
     weights <- as.vector(model.weights(mf))
@@ -110,19 +113,24 @@ hglm.fast <- function(formula, formula.random, group, family = gaussian, data,
     etastart <- model.extract(mf, "etastart")
 
     # group-specific estimates
-    z <- hglm.fast.fit(x.fixed = X.fixed, x.random = X.random, y = Y, group = group,
+    z <- hglm.fast.fit(x = X.fixed, x.random = X.random, y = Y, group = Group,
                        weights = weights, start = start, etastart = etastart,
                        mustart = mustart, offset = offset, family = family,
                        control = control, method = method,
-                       intercept = attr(mt, "intercept") > 0L,
+                       intercept = attr(mt.fixed, "intercept") > 0L,
                        standardize = standardize, steps = steps)
     z$call <- call
+    if (model)
+        z$model <- mf
+    z$na.action <- attr(mf, "na.action")
     if (x) {
         z$x.fixed <- X.fixed
         z$x.random <- X.random
     }
     if (!y)
         z$y <- NULL
+    if (!group)
+        z$group <- NULL
     class(z) <- "hglm"
 
     z
@@ -155,7 +163,8 @@ VarCorr.hglm <- function(x, sigma = 1, rdig = 3)
     attr(vc, "correlation") <- cor
 
     varcor <- list()
-    varcor[[as.character(x$call[["group"]])]] <- vc
+    group.name <- deparse(findbars(x$call[["formula"]])[[1L]][[3L]])
+    varcor[[group.name]] <- vc
     attr(varcor, "sc") <- sigma * sigma(x)
     attr(varcor, "useSc") <- !(x$family$family %in% c("binomial", "poisson"))
     class(varcor) <- "VarCorr.hglm"
@@ -224,7 +233,8 @@ ranef.hglm <- function(object, condVar = FALSE, ...)
     }
 
     re <- list()
-    re[[as.character(object$call[["group"]])]] <- coef
+    group.name <- deparse(findbars(object$call[["formula"]])[[1L]][[3L]])
+    re[[group.name]] <- coef
     class(re) <- "ranef.hglm"
     re
 }
