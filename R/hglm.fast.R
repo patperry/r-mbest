@@ -45,16 +45,19 @@ hglm.fast <- function(formula, family = gaussian, data,
     mf[[1L]] <- quote(stats::model.frame)
     mf$formula <- lme4::subbars(mf$formula)
     mf <- eval(mf, parent.frame())
-    if (identical(method, "model.frame"))
-        return(mf)
 
     # method
+    if (identical(method, "model.frame"))
+        return(mf)
     if (!is.character(method) && !is.function(method))
         stop("invalid 'method' argument")
     if (identical(method, "firthglm.fit"))
         control <- do.call("firthglm.control", control)
     if (identical(method, "glm.fit"))
         control <- do.call("glm.control", control)
+
+    # terms
+    mt <- attr(mf, "terms")
 
     # response
     Y <- model.response(mf, "any")
@@ -66,7 +69,7 @@ hglm.fast <- function(formula, family = gaussian, data,
     }
 
     # design matrix
-    mt.fixed <- terms(lme4::nobars(formula), data=data)
+    mt.fixed <- delete.response(terms(lme4::nobars(formula), data=data))
     X <- if (!is.empty.model(mt.fixed))
         model.matrix(mt.fixed, mf, contrasts)
     else matrix(, NROW(Y), 0L)
@@ -81,7 +84,9 @@ hglm.fast <- function(formula, family = gaussian, data,
         for (v in all.vars(b[[3L]])) {
             mf1[[v]] <- factor(mf1[[v]])
         }
-        Group <- eval(substitute(factor(fac), list(fac = b[[3L]])), mf1)
+        group.call <- substitute(factor(fac), list(fac = b[[3L]]))
+        Group <- eval(group.call, mf1)
+
         if (all(is.na(Group)))
             stop("Invalid grouping factor specification, ", deparse(b[[3L]]))
 
@@ -124,9 +129,20 @@ hglm.fast <- function(formula, family = gaussian, data,
                          standardize = standardize, steps = steps)
     fit$contrasts.fixed <- attr(X, "contrasts")
     fit$contrasts.random <- attr(Z, "contrasts")
+
+    xlevels <- .getXlevels(mt.fixed, mf)
+    xlevels.random <- .getXlevels(mt.random, mf)
+    for (i in names(xlevels.random)) {
+        xlevels[[i]] <- xlevels.random[[i]]
+    }
+    fit$xlevels <- xlevels
+    fit$group.levels <- levels(Group)
+
     fit$call <- call
+    fit$terms <- mt
     fit$terms.fixed <- mt.fixed
     fit$terms.random <- mt.random
+    fit$group.call <- group.call
     if (model)
         fit$model <- mf
     fit$na.action <- attr(mf, "na.action")
@@ -141,6 +157,11 @@ hglm.fast <- function(formula, family = gaussian, data,
     class(fit) <- "hglm"
 
     fit
+}
+
+
+family.hglm <- function(object, ...) {
+    object$family
 }
 
 
@@ -184,6 +205,88 @@ model.matrix.hglm <- function(object, type=c("fixed", "random"), ...)
 }
 
 
+predict.hglm <- function(object, newdata = NULL,
+                         type = c("link", "response"),
+                         se.fit = FALSE, na.action = na.pass, ...)
+{
+    type <- match.arg(type)
+
+    tt.fixed <- terms(object, "fixed")
+    tt.random <- terms(object, "random")
+
+    if (missing(newdata) || is.null(newdata)) {
+        x <- model.matrix(object, "fixed")
+        z <- model.matrix(object, "random")
+        m <- model.frame(object)
+        offset <- object$offset
+    } else {
+        tt <- object$terms
+        Terms <- delete.response(tt)
+        m <- model.frame(Terms, newdata, na.action = na.action,
+                         xlev=object$xlevels)
+        if (!is.null(cl <- attr(Terms, "dataClasses")))
+            .checkMFClasses(cl, m)
+
+        x <- model.matrix(tt.fixed, m, contrasts.arg=object$contrasts.fixed)
+        z <- model.matrix(tt.random, m, contrasts.arg=object$contrasts.random)
+
+        offset <- rep(0, nrow(x))
+        if (!is.null(off.num <- attr(tt, "offset")))
+            for (i in off.num)
+                offset <- offset + eval(attr(tt, "variables")[[i + 1]], newdata)
+        if (!is.null(object$call$offset))
+            offset <- offset + eval(object$call$offset, newdata)
+    }
+
+    mg <- m
+    for (v in all.vars(object$group.call)) {
+        mg[[v]] <- factor(mg[[v]])
+    }
+    group <- eval(object$group.call, mg)
+
+    re <- ranef(object, condVar=se.fit)[[1]]
+    eta <- drop(x %*% fixef(object))
+    group.ix <- match(group, object$group.levels)
+    old <- !is.na(group.ix)
+    eta[old] <- eta[old] + rowSums(z[old,,drop=FALSE]
+                                   * re[group.ix[old],,drop=FALSE])
+    if (!is.null(offset))
+        eta <- eta + offset
+
+    if (se.fit) {
+        eta.se2 <- pmax(0, rowSums((x %*% vcov(object)) * x))
+        re.sigma <- attr(re, "postVar")
+        sigma0 <- VarCorr(object)[[1]]
+        for (i in seq_along(eta)) {
+            zi <- drop(z[i,])
+            sigma <- if (old[i])
+                re.sigma[,,group.ix[i]]
+            else sigma0
+
+            eta.se2[i] <- eta.se2[i] + max(0, t(zi) %*% sigma %*% zi)
+        }
+
+        eta.se <- sqrt(eta.se2)
+        names(eta.se) <- names(eta)
+    } else {
+        eta.se <- NULL
+    }
+
+    residual.scale <- as.vector(sqrt(object$dispersion))
+
+    if (type == "link") {
+        fit <- eta
+        se.fit <- eta.se
+    } else if (type == "response") {
+        fit <- family(object)$linkinv(eta)
+        se.fit <- eta.se * abs(family(object)$mu.eta(eta))
+    }
+
+    pred <- list(fit = fit, se.fit = se.fit, residual.scale = residual.scale)
+    pred
+}
+
+
 fixef.hglm <- function(object, ...)
 {
     object$coefficient.mean
@@ -210,7 +313,7 @@ VarCorr.hglm <- function(x, sigma = 1, rdig = 3)
     attr(vc, "correlation") <- cor
 
     varcor <- list()
-    group.name <- deparse(findbars(x$call[["formula"]])[[1L]][[3L]])
+    group.name <- deparse(x$group.call[[2L]])
     varcor[[group.name]] <- vc
     attr(varcor, "sc") <- sigma * sigma(x)
     attr(varcor, "useSc") <- !(x$family$family %in% c("binomial", "poisson"))
@@ -280,7 +383,7 @@ ranef.hglm <- function(object, condVar = FALSE, ...)
     }
 
     re <- list()
-    group.name <- deparse(findbars(object$call[["formula"]])[[1L]][[3L]])
+    group.name <- deparse(object$group.call[[2L]])
     re[[group.name]] <- coef
     class(re) <- "ranef.hglm"
     re
