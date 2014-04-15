@@ -339,6 +339,52 @@ VarCorr.hglm <- function(x, sigma = 1, rdig = 3)
     varcor
 }
 
+
+coef.hglm <- function(object, ...)
+{
+    stop("Use 'fixef' and 'ranef' methods for hglm objects")
+}
+
+
+fitted.hglm <- function(object, ...)
+{
+    predict(model)
+}
+
+weights.hglm <- function (object, ...)
+{
+    res <- object$prior.weights
+    if (is.null(object$na.action)) 
+        res
+    else naresid(object$na.action, res)
+}
+
+residuals.hglm <- function(object, type = c("deviance", "pearson", "response"), ...)
+{
+    type <- match.arg(type)
+
+    y <- model.response(model.frame(object), "any")
+    mu <- fitted(object)
+    wts <- object$prior.weights
+    if (is.null(wts))
+        wts <- rep(1, NROW(y))
+
+    res <- switch(type, deviance = {
+            d.res <- sqrt(pmax((object$family$dev.resids)(y, mu, wts), 0))
+            ifelse(y > mu, d.res, -d.res)
+        }, pearson = {
+            (y - mu) * sqrt(wts)/sqrt(object$family$variance(mu))
+        }, response = {
+            y - mu
+        })
+    if (!is.null(object$na.action)) 
+        res <- naresid(object$na.action, res)
+    res
+}
+
+
+
+
 ranef.hglm <- function(object, condVar = FALSE, ...)
 {
     nvars <- ncol(object$coefficients)
@@ -422,7 +468,7 @@ summary.hglm <- function(object, ...)
     varcor <- VarCorr(object)
 
     structure(list(call = object$call, family = object$family,
-                   coefficients = coefs, dispersion = model$dispersion,
+                   coefficients = coefs, dispersion = object$dispersion,
                    vcov = vcov, varcor = varcor),
               class = "summary.hglm")
 }

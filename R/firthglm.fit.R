@@ -144,6 +144,7 @@ firthglm.fit <- function(x, y, weights = rep(1, nobs), start = NULL, etastart = 
     etamin <- -(etamax)
 
     # initial parameters
+    n <- NULL # this gets overwritten by eval(family$initizlize)
     if (is.null(mustart)) {
         eval(family$initialize) ## calculates mustart and may change y and weights and set n (!)
     } else {

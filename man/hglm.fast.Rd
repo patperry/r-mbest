@@ -1,12 +1,14 @@
+\newcommand{\CRANpkg}{\href{http://CRAN.R-project.org/package=#1}{\pkg{#1}}}
+
 \name{hglm.fast}
 \alias{hglm.fast}
 \alias{hglm.fast.fit}
 \title{
-Moment-Based Estimation for Hierarchical Generalized Linear Models
+Fitting Hierarchical Generalized Linear Models
 }
 \description{
-\code{hglm.fast} is used to fit a hierarchical generalized linear model using
-moment-based estimates.
+\code{hglm.fast} is used to fit a hierarchical generalized linear model with
+fast moment-based estimates.
 }
 \usage{
 hglm.fast(formula, family = gaussian, data, weights, subset,
@@ -97,35 +99,65 @@ hglm.fast.fit(x, z, y, group, weights = rep(1, nobs),
 
   \item{contrasts}{an optional list. See the \code{contrasts.arg}
     of \code{model.matrix.default}.}
+
+  \item{intercept}{logical. Should an intercept be included in the
+    \emph{null} model?}
 }
 \details{
-%%  ~~ If necessary, more details than the description above ~~
+  These functions are analogues of \code{\link{glm}} and
+  \code{\link{glm.fit}}, meant to be used for fitting hierarchical
+  generalized linear models.  A typical predictor has the form
+  \code{response ~ terms + (reterms | group)} where
+  \code{response} is the (numeric) response vector, \code{terms} is a
+  series of terms which specifies a linear predictor for
+  \code{response}, \code{reterms} is a series of terms with random
+  coefficients (effects), and \code{group} is a grouping factor; observations
+  with the same grouping factor share the same random effects.
+
+  Currently, only one random effect term is allowed, along with a single
+  level of hierarchy; random effect terms of the form
+  \code{reterms | g1 /.../gQ} are not supported.
 }
 \value{
-%%  ~Describe the value returned
-%%  If it is a LIST, use
-%%  \item{comp1 }{Description of 'comp1'}
-%%  \item{comp2 }{Description of 'comp2'}
-%% ...
+  \code{hglm.fast} returns an object of class inheriting from \code{"hglm"}.
+  See later in this section.  If a non-standard \code{method} is used, the
+  object will also inherit from the class (if any) returned by that function.
+
+  The function \code{\link{summary}} (i.e., \code{\link{summary.hglm}}) can
+  be used to obtain or print a summary of the results.
+
+  The generic accessor functions \code{\link[nlme]{fixef}}, \code{\link[nlme]{ranef}},
+  \code{fitted.values} and \code{residuals} can be used to
+  extract various useful features of the value returned by \code{hglm.fast}.
+}
+\seealso{
+  \code{\link{terms.hglm}}, \code{\link{model.matrix.hglm}}, and
+  \code{\link{predict.hglm}} for \code{hglm} methods, and the
+  generic functions \code{\link{residuals}},
+  \code{\link{summary}}, \code{\link{vcov}}, \code{\link{weights}}.
+
+  Generic functions \code{\link[nlme]{fixef}}, \code{\link[nlme]{ranef}},
+  \code{\link[nlme]{VarCorr}}, and \code{\link[lme4]{sigma}} for features
+  related to mixed effect models.
+
+  \code{\link[lme4]{glmer}} (package \CRANpkg{lme4}) for
+  fitting generalized linear mixed models with likelihood-based estimates.
 }
 \references{
-%% ~put references to the literature/web site here ~
+  Perry, P. O. (2014)
+  "Fast Moment-Based Estimation for Hierarchical Models",
+  Preprint.
 }
 \author{
 Patrick O. Perry
 }
 \note{
-%%  ~~further notes~~
+  If the moment-based random effect covariance is not positive-definite, then
+  a warning will be issued, and a projection of the estimate to the
+  positive-semidefinite cone will be used instead.
 }
 
-%% ~Make other sections like Warning with \section{Warning }{....} ~
-
-\seealso{
-%% ~~objects to See Also as \code{\link{help}}, ~~~
-}
 \examples{
 }
-% Add one or more standard keywords, see file 'KEYWORDS' in the
-% R documentation directory.
-\keyword{ ~kwd1 }
-\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line
+\keyword{models}
+\keyword{regression}

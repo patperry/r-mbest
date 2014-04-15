@@ -64,5 +64,6 @@ rdglm.fit <- function(x, y, weights = rep(1, nobs), start = NULL,
     }
 
     list(coefficients = coef, rank = fit$rank, qr = fit$qr,
-         df.residual = df.residual, dispersion = dispersion)
+         df.residual = df.residual, dispersion = dispersion,
+         prior.weights = fit$prior.weights)
 }
