@@ -95,7 +95,7 @@ hglm.fast.fit(x, z, y, group, weights = rep(1, nobs),
   Preprint.
 }
 \author{
-Patrick O. Perry
+  Patrick O. Perry
 }
 \note{
   If the moment-based random effect covariance is not positive-semidefinite, then
@@ -104,6 +104,12 @@ Patrick O. Perry
 }
 
 \examples{
+  library(lme4)
+  ## The following examples are adapted from lme4:
+  (fm1 <- hglm.fast(Reaction ~ Days + (Days | Subject), gaussian, sleepstudy))
+
+  (gm <- hglm.fast(cbind(incidence, size - incidence) ~ period + (1 | herd),
+                   data = cbpp, family = binomial))
 }
 \keyword{models}
 \keyword{regression}
