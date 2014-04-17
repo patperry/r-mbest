@@ -67,9 +67,9 @@ hglm.fast.fit(x, z, y, group, weights = rep(1, nobs),
   \code{reterms | g1/.../gQ} are not supported.
 }
 \value{
-  \code{hglm.fast} returns an object of class inheriting from \code{"hglm"}.
+  \code{hglm.fast} returns an object of class inheriting from \code{"hglm.fast"}.
 
-  The function \code{\link{summary}} (i.e., \code{\link{summary.hglm}}) can
+  The function \code{\link{summary}} (i.e., \code{\link{summary.hglm.fast}}) can
   be used to obtain or print a summary of the results.
 
   The generic accessor functions \code{\link[nlme]{fixef}}, \code{\link[nlme]{ranef}},
@@ -77,8 +77,8 @@ hglm.fast.fit(x, z, y, group, weights = rep(1, nobs),
   extract various useful features of the value returned by \code{hglm.fast}.
 }
 \seealso{
-  \code{\link{terms.hglm}}, \code{\link{model.matrix.hglm}}, and
-  \code{\link{predict.hglm}} for \code{hglm} methods, and the
+  \code{\link{terms.hglm.fast}}, \code{\link{model.matrix.hglm.fast}}, and
+  \code{\link{predict.hglm.fast}} for \code{hglm.fast} methods, and the
   generic functions \code{\link{residuals}},
   \code{\link{summary}}, \code{\link{vcov}}, \code{\link{weights}}.
 

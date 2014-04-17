@@ -1,17 +1,34 @@
-importFrom("nlme", fixef,ranef,VarCorr)
-importFrom("lme4", sigma)
+## base backages
+importFrom("stats", coef, family, fitted, model.matrix, nobs,
+           residuals, terms, vcov, weights)
 
+## Recommended packages
+importFrom("nlme", fixef,ranef,VarCorr)
+importFrom("lme4", findbars,nobars,sigma,subbars)
+
+## Exports
 export(hglm.fast)
 export(hglm.fast.control)
 export(hglm.fast.fit)
 export(firthglm.control)
 export(firthglm.fit)
-S3method(fixef, hglm)
-S3method(print, hglm)
-S3method(print, summary.hglm)
-S3method(print, VarCorr.hglm)
-S3method(ranef, hglm)
-S3method(sigma, hglm)
-S3method(summary, hglm)
-S3method(VarCorr, hglm)
-S3method(vcov, hglm)
+
+## Methods
+S3method(coef, hglm.fast)
+S3method(family, hglm.fast)
+S3method(fitted, hglm.fast)
+S3method(fixef, hglm.fast)
+S3method(model.frame, hglm.fast)
+S3method(model.matrix, hglm.fast)
+S3method(predict, hglm.fast)
+S3method(print, hglm.fast)
+S3method(print, summary.hglm.fast)
+S3method(print, VarCorr.hglm.fast)
+S3method(ranef, hglm.fast)
+S3method(residuals, hglm.fast)
+S3method(sigma, hglm.fast)
+S3method(summary, hglm.fast)
+S3method(terms, hglm.fast)
+S3method(VarCorr, hglm.fast)
+S3method(vcov, hglm.fast)
+S3method(weights, hglm.fast)

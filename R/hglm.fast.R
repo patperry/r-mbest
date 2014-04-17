@@ -172,25 +172,26 @@ hglm.fast <- function(formula, family = gaussian, data, weights, subset,
         fit$y <- NULL
     if (!group)
         fit$group <- NULL
-    class(fit) <- "hglm"
+    class(fit) <- "hglm.fast"
 
     fit
 }
 
 
-family.hglm <- function(object, ...) {
+family.hglm.fast <- function(object, ...)
+{
     object$family
 }
 
 
-terms.hglm <- function(x, type=c("fixed", "random"), ...)
+terms.hglm.fast <- function(x, type=c("fixed", "random"), ...)
 {
     type <- match.arg(type)
     switch(type, fixed = x$terms.fixed, random = x$terms.random)
 }
 
 
-model.frame.hglm <- function(formula, ...)
+model.frame.hglm.fast <- function(formula, ...)
 {
     dots <- list(...)
     nargs <- dots[match(c("data", "na.action", "subset"), names(dots), 0L)]
@@ -208,7 +209,7 @@ model.frame.hglm <- function(formula, ...)
 }
 
 
-model.matrix.hglm <- function(object, type=c("fixed", "random"), ...)
+model.matrix.hglm.fast <- function(object, type=c("fixed", "random"), ...)
 {
     type <- match.arg(type)
     contrasts <- switch(type,
@@ -223,7 +224,7 @@ model.matrix.hglm <- function(object, type=c("fixed", "random"), ...)
 }
 
 
-predict.hglm <- function(object, newdata = NULL,
+predict.hglm.fast <- function(object, newdata = NULL,
                          type = c("link", "response"),
                          se.fit = FALSE, na.action = na.pass, ...)
 {
@@ -305,22 +306,22 @@ predict.hglm <- function(object, newdata = NULL,
 }
 
 
-fixef.hglm <- function(object, ...)
+fixef.hglm.fast <- function(object, ...)
 {
     object$coefficient.mean
 }
 
-vcov.hglm <- function(object, ...)
+vcov.hglm.fast <- function(object, ...)
 {
     object$coefficient.mean.cov
 }
 
-sigma.hglm <- function(object, ...)
+sigma.hglm.fast <- function(object, ...)
 {
     sqrt(object$dispersion)
 }
 
-VarCorr.hglm <- function(x, sigma = 1, rdig = 3)
+VarCorr.hglm.fast <- function(x, sigma = 1, rdig = 3)
 {
     vc <- x$coefficient.cov
     stddev <- sqrt(diag(vc))
@@ -335,23 +336,23 @@ VarCorr.hglm <- function(x, sigma = 1, rdig = 3)
     varcor[[group.name]] <- vc
     attr(varcor, "sc") <- sigma * sigma(x)
     attr(varcor, "useSc") <- !(x$family$family %in% c("binomial", "poisson"))
-    class(varcor) <- "VarCorr.hglm"
+    class(varcor) <- "VarCorr.hglm.fast"
     varcor
 }
 
 
-coef.hglm <- function(object, ...)
+coef.hglm.fast <- function(object, ...)
 {
-    stop("Use 'fixef' and 'ranef' methods for hglm objects")
+    stop("Use 'fixef' and 'ranef' methods for hglm.fast objects")
 }
 
 
-fitted.hglm <- function(object, ...)
+fitted.hglm.fast <- function(object, ...)
 {
-    predict(model)
+    predict(object)
 }
 
-weights.hglm <- function (object, ...)
+weights.hglm.fast <- function (object, ...)
 {
     res <- object$prior.weights
     if (is.null(object$na.action)) 
@@ -359,7 +360,7 @@ weights.hglm <- function (object, ...)
     else naresid(object$na.action, res)
 }
 
-residuals.hglm <- function(object, type = c("deviance", "pearson", "response"), ...)
+residuals.hglm.fast <- function(object, type = c("deviance", "pearson", "response"), ...)
 {
     type <- match.arg(type)
 
@@ -385,7 +386,7 @@ residuals.hglm <- function(object, type = c("deviance", "pearson", "response"), 
 
 
 
-ranef.hglm <- function(object, condVar = FALSE, ...)
+ranef.hglm.fast <- function(object, condVar = FALSE, ...)
 {
     nvars <- ncol(object$coefficients)
     xnames <- names(object$coefficient.mean)
@@ -449,11 +450,11 @@ ranef.hglm <- function(object, condVar = FALSE, ...)
     re <- list()
     group.name <- deparse(object$group.call[[2L]])
     re[[group.name]] <- coef
-    class(re) <- "ranef.hglm"
+    class(re) <- "ranef.hglm.fast"
     re
 }
 
-summary.hglm <- function(object, ...)
+summary.hglm.fast <- function(object, ...)
 {
     # fixed effects
     vcov <- vcov(object)
@@ -470,10 +471,10 @@ summary.hglm <- function(object, ...)
     structure(list(call = object$call, family = object$family,
                    coefficients = coefs, dispersion = object$dispersion,
                    vcov = vcov, varcor = varcor),
-              class = "summary.hglm")
+              class = "summary.hglm.fast")
 }
 
-print.VarCorr.hglm <- function (x, digits = max(3, getOption("digits") - 2),
+print.VarCorr.hglm.fast <- function (x, digits = max(3, getOption("digits") - 2),
                                 var.print = FALSE, ...)
 {
     dims <- sapply(x, ncol)
@@ -525,7 +526,7 @@ print.VarCorr.hglm <- function (x, digits = max(3, getOption("digits") - 2),
 
 
 
-print.summary.hglm <- function(x, digits = max(3L, getOption("digits") - 3L),
+print.summary.hglm.fast <- function(x, digits = max(3L, getOption("digits") - 3L),
                                signif.stars = getOption("show.signif.stars"), ...)
 {
     cat("\nCall:\n", paste(deparse(x$call), sep = "\n", collapse = "\n"),
@@ -545,7 +546,7 @@ print.summary.hglm <- function(x, digits = max(3L, getOption("digits") - 3L),
 
 
 
-print.hglm <- function(x, digits = max(3L, getOption("digits") - 3L),
+print.hglm.fast <- function(x, digits = max(3L, getOption("digits") - 3L),
                        signif.stars = getOption("show.signif.stars"), ...)
 {
     names.fixed <- names(x$coefficient.mean)
