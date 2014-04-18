@@ -166,7 +166,7 @@ firthglm.fit <- function(x, y, weights = rep(1, nobs), start = NULL, etastart = 
         }
     } else {
         if (is.null(etastart)) {
-            etastart <- family$linkinv(mustart)
+            etastart <- family$linkfun(mustart)
         }
         start <- qr.coef(qr, sqrt(weights) * (etastart - offset))
         start[is.na(start)] <- 0
