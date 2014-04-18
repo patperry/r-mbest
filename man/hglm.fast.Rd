@@ -69,18 +69,19 @@ hglm.fast.fit(x, z, y, group, weights = rep(1, nobs),
 \value{
   \code{hglm.fast} returns an object of class inheriting from \code{"hglm.fast"}.
 
-  The function \code{\link{summary}} (i.e., \code{\link{summary.hglm.fast}}) can
-  be used to obtain or print a summary of the results.
+  The function \code{\link{summary}} can be used to obtain or print a summary
+  of the results.
 
-  The generic accessor functions \code{\link[nlme]{fixef}}, \code{\link[nlme]{ranef}},
-  \code{fitted.values} and \code{residuals} can be used to
-  extract various useful features of the value returned by \code{hglm.fast}.
+  The generic accessor functions \code{\link{fixef}}, \code{\link{ranef}},
+  \code{\link{VarCorr}}, \code{\link{sigma}}, \code{fitted.values} and
+  \code{residuals} can be used to extract various useful features of the
+  value returned by \code{hglm.fast}.
 }
 \seealso{
   \code{\link{terms.hglm.fast}}, \code{\link{model.matrix.hglm.fast}}, and
   \code{\link{predict.hglm.fast}} for \code{hglm.fast} methods, and the
-  generic functions \code{\link{residuals}},
-  \code{\link{summary}}, \code{\link{vcov}}, \code{\link{weights}}.
+  generic functions \code{\link{fitted.values}}, \code{\link{residuals}},
+  \code{\link{summary}}, \code{\link{vcov}}, and \code{\link{weights}}.
 
   Generic functions \code{\link[nlme]{fixef}}, \code{\link[nlme]{ranef}},
   \code{\link[nlme]{VarCorr}}, and \code{\link[lme4]{sigma}} for features

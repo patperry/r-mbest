@@ -22,16 +22,19 @@ firthglm.control(epsilon = 1e-07, maxit = 25, qr.tol = 1e-07,
 }
 \arguments{
   \item{x, y, weights, start, etastart, mustart, offset, family, control, intercept, singular.ok, \dots}{
-    These arguments have the same functions as for \code{\link{glm.fit}}.
+    arguments that have the same functions as for \code{\link{glm.fit}}.
   }
   \item{qr.tol}{
-    Tolerance parameter for determining the rank of \code{x}.
+    tolerance parameter for determining the rank of \code{x}.
   }
   \item{epsilon, maxit}{
-    Convergence parameters for the quasi-Newton method.
+    convergence parameters for the quasi-Newton method.
   }
   \item{improve.tol, curvature.tol, linesearch.maxit}{
-    Tolerance parameters for the linesearch procedure.
+    tolerance parameters for the linesearch procedure.
+  }
+  \item{trace}{
+    logical indicating if output should be produced for each iteration.
   }
 }
 \details{
