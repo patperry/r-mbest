@@ -104,12 +104,12 @@ hglm.fast.fit(x, z, y, group, weights = rep(1, nobs),
 }
 
 \examples{
-  library(lme4)
-  ## The following examples are adapted from lme4:
-  (fm1 <- hglm.fast(Reaction ~ Days + (Days | Subject), gaussian, sleepstudy))
+library(lme4)
+## The following examples are adapted from lme4:
+(fm1 <- hglm.fast(Reaction ~ Days + (Days | Subject), gaussian, sleepstudy))
 
-  (gm <- hglm.fast(cbind(incidence, size - incidence) ~ period + (1 | herd),
-                   data = cbpp, family = binomial))
+(gm <- hglm.fast(cbind(incidence, size - incidence) ~ period + (1 | herd),
+                 data = cbpp, family = binomial))
 }
 \keyword{models}
 \keyword{regression}
