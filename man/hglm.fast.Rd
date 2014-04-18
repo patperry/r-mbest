@@ -83,11 +83,11 @@ hglm.fast.fit(x, z, y, group, weights = rep(1, nobs),
   generic functions \code{\link{fitted.values}}, \code{\link{residuals}},
   \code{\link{summary}}, \code{\link{vcov}}, and \code{\link{weights}}.
 
-  Generic functions \code{\link[nlme]{fixef}}, \code{\link[nlme]{ranef}},
-  \code{\link[nlme]{VarCorr}}, and \code{\link[lme4]{sigma}} for features
+  Generic functions \code{\link{fixef}}, \code{\link{ranef}},
+  \code{\link{VarCorr}}, and \code{\link{sigma}} for features
   related to mixed effect models.
 
-  \code{\link[lme4]{glmer}} (package \CRANpkg{lme4}) for
+  \code{\link{glmer}} (package \CRANpkg{lme4}) for
   fitting generalized linear mixed models with likelihood-based estimates.
 }
 \references{

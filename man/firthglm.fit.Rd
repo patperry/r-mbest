@@ -4,11 +4,11 @@
 \alias{firthglm.fit}
 \alias{firthglm.control}
 \title{
-Fitting Generalized Linear Models with Firth's Bias Correction
+Fitting Generalized Linear Models with Firth's Bias Reduction
 }
 \description{
 A drop-in replacement for \code{\link{glm.fit}} which uses Firth's
-bias-corrected estimates instead of maximum likelihood.
+bias-reduced estimates instead of maximum likelihood.
 }
 \usage{
 firthglm.fit(x, y, weights = rep(1, nobs),

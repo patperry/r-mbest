@@ -7,7 +7,7 @@ Maintainer:  Patrick O. Perry <pperry@stern.nyu.edu>
 Description: 
     Implements methods from the paper "Fast Moment-Based Estimation
     for Hierarchical Models," by Perry (2014).
-Imports:     lme4, nlme
+Imports:     lme4
 Suggests:    testthat
 LazyData:    Yes
 License:     Apache License (== 2.0) | file LICENSE

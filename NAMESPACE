@@ -3,8 +3,8 @@ importFrom("stats", coef, family, fitted, model.matrix, nobs,
            residuals, terms, vcov, weights)
 
 ## Recommended packages
-importFrom("nlme", fixef,ranef,VarCorr)
-importFrom("lme4", findbars,nobars,sigma,subbars)
+importFrom("lme4", findbars, fixef, nobars, ranef, sigma,
+           subbars, VarCorr)
 
 ## Exports
 export(hglm.fast)
