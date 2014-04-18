@@ -2,6 +2,7 @@
 
 \name{firthglm.fit}
 \alias{firthglm.fit}
+\alias{firthglm.control}
 \title{
 Fitting Generalized Linear Models with Firth's Bias Correction
 }
@@ -14,16 +15,30 @@ firthglm.fit(x, y, weights = rep(1, nobs),
              start = NULL, etastart = NULL, mustart = NULL,
              offset = rep(0, nobs), family = gaussian(),
              control = list(), intercept = TRUE, singular.ok = TRUE, ...)
+
+firthglm.control(epsilon = 1e-07, maxit = 25, qr.tol = 1e-07,
+                 improve.tol = 1e-04, curvature.tol = 0.9,
+                 linesearch.maxit = 10, trace = FALSE)
 }
 \arguments{
   \item{x, y, weights, start, etastart, mustart, offset, family, control, intercept, singular.ok, \dots}{
     These arguments have the same functions as for \code{\link{glm.fit}}.
   }
+  \item{qr.tol}{
+    Tolerance parameter for determining the rank of \code{x}.
+  }
+  \item{epsilon, maxit}{
+    Convergence parameters for the quasi-Newton method.
+  }
+  \item{improve.tol, curvature.tol, linesearch.maxit}{
+    Tolerance parameters for the linesearch procedure.
+  }
 }
 \details{
 Firth's modified score function gives rise to estimates with smaller biases
 than their maximum likelihood counterparts.  Unlike the maximum likelihood
-estimates, the Firth bias-corrected estimates are always finite.
+estimates, if the design matrix is of full rank, then the Firth bias-reduced
+estimate is finite.
 
 The fitting procedure uses a quasi-Newton optimization method, with a
 More-Thuente linesearch.
@@ -47,8 +62,6 @@ Patrick O. Perry
 Currently, only families with canonical link functions are supported.
 }
 \seealso{
-\code{link{firthglm.control}} for control parameters.
-
 \code{\link[logistf]{logistf}} (package \CRANpkg{logistf}) and
 \code{\link[brglm]{brglm}} (package \CRANpkg{brglm}) for alternative
 implementations of Firth's bias-reduced estimators.
