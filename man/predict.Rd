@@ -34,7 +34,8 @@ response values.  If \code{se.fit = TRUE}, then the conditional variances of
 the random effects are used along with the fixed effect variance-covariance
 matrix to estimate the standard errors.
 
-The \code{sigma} function gives the dispersion parameter of the model.
+The \code{sigma} function gives the square root of the dispersion parameter
+or the model; for linear models, this is the error standard deviation.
 }
 \seealso{
 \code{\link{predict}}.
