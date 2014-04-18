@@ -10,6 +10,7 @@ importFrom("lme4", findbars, fixef, nobars, ranef, sigma,
 export(hglm.fast)
 export(hglm.fast.control)
 export(hglm.fast.fit)
+export(fitted.hglm.fast)
 export(fixef)
 export(fixef.hglm.fast)
 export(firthglm.control)

@@ -53,6 +53,7 @@ returns the empirical Bayes random effect estimates.
 These functions behave like their counterparts in the \CRANpkg{lme4} package.
 }
 \seealso{
-  \code{\link[lme4]{fixef}}, \code{\link[lme4]{ranef}}, \code{\link[lme4]{VarCorr}}.
+  \code{\link[lme4]{fixef}}, \code{\link[lme4]{ranef}}, \code{\link[lme4]{VarCorr}},
+  from package \CRANpkg{lme4}.
 }
 \keyword{models}
