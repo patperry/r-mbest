@@ -8,8 +8,8 @@
 \description{
   This package implements moment-based fitting methods for
   hierarchical models described in the paper
-  "Fast Moment-Based Estimation for Hierarchical Models,"
-  by Perry (2014).
+  "Fast Moment-Based Estimation for Hierarchical Models"
+  (Perry, 2014).
 }
 \details{
     \tabular{ll}{
