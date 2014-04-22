@@ -1,10 +1,10 @@
 
-context("hglm.fast")
+context("mhglm")
 
 require(lme4)
 
 test_that("succeeds on sleepstudy", {
-    model <- hglm.fast(Reaction ~ Days + (Days | Subject), data=sleepstudy)
+    model <- mhglm(Reaction ~ Days + (Days | Subject), data=sleepstudy)
 
     # fixef
     fixef0 <- c("(Intercept)" = 251.4, "Days" = 10.5)
@@ -43,8 +43,8 @@ test_that("succeeds on sleepstudy", {
 
 test_that("succeeds on cbpp", {
     suppressWarnings({
-        model <- hglm.fast(cbind(incidence, size - incidence) ~ period + (period | herd),
-                           data=cbpp, family=binomial)
+        model <- mhglm(cbind(incidence, size - incidence) ~ period + (period | herd),
+                       data=cbpp, family=binomial)
     })
 
     # fixef

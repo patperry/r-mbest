@@ -1,26 +1,25 @@
 \newcommand{\CRANpkg}{\href{http://CRAN.R-project.org/package=#1}{\pkg{#1}}}
 
-\name{hglm.fast}
-\alias{hglm.fast}
-\alias{hglm.fast.fit}
+\name{mhglm}
+\alias{mhglm}
+\alias{mhglm.fit}
 \title{
-Fitting Hierarchical Generalized Linear Models
+Fitting Moment Hierarchical Generalized Linear Models
 }
 \description{
-\code{hglm.fast} is used to fit a hierarchical generalized linear model with
-fast moment-based estimates.
+\code{mhglm} is used to fit a moment hierarchical generalized linear model.
 }
 \usage{
-hglm.fast(formula, family = gaussian, data, weights, subset,
-          na.action, start = NULL, etastart, mustart, offset,
-          control = list(), model = TRUE, method = "hglm.fast.fit",
-          x = FALSE, z = FALSE, y = TRUE, group = TRUE,
-          contrasts = NULL)
+mhglm(formula, family = gaussian, data, weights, subset,
+      na.action, start = NULL, etastart, mustart, offset,
+      control = list(), model = TRUE, method = "mhglm.fit",
+      x = FALSE, z = FALSE, y = TRUE, group = TRUE,
+      contrasts = NULL)
 
-hglm.fast.fit(x, z, y, group, weights = rep(1, nobs),
-              start = NULL, etastart = NULL, mustart = NULL,
-              offset = rep(0, nobs), family = gaussian(), 
-              control = list(), intercept = TRUE)
+mhglm.fit(x, z, y, group, weights = rep(1, nobs),
+          start = NULL, etastart = NULL, mustart = NULL,
+          offset = rep(0, nobs), family = gaussian(), 
+          control = list(), intercept = TRUE)
 }
 \arguments{
   \item{formula, family, data, weights, subset, na.action, start, etastart,
@@ -30,21 +29,21 @@ hglm.fast.fit(x, z, y, group, weights = rep(1, nobs),
   }
 
   \item{control}{a list of parameters for controlling the fitting
-    process.  For \code{hglm.fast.fit} this is passed to
-    \code{\link{hglm.fast.control}}.}
+    process.  For \code{mhglm.fit} this is passed to
+    \code{\link{mhglm.control}}.}
 
   \item{method}{the method to be used in fitting the model.  The default
-    method \code{"hglm.fast.fit"} uses moment-based estimates;
+    method \code{"mhglm.fit"} uses moment-based estimates;
     the alternative \code{"model.frame"} returns the model frame
     and does no fitting.
   }
 
-  \item{x, z, y, group}{For \code{hglm.fast}:
+  \item{x, z, y, group}{For \code{mhglm}:
     logical values indicating whether the response vector, model matrices,
     and grouping factor used in the fitting process should be returned as
     components of the returned value.
 
-    For \code{hglm.fast.fit}: \code{x} is a fixed effect design matrix of
+    For \code{mhglm.fit}: \code{x} is a fixed effect design matrix of
     dimension \code{n * p}, \code{z} is a random effect design matrix of
     dimension \code{n * q}, \code{y} is a vector of observations of length
     \code{n}, and \code{group} is a grouping factor vector of length
@@ -67,7 +66,7 @@ hglm.fast.fit(x, z, y, group, weights = rep(1, nobs),
   \code{reterms | g1/.../gQ} are not supported.
 }
 \value{
-  \code{hglm.fast} returns an object of class inheriting from \code{"hglm.fast"}.
+  \code{mhglm} returns an object of class inheriting from \code{"mhglm"}.
 
   The function \code{\link{summary}} can be used to obtain or print a summary
   of the results.
@@ -75,11 +74,11 @@ hglm.fast.fit(x, z, y, group, weights = rep(1, nobs),
   The generic accessor functions \code{\link{fixef}}, \code{\link{ranef}},
   \code{\link{VarCorr}}, \code{\link{sigma}}, \code{fitted.values} and
   \code{residuals} can be used to extract various useful features of the
-  value returned by \code{hglm.fast}.
+  value returned by \code{mhglm}.
 }
 \seealso{
-  \code{\link{terms.hglm.fast}}, \code{\link{model.matrix.hglm.fast}}, and
-  \code{\link{predict.hglm.fast}} for \code{hglm.fast} methods, and the
+  \code{\link{terms.mhglm}}, \code{\link{model.matrix.mhglm}}, and
+  \code{\link{predict.mhglm}} for \code{mhglm} methods, and the
   generic functions \code{\link{fitted.values}}, \code{\link{residuals}},
   \code{\link{summary}}, \code{\link{vcov}}, and \code{\link{weights}}.
 
@@ -107,10 +106,10 @@ hglm.fast.fit(x, z, y, group, weights = rep(1, nobs),
 \examples{
 library(lme4)
 ## The following examples are adapted from lme4:
-(fm1 <- hglm.fast(Reaction ~ Days + (Days | Subject), gaussian, sleepstudy))
+(fm1 <- mhglm(Reaction ~ Days + (Days | Subject), gaussian, sleepstudy))
 
-(gm <- hglm.fast(cbind(incidence, size - incidence) ~ period + (1 | herd),
-                 data = cbpp, family = binomial))
+(gm <- mhglm(cbind(incidence, size - incidence) ~ period + (1 | herd),
+             data = cbpp, family = binomial))
 }
 \keyword{models}
 \keyword{regression}

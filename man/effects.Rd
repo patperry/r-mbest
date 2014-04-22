@@ -2,12 +2,12 @@
 
 \name{effects}
 \alias{fixef}
-\alias{fixef.hglm.fast}
+\alias{fixef.mhglm}
 \alias{ranef}
-\alias{ranef.hglm.fast}
+\alias{ranef.mhglm}
 \alias{VarCorr}
-\alias{VarCorr.hglm.fast}
-\alias{vcov.hglm.fast}
+\alias{VarCorr.mhglm}
+\alias{vcov.mhglm}
 \title{
 Mixed Effects
 }
@@ -16,18 +16,18 @@ Get the fixed effects, random effect variances, and empirical Bayes random
 effect estimates.
 }
 \usage{
-\method{fixef}{hglm.fast}(object, ...)
+\method{fixef}{mhglm}(object, ...)
 
-\method{ranef}{hglm.fast}(object, condVar = FALSE, ...) 
+\method{ranef}{mhglm}(object, condVar = FALSE, ...) 
 
-\method{vcov}{hglm.fast}(object, ...)
+\method{vcov}{mhglm}(object, ...)
 
-\method{VarCorr}{hglm.fast}(x, sigma = 1, rdig = 3)
+\method{VarCorr}{mhglm}(x, sigma = 1, rdig = 3)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{object, x}{
-    an \code{hglm.fast} object.
+    an \code{mhglm} object.
   }
   \item{sigma}{
     a factor by which to scale the random effect variance-covariance matrix.

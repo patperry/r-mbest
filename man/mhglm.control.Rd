@@ -1,16 +1,16 @@
-\name{hglm.fast.control}
-\alias{hglm.fast.control}
+\name{mhglm.control}
+\alias{mhglm.control}
 \title{
-Auxiliary for Controlling HGLM Fitting
+Auxiliary for Controlling Moment Heirarchical GLM Fitting
 }
 \description{
-Auxiliary function for \code{\link{hglm.fast}} fitting. Typically only used
-internally by \code{\link{hglm.fast.fit}}, but may be used to construct a
+Auxiliary function for \code{\link{mhglm}} fitting. Typically only used
+internally by \code{\link{mhglm.fit}}, but may be used to construct a
 control argument to either function.
 }
 \usage{
-hglm.fast.control(standardize = TRUE, steps = 1, fit.method = "firthglm.fit",
-                  fit.control = list(...), ...)
+mhglm.control(standardize = TRUE, steps = 1, fit.method = "firthglm.fit",
+              fit.control = list(...), ...)
 }
 \arguments{
   \item{standardize}{
@@ -45,8 +45,8 @@ more accurate estimates, but in simulations, the differences are negligible.
 A list with components named as the arguments.
 }
 \seealso{
-\code{\link{hglm.fast.fit}}, the fitting procedure used by
-\code{\link{hglm.fast}}.
+\code{\link{mhglm.fit}}, the fitting procedure used by
+\code{\link{mhglm}}.
 
 \code{\link{firthglm.fit}}, the default subpopulation-specific fitting method.
 }
@@ -54,14 +54,14 @@ A list with components named as the arguments.
 library(lme4) # for cbpp data
 
 # The default fitting method uses Firth's bias-corrected estimates
-(gm.firth <- hglm.fast(cbind(incidence, size - incidence) ~ period + (1 | herd),
-                       data = cbpp, family = binomial,
-                       control=hglm.fast.control(fit.method="firthglm.fit")))
+(gm.firth <- mhglm(cbind(incidence, size - incidence) ~ period + (1 | herd),
+                   data = cbpp, family = binomial,
+                   control=mhglm.control(fit.method="firthglm.fit")))
 
 # Using maximum likelihood estimates is less reliable
-(gm.ml <- hglm.fast(cbind(incidence, size - incidence) ~ period + (1 | herd),
-                    data = cbpp, family = binomial,
-                    control=hglm.fast.control(fit.method="glm.fit")))
+(gm.ml <- mhglm(cbind(incidence, size - incidence) ~ period + (1 | herd),
+                data = cbpp, family = binomial,
+                control=mhglm.control(fit.method="glm.fit")))
 }
 \keyword{optimize}
 \keyword{models}

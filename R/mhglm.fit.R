@@ -13,12 +13,12 @@
 # limitations under the License.
 
 
-hglm.fast.fit <- function(x, z, y, group, weights = rep(1, nobs),
-                          start = NULL, etastart = NULL, mustart = NULL,
-                          offset = rep(0, nobs), family = gaussian(), 
-                          control = list(), intercept = TRUE)
+mhglm.fit <- function(x, z, y, group, weights = rep(1, nobs),
+                      start = NULL, etastart = NULL, mustart = NULL,
+                      offset = rep(0, nobs), family = gaussian(), 
+                      control = list(), intercept = TRUE)
 {
-    control <- do.call("hglm.fast.control", control)
+    control <- do.call("mhglm.control", control)
     x <- as.matrix(x)
     z <- as.matrix(z)
     xnames <- dimnames(x)[[2L]]

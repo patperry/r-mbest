@@ -1,9 +1,9 @@
 \newcommand{\CRANpkg}{\href{http://CRAN.R-project.org/package=#1}{\pkg{#1}}}
 
 \name{predict}
-\alias{predict.hglm.fast}
+\alias{predict.mhglm}
 \alias{sigma}
-\alias{sigma.hglm.fast}
+\alias{sigma.mhglm}
 \title{
 Prediction
 }
@@ -12,14 +12,14 @@ Prediction
 \code{sigma} gives the dispersion parameter.
 }
 \usage{
-\method{predict}{hglm.fast}(object, newdata = NULL, type = c("link", "response"),
-          se.fit = FALSE, na.action = na.pass, ...)
+\method{predict}{mhglm}(object, newdata = NULL, type = c("link", "response"),
+      se.fit = FALSE, na.action = na.pass, ...)
 
-\method{sigma}{hglm.fast}(object, ...)
+\method{sigma}{mhglm}(object, ...)
 }
 \arguments{
   \item{object}{
-    an \code{hglm.fast} object
+    an \code{mhglm} object
   }
   \item{newdata, type, se.fit, na.action}{
     these arguments behave as in \code{\link{predict.glm}}.  See Details, below.
