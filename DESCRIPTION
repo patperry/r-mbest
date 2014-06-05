@@ -1,6 +1,6 @@
 Package:     mbest
-Version:     0.1
-Date:        2014-4-01
+Version:     0.2
+Date:        2014-6-01
 Title:       Moment-Based Estimation for Hierarchical Models
 Author:      Patrick O. Perry
 Maintainer:  Patrick O. Perry <pperry@stern.nyu.edu>

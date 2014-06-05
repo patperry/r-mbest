@@ -207,7 +207,12 @@ firthglm.fit <- function(x, y, weights = rep(1, nobs), start = NULL, etastart = 
         eta0 <- obj0$eta
         val0 <- 0.5 * (obj0$deviance.modified)
         grad0 <- -(obj0$score.modified)
-        search <- qr.coef(obj0$qr, sqrt(obj0$weights) * obj0$residuals.modified)
+        # This is mathematically equivalent, but (apparently) numerically less stable:
+        # search <- qr.coef(obj0$qr, sqrt(obj0$weights) * obj0$residuals.modified)
+        search <- numeric(rank)
+        search[obj0$qr$pivot] <- backsolve(obj0$R,
+                                           backsolve(obj0$R, transpose=TRUE,
+                                                     obj0$score.modified[obj0$qr$pivot]))
         deriv0 <- sum(search * grad0)
 
         if ((deriv0)^2 <= 2 * control$epsilon) {
