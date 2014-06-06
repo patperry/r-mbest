@@ -86,6 +86,20 @@ test_that("succeeds on dataset 8", {
     expect_that(as.numeric(round(model$coefficients, 1)), equals(coef))
 })
 
+test_that("succeeds on dataset 9", {
+    data <- readRDS("firth-binomial9.rds")
+    model <- firthglm.fit(data$x, data$y, family=binomial(), start=data$start)
+    coef <- c( 0.0,  0.1,  0.3, -0.2, -0.2,  0.1, -0.3,  0.2,  0.2, -0.1,
+               0.0,  0.0,  0.0,  0.1,  0.2,  0.0,  0.1, -0.2,  0.1,  0.2,
+              -0.3,  0.0, -0.2, -0.3,  0.0, -0.1,  0.3, -0.1, -0.2, -0.3,
+               0.1,  0.5, -0.2, -0.1,  0.4, -0.1,  0.0, -0.1,  0.2,  0.2,
+               0.3, -0.1,  0.3,  0.3,  0.1,  0.1, -0.2,  0.0,  0.0,  0.5)
+
+    expect_that(model$converged, is_true())
+    expect_that(model$boundary, is_false())
+    expect_that(as.numeric(round(model$coefficients, 1)), equals(coef))
+})
+
 test_that("succeeds on rank degenerate case", {
     x <- matrix(c(-1, 1, -1, 1, 1, 1, 1, -1, 1, -1), nrow=2)
     y <- c(1, 1)

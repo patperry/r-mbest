@@ -220,27 +220,40 @@ firthglm.fit <- function(x, y, weights = rep(1, nobs), start = NULL, etastart = 
             break
         }
 
-        # determine maximum step size; relies on initial linear predictors
-        # being in range (etamin, etamax)
+        # determine maximum step size to ensure eta always in range;
+        # this relies on initial linear predictors being in range (etamin, etamax)
         search.eta <- drop(x %*% search)
         pos <- search.eta >= 0 & (1/search.eta != -Inf) # handle negative zero
         step.max <- min((ifelse(pos, etamax, etamin) - eta0) / search.eta)
+        step.max <- min(step.max, .Machine$double.xmax)
 
+        # determine minimum step size to ensure
+        # |eta[i] - eta0[i]| >  eps * (|eta0[i]| + 1)
+        # for at least one i
+        step.min <- .Machine$double.eps * min((abs(eta0) + 1) / abs(search.eta))
+        step.min <- max(step.min, .Machine$double.xmin)
+
+        # determine initial step, shrinking step.max if necessary
         step0 <- min(1.0,
-                     0.5 * step.max,
+                     step.min + 0.5 * (step.max - step.min),
                      10 * min((abs(eta0) + 0.1) / (abs(search.eta) + 0.1)))
-        step.min <- .Machine$double.eps * step0
+        repeat {
+            coef <- coef0 + step0 * search
+            obj <- objective(coef)
+            if (obj$indomain)
+                break
 
+            step.max <- step0
+            step0 <- step.min + 0.5 * (step.max - step.min)
+            stopifnot(step0 > step.min)
+        }
+
+        # perform line search
         lsctrl <- linesearch.control(value.tol = ftol, deriv.tol = gtol,
                                      step.min = step.min, step.max = step.max)
         ls <- linesearch(val0, deriv0, step0, control = lsctrl)
 
         for (lsiter in seq_len(control$linesearch.maxit)) {
-            coef <- coef0 + ls$step * search
-            obj <- objective(coef)
-
-            stopifnot(obj$indomain)
-
             val <- 0.5 * (obj$deviance.modified)
             grad <- -(obj$score.modified)
             deriv <- sum(search * grad)
@@ -252,6 +265,9 @@ firthglm.fit <- function(x, y, weights = rep(1, nobs), start = NULL, etastart = 
             if (control$trace)
                   cat("New step size (", ls$step, "); current modified deviance = ",
                       obj$deviance.modified, "\n", sep = "")
+            coef <- coef0 + ls$step * search
+            obj <- objective(coef)
+            stopifnot(obj$indomain)
         }
 
         if (!ls$converged) {
