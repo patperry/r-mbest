@@ -18,7 +18,7 @@
 
 firthglm.control <- function(epsilon = 1e-7, maxit = 25, qr.tol = 1e-7,
                              improve.tol = 1e-4, curvature.tol = 0.9,
-                             linesearch.maxit = 10, trace = FALSE)
+                             linesearch.maxit = 20, trace = FALSE)
 {
     if (!is.numeric(epsilon) || epsilon <= 0)
         stop("value of 'epsilon' must be > 0")
