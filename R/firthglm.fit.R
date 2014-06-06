@@ -69,6 +69,7 @@ firthglm.eval <- function(coefficients, x, y, weights, offset, family, control)
 
     # deviance, score, residuals, hat
     dev <- sum(family$dev.resids(y, mu, weights))
+
     residuals <- (y - mu)/mu.eta
     score <- drop(t(xw) %*% (sqrt(wt) * residuals))
     #hat <- colSums(backsolve(R, t(xw[,qr$pivot]), transpose=TRUE)^2)
@@ -215,6 +216,12 @@ firthglm.fit <- function(x, y, weights = rep(1, nobs), start = NULL, etastart = 
                                                      obj0$score.modified[obj0$qr$pivot]))
         deriv0 <- sum(search * grad0)
 
+        # Fall back to gradient descent
+        if (deriv0 >= 0) {
+            search <- -grad0
+            deriv0 <- sum(search * grad0)
+        }
+
         if ((deriv0)^2 <= 2 * control$epsilon) {
             conv <- TRUE
             break
@@ -228,7 +235,7 @@ firthglm.fit <- function(x, y, weights = rep(1, nobs), start = NULL, etastart = 
         step.max <- min(step.max, .Machine$double.xmax)
 
         # determine minimum step size to ensure
-        # |eta[i] - eta0[i]| >  eps * (|eta0[i]| + 1)
+        # |eta[i] - eta0[i]| > eps * (|eta0[i]| + 1)
         # for at least one i
         step.min <- .Machine$double.eps * min((abs(eta0) + 1) / abs(search.eta))
         step.min <- max(step.min, .Machine$double.xmin)
