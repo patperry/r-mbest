@@ -79,7 +79,8 @@ firthglm.eval <- function(coefficients, x, y, weights, offset, family, control)
     # penalty
     logdet <- 2 * sum(log(abs(diag(R))))
     logdet.residuals <- ifelse(wt == 0, 0,
-                               hat * skewmu * sqrt(varmu) / wt)
+                               hat * skewmu * sqrt(varmu)
+                               / (weights * mu.eta))
     logdet.grad <- drop(t(xw) %*% (sqrt(wt) * logdet.residuals))
 
     # modified quantities
