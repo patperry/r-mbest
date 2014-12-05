@@ -16,8 +16,9 @@
 # improve.tol = 1e-4 suggested by Nocedal & Wright (c1, p. 38)
 # curvature.tol = 0.9 suggested by Nocedal & Wright (c2, p. 39)
 
-firthglm.control <- function(epsilon = 1e-7, maxit = 25, qr.tol = 1e-7,
+firthglm.control <- function(epsilon = 1e-8, maxit = 25, qr.tol = 1e-7,
                              improve.tol = 1e-4, curvature.tol = 0.9,
+                             linesearch.method = "linesearch",
                              linesearch.maxit = 20, trace = FALSE)
 {
     if (!is.numeric(epsilon) || epsilon <= 0)
@@ -35,6 +36,7 @@ firthglm.control <- function(epsilon = 1e-7, maxit = 25, qr.tol = 1e-7,
 
     list(epsilon = epsilon, maxit = maxit, qr.tol = qr.tol,
          improve.tol = improve.tol, curvature.tol = curvature.tol,
+         linesearch.method = linesearch.method,
          linesearch.maxit = linesearch.maxit, trace = trace)
 }
 
@@ -118,9 +120,10 @@ firthglm.eval <- function(coefficients, x, y, weights, offset, family, control)
 
 
 
-firthglm.fit <- function(x, y, weights = rep(1, nobs), start = NULL, etastart = NULL,
-                         mustart = NULL, offset = rep(0, nobs), family = gaussian(),
-                         control = list(), intercept = TRUE, singular.ok = TRUE, ...)
+firthglm.fit <-
+    function(x, y, weights = rep(1, nobs), start = NULL, etastart = NULL,
+             mustart = NULL, offset = rep(0, nobs), family = gaussian(),
+             control = list(...), intercept = TRUE, singular.ok = TRUE, ...)
 {
     # control
     control <- do.call("firthglm.control", control)
@@ -148,7 +151,8 @@ firthglm.fit <- function(x, y, weights = rep(1, nobs), start = NULL, etastart = 
     # initial parameters
     n <- NULL # this gets overwritten by eval(family$initizlize)
     if (is.null(mustart)) {
-        eval(family$initialize) ## calculates mustart and may change y and weights and set n (!)
+        eval(family$initialize) ## calculates mustart, may change y,
+                                ##   weights, and n
     } else {
         mukeep <- mustart
         eval(family$initialize)
@@ -162,7 +166,8 @@ firthglm.fit <- function(x, y, weights = rep(1, nobs), start = NULL, etastart = 
     # compute initial parameters
     if (!is.null(start)) {
         if (length(start) != nvar) {
-            stop(gettextf("length of 'start' should equal %d and correspond to initial coefs for %s",
+            stop(gettextf(paste("length of 'start' should equal %d",
+                                "and correspond to initial coefs for %s"),
                           nvar, paste(deparse(xnames), collapse=", ")),
                  domain=NA)
         }
@@ -195,71 +200,96 @@ firthglm.fit <- function(x, y, weights = rep(1, nobs), start = NULL, etastart = 
     obj0 <- objective(coef0)
 
     if (!obj0$indomain)
-        stop("cannot find valid starting values: please specify some", call. = FALSE)
+        stop("cannot find valid starting values: please specify some",
+             call. = FALSE)
 
     conv <- FALSE
+    eval <- 1
     ftol <- control$improve.tol
     gtol <- control$curvature.tol
 
     for (iter in seq_len(control$maxit)) {
         if (control$trace)
-            cat("Modified deviance = ", obj0$deviance.modified, " Iterations - ",
-                iter, "\n", sep = "")
+            cat("Penalized deviance = ", obj0$deviance.modified,
+                " Iterations - ", iter, "\n", sep = "")
 
         eta0 <- obj0$eta
         val0 <- 0.5 * (obj0$deviance.modified)
         grad0 <- -(obj0$score.modified)
-        # This is mathematically equivalent, but (apparently) numerically less stable:
-        # search <- qr.coef(obj0$qr, sqrt(obj0$weights) * obj0$residuals.modified)
         search <- numeric(rank)
-        search[obj0$qr$pivot] <- backsolve(obj0$R,
-                                           backsolve(obj0$R, transpose=TRUE,
-                                                     obj0$score.modified[obj0$qr$pivot]))
+        search[obj0$qr$pivot] <-
+            backsolve(obj0$R, backsolve(obj0$R, transpose=TRUE,
+                                        obj0$score.modified[obj0$qr$pivot]))
+        # This is mathematically equivalent, but (apparently) less stable:
+        #   search <- qr.coef(obj0$qr,
+        #                     sqrt(obj0$weights) * obj0$residuals.modified)
         deriv0 <- sum(search * grad0)
+        search.eta <- drop(x %*% search)
 
-        # Fall back to gradient descent
-        if (deriv0 >= 0) {
-            search <- -grad0
-            deriv0 <- sum(search * grad0)
-        }
-
+        # Test for convergence
         if ((deriv0)^2 <= 2 * control$epsilon) {
             conv <- TRUE
             break
         }
 
-        # determine maximum step size to ensure eta always in range;
-        # this relies on initial linear predictors being in range (etamin, etamax)
-        search.eta <- drop(x %*% search)
-        pos <- search.eta >= 0 & (1/search.eta != -Inf) # handle negative zero
-        step.max <- min((ifelse(pos, etamax, etamin) - eta0) / search.eta)
+        # Fall back to gradient descent if Hessian is ill-conditioned
+        if (deriv0 >= 0 || .kappa_tri(obj0$R, LINPACK=FALSE) >= 1e8) {
+            search <- -grad0
+            deriv0 <- sum(search * grad0)
+            search.eta <- drop(x %*% search)
+        }
+
+        # determine maximum step size to ensure
+        #   |eta[i] - eta0[i]| < 10 * (|eta0[i]| + 1)
+        #   for all i
+        step.max <- 10 * min((abs(eta0) + 1) / abs(search.eta))
         step.max <- min(step.max, .Machine$double.xmax)
 
         # determine minimum step size to ensure
-        # |eta[i] - eta0[i]| > eps * (|eta0[i]| + 1)
-        # for at least one i
+        #   |eta[i] - eta0[i]| > eps * (|eta0[i]| + 1)
+        #   for at least one i
         step.min <- .Machine$double.eps * min((abs(eta0) + 1) / abs(search.eta))
         step.min <- max(step.min, .Machine$double.xmin)
 
         # determine initial step, shrinking step.max if necessary
-        step0 <- min(1.0,
-                     step.min + 0.5 * (step.max - step.min),
-                     10 * min((abs(eta0) + 0.1) / (abs(search.eta) + 0.1)))
+        if (step.min <= 1.0 && 1.0 <= step.max) {
+            step0 <- 1.0
+        } else {
+            step0 <- step.min + 0.5 * (step.max - step.min)
+        }
         repeat {
             coef <- coef0 + step0 * search
             obj <- objective(coef)
+            eval <- eval + 1
             if (obj$indomain)
                 break
 
             step.max <- step0
-            step0 <- step.min + 0.5 * (step.max - step.min)
+            if (step0 < 0.01) {
+                step0 <- 2^(0.5 * log2(step.min) + 0.5 * log2(step.max))
+            } else {
+                step0 <- step.min + 0.5 * (step.max - step.min)
+            }
             stopifnot(step0 > step.min)
         }
 
         # perform line search
-        lsctrl <- linesearch.control(value.tol = ftol, deriv.tol = gtol,
-                                     step.min = step.min, step.max = step.max)
-        ls <- linesearch(val0, deriv0, step0, control = lsctrl)
+        if (control$linesearch.method == "linesearch") {
+            lsctrl <- linesearch.control(value.tol = ftol, deriv.tol = gtol,
+                                         step.min = step.min,
+                                         step.max = step.max)
+            ls <- linesearch(val0, deriv0, step0, control = lsctrl)
+        } else if (control$linesearch.method == "backtrack") {
+            lsctrl <- backtrack.control(value.tol = ftol, step.min = step.min,
+                                        contract = 0.5)
+            ls <- backtrack(val0, deriv0, step0, control = lsctrl)
+        } else if (control$linesearch.method == "blindsearch") {
+            lsctrl <- blindsearch.control()
+            ls <- blindsearch(val0, deriv0, step0, control = lsctrl)
+        } else {
+            stop("unrecognized line search method:",
+                 control$linesearch.method)
+        }
 
         for (lsiter in seq_len(control$linesearch.maxit)) {
             val <- 0.5 * (obj$deviance.modified)
@@ -271,10 +301,12 @@ firthglm.fit <- function(x, y, weights = rep(1, nobs), start = NULL, etastart = 
                 break
 
             if (control$trace)
-                  cat("New step size (", ls$step, "); current modified deviance = ",
+                  cat("New step size (", ls$step, ");",
+                      " current modified deviance = ",
                       obj$deviance.modified, "\n", sep = "")
             coef <- coef0 + ls$step * search
             obj <- objective(coef)
+            eval <- eval + 1
             stopifnot(obj$indomain)
         }
 
@@ -375,7 +407,7 @@ firthglm.fit <- function(x, y, weights = rep(1, nobs), start = NULL, etastart = 
          R = obj0$R, qr = qr, rank = rank,
          family = family, linear.predictors = eta,
          deviance = dev, aic = aic, null.deviance = nulldev,
-         iter = iter, weights = wt, prior.weights = weights,
+         iter = iter, eval = eval, weights = wt, prior.weights = weights,
          df.residual = resdf, df.null = nulldf, y = y, converged = conv,
          boundary = FALSE)
 }

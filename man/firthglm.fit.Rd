@@ -14,11 +14,12 @@ bias-reduced estimates instead of maximum likelihood.
 firthglm.fit(x, y, weights = rep(1, nobs),
              start = NULL, etastart = NULL, mustart = NULL,
              offset = rep(0, nobs), family = gaussian(),
-             control = list(), intercept = TRUE, singular.ok = TRUE, ...)
+             control = list(...), intercept = TRUE, singular.ok = TRUE, ...)
 
-firthglm.control(epsilon = 1e-07, maxit = 25, qr.tol = 1e-07,
-                 improve.tol = 1e-04, curvature.tol = 0.9,
-                 linesearch.maxit = 10, trace = FALSE)
+firthglm.control(epsilon = 1e-8, maxit = 25, qr.tol = 1e-7,
+                 improve.tol = 1e-4, curvature.tol = 0.9,
+                 linesearch.method = "linesearch",
+                 linesearch.maxit = 20, trace = FALSE)
 }
 \arguments{
   \item{x, y, weights, start, etastart, mustart, offset, family, control, intercept, singular.ok, \dots}{
@@ -29,6 +30,9 @@ firthglm.control(epsilon = 1e-07, maxit = 25, qr.tol = 1e-07,
   }
   \item{epsilon, maxit}{
     convergence parameters for the quasi-Newton method.
+  }
+  \item{linesearch.method}{
+    line search methods (one of "linesearch", "backtrack", or "blindsearch")
   }
   \item{improve.tol, curvature.tol, linesearch.maxit}{
     tolerance parameters for the linesearch procedure.
@@ -43,8 +47,8 @@ than their maximum likelihood counterparts.  Unlike the maximum likelihood
 estimates, if the design matrix is of full rank, then the Firth bias-reduced
 estimate is finite.
 
-The fitting procedure uses a quasi-Newton optimization method, with a
-More-Thuente linesearch.
+By default, the fitting procedure uses a quasi-Newton optimization method,
+with a More-Thuente linesearch.
 }
 \value{
 \code{firthglm.fit} returns an object having the same components that a call

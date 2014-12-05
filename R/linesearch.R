@@ -20,15 +20,16 @@
 # This module implements the algorithm described by More and Thuente (1994),
 # which is guaranteed to converge after a finite number of iterations.
 #
-#
 # References:
 #
-# * More, J. J. and Thuente, D. J. (1994) Line search algorithms
-#   with guaranteed sufficient decrease. /ACM Transactions on Mathematical Software/
-#   20(3):286&#8211;307. <http://doi.acm.org/10.1145/192115.192132>
+# * More, J. J. and Thuente, D. J. (1994). Line search algorithms
+#   with guaranteed sufficient decrease. /ACM Transactions on Mathematical
+#   Software/ 20(3):286-307.
+#   <http://doi.acm.org/10.1145/192115.192132>
 #
-# * Nocedal, J. and Wright, S. J. (2006) /Numerical Optimization/, 2nd ed.
-#   Springer. <http://www.springer.com/mathematics/book/978-0-387-30303-1>
+# * Nocedal, J. and Wright, S. J. (2006). /Numerical Optimization/, 2nd ed.
+#   Springer.
+#   <http://www.springer.com/mathematics/book/978-0-387-30303-1>
 #
 
 
@@ -55,11 +56,12 @@ linesearch.control <- function(value.tol = 1e-4, deriv.tol = 0.9,
         stop("value of 'extrap.upper' must be > extrap.lower")
     if (!is.numeric(extrap.max) || !(0 < extrap.max && extrap.max < 1))
         stop("value of 'extrap.max' must be in range (0,1)")
-    if (!is.numeric(bisection.width) || !(0 < bisection.width && bisection.width < 1))
+    if (!is.numeric(bisection.width)
+            || !(0 < bisection.width && bisection.width < 1))
         stop("value of 'bisection.width' must be in range (0,1)")
 
-    list(value.tol = value.tol, deriv.tol = deriv.tol, step.tol = step.tol,
-         step.min = step.min, step.max = step.max,
+    list(value.tol = value.tol, deriv.tol = deriv.tol,
+         step.tol = step.tol, step.min = step.min, step.max = step.max,
          extrap.lower = extrap.lower, extrap.upper = extrap.upper,
          extrap.max = extrap.max, bisection.width = bisection.width)
 }
@@ -409,4 +411,3 @@ cubic.min <- function(u, fu, du, v, fv, dv)
     r <- p / q
     u + r * d
 }
-

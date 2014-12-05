@@ -3,7 +3,7 @@ context("firthglm.fit")
 test_that("succeeds on dataset 1", {
     data <- readRDS("firth-binomial1.rds")
     model <- firthglm.fit(data$x, data$y, family=binomial())
-    coef <- c(11.1, 12.5, -6.8, 0.7, 14.6, -2.4)
+    coef <- c(11.2, 12.6, -6.9, 0.7, 14.7, -2.4)
 
     expect_that(model$converged, is_true())
     expect_that(model$boundary, is_false())
@@ -25,7 +25,7 @@ test_that("succeeds on dataset 2", {
 test_that("succeeds on dataset 3", {
     data <- readRDS("firth-binomial3.rds")
     model <- firthglm.fit(data$x, data$y, family=binomial())
-    coef <- c(11.9, -0.1, -2.9, NA, 0.1, -1.1)
+    coef <- c(12.0, 0.0, -2.9, NA, 0.1, -1.1)
 
     expect_that(model$converged, is_true())
     expect_that(model$boundary, is_false())
@@ -36,7 +36,7 @@ test_that("succeeds on dataset 3", {
 test_that("succeeds on dataset 4", {
     data <- readRDS("firth-binomial4.rds")
     model <- firthglm.fit(data$x, data$y, family=binomial())
-    coef <- c(-100.0, 18.0, 2.3, NA, 3.9, 12.5)
+    coef <- c(-100.9, 18.2, 2.3, NA, 4.0, 12.6)
 
     expect_that(model$converged, is_true())
     expect_that(model$boundary, is_false())
@@ -47,7 +47,7 @@ test_that("succeeds on dataset 4", {
 test_that("succeeds on dataset 5", {
     data <- readRDS("firth-binomial5.rds")
     model <- firthglm.fit(data$x, data$y, family=binomial())
-    coef <- c(-6.1, 7.3, 21.8, 4.9, 7.6, 10.6, 7.0, 9.1, 5.4, -0.7, 4.9)
+    coef <- c(-6.0, 7.3, 21.8, 4.9, 7.6, 10.6, 7.0, 9.1, 5.4, -0.7, 4.9)
 
     expect_that(model$converged, is_true())
     expect_that(model$boundary, is_false())
