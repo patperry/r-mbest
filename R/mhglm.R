@@ -349,7 +349,7 @@ coef.mhglm <- function(object, ...)
 
 fitted.mhglm <- function(object, ...)
 {
-    predict(object)
+    predict(object, type="response")
 }
 
 weights.mhglm <- function (object, ...)
