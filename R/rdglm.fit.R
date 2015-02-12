@@ -32,17 +32,19 @@ rdglm.fit <- function(x, y, weights = rep(1, nobs), start = NULL,
     nvars <- ncol(x)
 
     # handle degenerate (no-observations) case
-    if (nrow(x) == 0L) {
+    if (nobs == 0L) {
         coef <- numeric(nvars)
-        subspace = matrix(0, nvars, 0)
-        colnames(coef) <- rownames(subspace) <- xnames
+        names(coef) <- xnames
 
-        return(list(coefficients = coef,
-                    rank = 0L,
-                    subspace = subspace,
-                    precision = numeric(),
-                    df.residual = 0L,
-                    dispersion = 0))
+        if (family$family %in% c("poisson", "binomial")) {
+            dispersion <- 1
+        } else {
+            dispersion <- 0
+        }
+
+        return(list(coefficients = coef, rank = 0L, qr = qr(x),
+                    df.residual = 0L, dispersion = dispersion,
+                    prior.weights = weights))
     }
 
     fit <- eval(call(if (is.function(method)) "method" else method,

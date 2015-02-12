@@ -62,11 +62,13 @@ mhglm.fit <- function(x, z, y, group, weights = rep(1, nobs),
     Rp <- as.list(rep(NULL, ngroups))
     for (i in seq_len(ngroups)) {
         qr.i <- m$qr[[i]]
-        pivot.i <- qr.i$pivot
         rank.i <- qr.i$rank
-        R.i <- qr.R(qr.i)
         Rp[[i]] <- matrix(0, rank.i, nvars)
-        Rp[[i]][,pivot.i] <- R.i[seq_len(rank.i),]
+        if (rank.i > 0L) {
+            R.i <- qr.R(qr.i)
+            pivot.i <- qr.i$pivot
+            Rp[[i]][,pivot.i] <- R.i[seq_len(rank.i),]
+        }
     }
 
     # change coordinates so that average precision is identity
@@ -133,12 +135,17 @@ mhglm.fit <- function(x, z, y, group, weights = rep(1, nobs),
     subspace <- as.list(rep(NULL, ngroups))
     precision <- as.list(rep(NULL, ngroups))
     for (i in seq_len(ngroups)) {
-        prec.sqrt <- backsolve(R, t(Rp[[i]][,pivot[r1],drop=FALSE]),
-                                transpose=TRUE)
-        prec.sqrt.svd <- svd(prec.sqrt)
+        if (nrow(Rp[[i]]) > 0L) {
+            prec.sqrt <- backsolve(R, t(Rp[[i]][,pivot[r1],drop=FALSE]),
+                                    transpose=TRUE)
+            prec.sqrt.svd <- svd(prec.sqrt)
 
-        subspace[[i]] <- prec.sqrt.svd$u
-        precision[[i]] <- (prec.sqrt.svd$d)^2
+            subspace[[i]] <- prec.sqrt.svd$u
+            precision[[i]] <- (prec.sqrt.svd$d)^2
+        } else {
+            subspace[[i]] <- matrix(0, rank, 0)
+            precision[[i]] <- numeric()
+        }
     }
 
     # compute coefficient mean and covariance estimates
