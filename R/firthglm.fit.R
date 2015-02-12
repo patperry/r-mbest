@@ -159,7 +159,19 @@ firthglm.fit <-
         mustart <- mukeep
     }
 
-    qr <- qr(x * sqrt(weights), tol=control$qr.tol)
+    eta <- offset
+    if (nobs > 0L) {
+        mu <- family$linkinv(offset)
+        mu.eta <- family$mu.eta(eta)
+        varmu <- family$variance(mu)
+    } else {
+        mu <- numeric()
+        varmu <- numeric()
+        mu.eta <- numeric()
+    }
+    wt <- weights * mu.eta^2 / varmu
+
+    qr <- qr(x * sqrt(wt), tol=control$qr.tol)
     rank <- qr$rank
     pivot <- qr$pivot
 
@@ -173,7 +185,11 @@ firthglm.fit <-
         }
     } else {
         if (is.null(etastart)) {
-            etastart <- family$linkfun(mustart)
+            if (length(mustart) > 0L) {
+                etastart <- family$linkfun(mustart)
+            } else {
+                etastart <- numeric()
+            }
         }
         start <- qr.coef(qr, sqrt(weights) * (etastart - offset))
         start[is.na(start)] <- 0
@@ -189,8 +205,28 @@ firthglm.fit <-
         start <- start[pivot[seq_len(rank)]]
     }
 
-    if (rank == 0) { # empty model
-        stop("firthglm.fit: rank0 models not implemented")
+    if (rank == 0L) { # empty model
+        coefficients <- rep(NA, nvar)
+        names(coefficients) <- xnames
+        R <- matrix(NA, 0, 0)
+        effects <- qr.qty(qr, sqrt(wt) * y)
+        if (!is.null(xnames))
+            names(effects) <- character(nobs)
+
+        dev <- sum(family$dev.resids(y, mu, weights))
+        nulldev <- dev
+        aic <- family$aic(y, n, mu, weights, dev)
+        residuals <- (y - mu)/mu.eta
+
+        return(list(coefficients = coefficients,
+             residuals = residuals,
+             fitted.values = mu, effects = effects,
+             R = R, qr = qr, rank = rank,
+             family = family, linear.predictors = eta,
+             deviance = dev, aic = aic, null.deviance = nulldev,
+             iter = 0L, eval = 0L, weights = wt, prior.weights = weights,
+             df.residual = nobs, df.null = nobs, y = y, converged = TRUE,
+             boundary = FALSE))
     }
 
     objective <- function(coef)
