@@ -129,15 +129,40 @@ moment.est <- function(coefficients, nfixed, subspace, precision, dispersion,
     wt.cov <- apply(weight22.coef.2, c(2, 3), mean)
     wt.bias <- apply(bias, c(2, 3), mean)
 
-    cov.vec <- pseudo.solve(wtot2, as.vector(wt.cov))
-    bias.vec <- pseudo.solve(wtot2, as.vector(wt.bias))
+    # construct an orthonormal basis for the space of symmetric
+    # matrices
+    q <- nrandom
+    F <- matrix(0, q^2, q * (q + 1) / 2)
+    j <- 0
+    for (k in seq_len(q)) {
+        for (l in seq_len(k)) {
+            j <- j + 1
+            f <- matrix(0, q, q)
+            if (k == l) {
+                f[k,l] <- 1
+            } else {
+                f[k,l] <- 1/sqrt(2)
+                f[l,k] <- 1/sqrt(2)
+            }
+            F[,j] <- as.vector(f)
+        }
+    }
+
+    # solve the moment equations
+    tF.wtot2.F <- t(F) %*% wtot2 %*% F
+    cov.vec <- pseudo.solve(tF.wtot2.F, t(F) %*% as.vector(wt.cov))
+    bias.vec <- pseudo.solve(tF.wtot2.F, t(F) %*% as.vector(wt.bias))
+
     if (attr(cov.vec, "deficient")) {
         warning("cannot solve covariance moment equation due to rank deficiency")
     }
-    cov <- matrix(cov.vec, nrandom, nrandom)
-    bias <- matrix(bias.vec, nrandom, nrandom)
 
-    cov <- 0.5 * (cov + t(cov)) # ensure symmetry
+    # change back to original space
+    cov <- matrix(F %*% cov.vec, nrandom, nrandom)
+    bias <- matrix(F %*% bias.vec, nrandom, nrandom)
+
+    # remove asymmetry arising from numerical errors
+    cov <- 0.5 * (cov + t(cov))
     bias <- 0.5 * (bias + t(bias))
 
     eigen.cov <- eigen(cov, symmetric=TRUE)
