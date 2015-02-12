@@ -152,7 +152,9 @@ moment.est <- function(coefficients, nfixed, subspace, precision, dispersion,
     l.bias <- eigen.cov.bias$values
     u.bias.t <- t(eigen.cov.bias$vectors) %*% s.u.t
     scale <- max(1, l.bias[1])
-    cov.adj <- t(u.bias.t) %*% diag(1 - l.bias / scale, length(l.bias)) %*% u.bias.t
+    cov.adj <- (t(u.bias.t)
+                %*% diag((scale - l.bias) / scale, length(l.bias))
+                %*% u.bias.t)
 
     cov <- proj.psd(cov.adj)  # ensure positive definite
     if (attr(cov, "modified") || length(l) < nrow(cov) || scale != 1)
