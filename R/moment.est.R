@@ -103,7 +103,7 @@ moment.est <- function(coefficients, nfixed, subspace, precision, dispersion,
     wtot <- apply(weight11, c(2,3), mean)
     mean <- pseudo.solve(wtot, colMeans(weight1.coef))
     if (attr(mean, "deficient")) {
-        warning("cannot solve mean moment equation due to rank deficiency")
+        warning("cannot solve fixed effect moment equation due to rank deficiency")
     }
     mean.cov <- pseudo.solve(wtot) / ngroups
     attr(mean, "deficient") <- attr(mean.cov, "deficient") <- NULL
