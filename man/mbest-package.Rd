@@ -9,14 +9,14 @@
   This package implements moment-based fitting methods for
   hierarchical models described in the paper
   "Fast Moment-Based Estimation for Hierarchical Models"
-  (Perry, 2014).
+  (Perry, 2015).
 }
 \details{
     \tabular{ll}{
     Package: \tab mbest\cr
     Type: \tab Package\cr
-    Version: \tab 0.1\cr
-    Date: \tab 2014-04-01\cr
+    Version: \tab 0.3\cr
+    Date: \tab 2015-04-20\cr
     License: \tab Apache License, Version 2.0\cr
     }
     

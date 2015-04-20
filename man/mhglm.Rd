@@ -90,7 +90,7 @@ mhglm.fit(x, z, y, group, weights = rep(1, nobs),
   fitting generalized linear mixed models with likelihood-based estimates.
 }
 \references{
-  Perry, P. O. (2014)
+  Perry, P. O. (2015)
   "Fast Moment-Based Estimation for Hierarchical Models",
   Preprint.
 }
