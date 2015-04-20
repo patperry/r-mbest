@@ -1,12 +1,12 @@
 Package:     mbest
 Version:     0.3
-Date:        2014-12-05
+Date:        2015-04-20
 Title:       Moment-Based Estimation for Hierarchical Models
 Author:      Patrick O. Perry
 Maintainer:  Patrick O. Perry <pperry@stern.nyu.edu>
 Description: 
     Implements methods from the paper "Fast Moment-Based Estimation
-    for Hierarchical Models," by Perry (2014).
+    for Hierarchical Models," by Perry (2015).
 Imports:     lme4
 Suggests:    testthat
 LazyData:    Yes
