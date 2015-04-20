@@ -11,7 +11,7 @@ citEntry(entry="Unpublished",
          title="Fast Moment-Based Estimation for Hierarchical Models",
          author=personList(as.person("Patrick O. Perry")),
          year="2014", note="Submitted for publication",
-         textVersion=paste("P. O. Perry (2014).",
+         textVersion=paste("P. O. Perry (2015).",
                            "Fast Moment-Based Estimation for Hierarchical Models.",
                            "Submitted for publication."))
 
