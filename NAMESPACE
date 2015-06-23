@@ -3,8 +3,15 @@ importFrom("stats", coef, family, fitted, model.matrix, nobs,
            residuals, terms, vcov, weights)
 
 ## Recommended packages
-importFrom("lme4", findbars, fixef, nobars, ranef, sigma,
-           subbars, VarCorr)
+importFrom("lme4", findbars, fixef, nobars, ranef, subbars, VarCorr)
+
+## S3 generic for sigma():
+##   exported from 'stats' for R >= 3.3.0; from 'lme4' for R <= 3.2.x
+if(getRversion() >= "3.3.0") {
+  importFrom("stats", sigma)
+} else {
+  importFrom("lme4", sigma)
+}
 
 ## Exports
 export(mhglm)
