@@ -1,6 +1,9 @@
 ## base backages
-importFrom("stats", coef, family, fitted, model.matrix, nobs,
-           residuals, terms, vcov, weights)
+importFrom("stats", .checkMFClasses, .getXlevels, coef, delete.response,
+    family, fitted, gaussian, is.empty.model, model.extract, model.frame,
+    model.offset, model.matrix, model.response, model.weights, na.pass,
+    naresid, nobs, pnorm, predict, printCoefmat, pt, residuals, terms,
+    update, vcov, weights)
 
 ## Recommended packages
 importFrom("lme4", findbars, fixef, nobars, ranef, subbars, VarCorr)
