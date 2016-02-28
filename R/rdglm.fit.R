@@ -23,7 +23,7 @@ rdglm.fit <- function(x, y, weights = rep(1, nobs), start = NULL,
     if (!is.character(method) && !is.function(method))
         stop("invalid 'method' argument")
 
-    x <- as.matrix(x)
+    # x <- as.matrix(x) # suppressed to use bigmemory package
     xnames <- dimnames(x)[[2L]]
     ynames <- if (is.matrix(y))
         rownames(y)

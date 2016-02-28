@@ -12,18 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 mhglm.fit <- function(x, z, y, group, weights = rep(1, nobs),
                       start = NULL, etastart = NULL, mustart = NULL,
-                      offset = rep(0, nobs), family = gaussian(), 
-                      control = list(), intercept = TRUE)
+                      offset = rep(0, nobs), family = gaussian(),
+                      control = list(), intercept = TRUE, parallel = FALSE)
 {
     control <- do.call("mhglm.control", control)
     x <- as.matrix(x)
     z <- as.matrix(z)
     xnames <- dimnames(x)[[2L]]
     znames <- dimnames(z)[[2L]]
-    ynames <- if (is.matrix(y)) 
+    ynames <- if (is.matrix(y))
         rownames(y)
     else names(y)
     nobs <- NROW(y)
@@ -45,7 +44,7 @@ mhglm.fit <- function(x, z, y, group, weights = rep(1, nobs),
     # group-specific estimates
     m <- rdglm.group.fit(x = cbind(x, z), y = y, group = group, weights = weights,
                          start = start, etastart = etastart, mustart = mustart,
-                         offset = offset, family = family,
+                         offset = offset, family = family, parallel = parallel,
                          control = control$fit.control, method = control$fit.method,
                          intercept = intercept)
     ngroups <- m$ngroups
@@ -60,25 +59,51 @@ mhglm.fit <- function(x, z, y, group, weights = rep(1, nobs),
 
     # compute group-sqecific precision square root (unpivoted)
     Rp <- as.list(rep(NULL, ngroups))
-    for (i in seq_len(ngroups)) {
+
+    if(parallel) {
+      Rp <- foreach(i = seq_len(ngroups)) %dopar% {
+        qr.i <- m$qr[[i]]
+        rank.i <- qr.i$rank
+        Rp <- matrix(0, rank.i, nvars)
+        if (rank.i > 0L) {
+          R.i <- qr.R(qr.i)
+          pivot.i <- qr.i$pivot
+          Rp[, pivot.i] <- R.i[seq_len(rank.i), ]
+        }
+        return(Rp)
+      }
+    }
+    else {
+      for(i in seq_len(ngroups)) {
         qr.i <- m$qr[[i]]
         rank.i <- qr.i$rank
         Rp[[i]] <- matrix(0, rank.i, nvars)
         if (rank.i > 0L) {
-            R.i <- qr.R(qr.i)
-            pivot.i <- qr.i$pivot
-            Rp[[i]][,pivot.i] <- R.i[seq_len(rank.i),]
+          R.i <- qr.R(qr.i)
+          pivot.i <- qr.i$pivot
+          Rp[[i]][,pivot.i] <- R.i[seq_len(rank.i),]
         }
+      }
+
     }
 
     # change coordinates so that average precision is identity
+
     if (control$standardize) {
         # compute averge precision of estimates
         prec.avg <- matrix(0, nvars, nvars)
-
-        for (i in seq_len(ngroups)) {
+        if(parallel) {
+          prec.avg <- foreach(i = seq_len(ngroups)) %dopar% {
+            scale.i <- sqrt(1/dispersion[i])
+            return(crossprod(scale.i * Rp[[i]]))
+          }
+          prec.avg <- Reduce('+', prec.avg)
+        }
+        else {
+          for (i in seq_len(ngroups)) {
             scale.i <- sqrt(1/dispersion[i])
             prec.avg <- prec.avg + crossprod(scale.i * Rp[[i]])
+          }
         }
         prec.avg <- prec.avg / ngroups
 
@@ -96,7 +121,8 @@ mhglm.fit <- function(x, z, y, group, weights = rep(1, nobs),
         #r1.random <- seq_len(attr(R.random, "rank"))
         #R.fixed <- R.fixed[r1.fixed,r1.fixed,drop=FALSE]
         #R.random <- R.random[r1.random,r1.random,drop=FALSE]
-    } else {
+    }
+    else { # control.standardize==FALSE
         R.fixed <- diag(nfixed)
         attr(R.fixed, "pivot") <- seq_len(nfixed)
         attr(R.fixed, "rank") <- nfixed
@@ -132,32 +158,51 @@ mhglm.fit <- function(x, z, y, group, weights = rep(1, nobs),
     coef <- m$coefficients[,pivot[r1],drop=FALSE] %*% t(R)
 
     # compute group-specific subspace and precisions
-    subspace <- as.list(rep(NULL, ngroups))
-    precision <- as.list(rep(NULL, ngroups))
-    for (i in seq_len(ngroups)) {
+    if(parallel) {
+      results <- foreach(i = seq_len(ngroups)) %dopar% {
         if (nrow(Rp[[i]]) > 0L) {
-            prec.sqrt <- backsolve(R, t(Rp[[i]][,pivot[r1],drop=FALSE]),
-                                    transpose=TRUE)
-            prec.sqrt.svd <- svd(prec.sqrt)
-
-            subspace[[i]] <- prec.sqrt.svd$u
-            precision[[i]] <- (prec.sqrt.svd$d)^2
-        } else {
-            subspace[[i]] <- matrix(0, rank, 0)
-            precision[[i]] <- numeric()
+          prec.sqrt <- backsolve(R, t(Rp[[i]][,pivot[r1],drop=FALSE]),
+                                 transpose=TRUE)
+          prec.sqrt.svd <- svd(prec.sqrt)
+          return(list(subspace=prec.sqrt.svd$u,
+                      precision=(prec.sqrt.svd$d)^2))
         }
+        else { #nrow(Rp[[i]]) == 0
+          return(list(subspace=matrix(0, rank, 0), precision=numeric()))
+        }
+      }
+      subspace <- lapply(results, function(x) x[['subspace']])
+      precision <- lapply(results, function(x) x[['precision']])
+      rm(results)
+    }
+    else {
+      subspace <- as.list(rep(NULL, ngroups))
+      precision <- as.list(rep(NULL, ngroups))
+      for (i in seq_len(ngroups)) {
+        if (nrow(Rp[[i]]) > 0L) {
+          prec.sqrt <- backsolve(R, t(Rp[[i]][,pivot[r1],drop=FALSE]),
+                                 transpose=TRUE)
+          prec.sqrt.svd <- svd(prec.sqrt)
+          subspace[[i]] <- prec.sqrt.svd$u
+          precision[[i]] <- (prec.sqrt.svd$d)^2
+        }
+        else {
+          subspace[[i]] <- matrix(0, rank, 0)
+          precision[[i]] <- numeric()
+        }
+      }
     }
 
     # compute coefficient mean and covariance estimates
     est0 <- NULL
     suppressWarnings({
         for (s in seq_len(control$steps)) {
-            est0 <- moment.est(coef, nfixed=rank.fixed,
-                               subspace, precision, dispersion, start.cov=est0$cov)
+            est0 <- moment.est(coef, nfixed=rank.fixed, subspace, precision,
+                               dispersion, start.cov=est0$cov, parallel=parallel)
         }
     })
     est <- moment.est(coef, nfixed=rank.fixed, subspace, precision, dispersion,
-                      start.cov=est0$cov)
+                      start.cov=est0$cov, parallel=parallel)
     mean <- est$mean
     mean.cov <- est$mean.cov
     cov <- est$cov

@@ -37,8 +37,9 @@ mhglm <- function(formula, family = gaussian, data, weights, subset,
                   na.action, start = NULL, etastart, mustart, offset,
                   control = list(), model = TRUE, method = "mhglm.fit",
                   x = FALSE, z = FALSE, y = TRUE, group = TRUE,
-                  contrasts = NULL)
+                  contrasts = NULL, parallel = FALSE, verbose=FALSE)
 {
+    logging::basicConfig("INFO")
     # call
     call <- match.call()
 
@@ -86,13 +87,13 @@ mhglm <- function(formula, family = gaussian, data, weights, subset,
             names(Y) <- nm
     }
 
-    # design matrix
+    if(verbose) logging::loginfo("Creating design matrix")
     mt.fixed <- delete.response(terms(lme4::nobars(formula), data=data))
     X <- if (!is.empty.model(mt.fixed))
         model.matrix(mt.fixed, mf, contrasts)
     else matrix(, NROW(Y), 0L)
 
-    # grouping factor and random effect design matrix
+    if(verbose) logging::loginfo("grouping factor and random effect design matrix")
     bars <- lme4::findbars(formula)
     if (length(bars) >= 2L)
         stop("Can specify at most one random effect term")
@@ -119,18 +120,18 @@ mhglm <- function(formula, family = gaussian, data, weights, subset,
         Z <- matrix(, NROW(Y), 0L)
     }
 
-    # weights
+    if(verbose) logging::loginfo("weights")
     weights <- as.vector(model.weights(mf))
     if (!is.null(weights) && !is.numeric(weights))
         stop("'weights' must be a numeric vector")
     if (!is.null(weights) && any(weights < 0))
         stop("negative weights not allowed")
 
-    # offset
+    if(verbose) logging::loginfo("offset")
     offset <- as.vector(model.offset(mf))
     if (!is.null(offset)) {
         if (length(offset) != NROW(Y))
-            stop(gettextf("number of offsets is %d should equal %d (number of observations)", 
+            stop(gettextf("number of offsets is %d should equal %d (number of observations)",
                 length(offset), NROW(Y)), domain = NA)
     }
 
@@ -139,11 +140,12 @@ mhglm <- function(formula, family = gaussian, data, weights, subset,
     etastart <- model.extract(mf, "etastart")
 
     # group-specific estimates
+    # at this point in the code, method = mhglm.fit
     fit <- eval(call(if (is.function(method)) "method" else method,
                      x = X, z = Z, y = Y, group = Group,
                      weights = weights, start = start, etastart = etastart,
                      mustart = mustart, offset = offset, family = family,
-                     control = control,
+                     control = control, parallel = parallel,
                      intercept = attr(mt.fixed, "intercept") > 0L))
     fit$contrasts.fixed <- attr(X, "contrasts")
     fit$contrasts.random <- attr(Z, "contrasts")
@@ -355,7 +357,7 @@ fitted.mhglm <- function(object, ...)
 weights.mhglm <- function (object, ...)
 {
     res <- object$prior.weights
-    if (is.null(object$na.action)) 
+    if (is.null(object$na.action))
         res
     else naresid(object$na.action, res)
 }
@@ -378,7 +380,7 @@ residuals.mhglm <- function(object, type = c("deviance", "pearson", "response"),
         }, response = {
             y - mu
         })
-    if (!is.null(object$na.action)) 
+    if (!is.null(object$na.action))
         res <- naresid(object$na.action, res)
     res
 }
