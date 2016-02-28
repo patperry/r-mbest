@@ -187,7 +187,6 @@ moment.est <- function(coefficients, nfixed, subspace, precision, dispersion,
 
     if(verbose) logging::loginfo("construct an orthonormal basis for the space of symmetric")
     q <- nrandom
-    # TODO: rename this something besides F == FALSE
     FF <- matrix(0, q^2, q * (q + 1) / 2)
     j <- 0
     for (k in seq_len(q)) {
