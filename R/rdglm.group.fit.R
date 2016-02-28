@@ -14,8 +14,6 @@
 
 
 # fit group-specific rank-deficient generalized linear models
-#' @useDynLib mbest
-#' @importFrom Rcpp sourceCpp
 rdglm.group.fit <- function(x, y, group, weights = rep(1, nobs), start = NULL,
                             etastart = NULL, mustart = NULL,
                             offset = rep(0, nobs), family = gaussian(),
@@ -76,7 +74,7 @@ rdglm.group.fit <- function(x, y, group, weights = rep(1, nobs), start = NULL,
       qr <- lapply(results, function(x) x[[5]])
       rm(results)
     }
-    else {
+    else { # non-parallel computation
       for(i in seq_len(ngroups)) {
         j <- subset[[i]]
         yj <- if (is.matrix(y))
@@ -86,6 +84,7 @@ rdglm.group.fit <- function(x, y, group, weights = rep(1, nobs), start = NULL,
         model <- rdglm.fit(x = x[j,,drop=FALSE], y = yj, weights = weights[j],
                            start = start, etastart = etastart[j],
                            mustart = mustart[j], offset = offset[j],
+                           parallel=parallel, # cast x as a matrix each time
                            family = family, control = control,
                            method = method, intercept = intercept)
         coefficients[i,] <- model$coefficients
