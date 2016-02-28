@@ -15,7 +15,8 @@
 mhglm.fit <- function(x, z, y, group, weights = rep(1, nobs),
                       start = NULL, etastart = NULL, mustart = NULL,
                       offset = rep(0, nobs), family = gaussian(),
-                      control = list(), intercept = TRUE, parallel = FALSE)
+                      control = list(), intercept = TRUE, 
+                      parallel = FALSE, verbose=FALSE)
 {
     control <- do.call("mhglm.control", control)
     x <- as.matrix(x)
@@ -44,7 +45,8 @@ mhglm.fit <- function(x, z, y, group, weights = rep(1, nobs),
     # group-specific estimates
     m <- rdglm.group.fit(x = cbind(x, z), y = y, group = group, weights = weights,
                          start = start, etastart = etastart, mustart = mustart,
-                         offset = offset, family = family, parallel = parallel,
+                         offset = offset, family = family, 
+                         parallel = parallel, verbose=verbose,
                          control = control$fit.control, method = control$fit.method,
                          intercept = intercept)
     ngroups <- m$ngroups
@@ -198,7 +200,8 @@ mhglm.fit <- function(x, z, y, group, weights = rep(1, nobs),
     suppressWarnings({
         for (s in seq_len(control$steps)) {
             est0 <- moment.est(coef, nfixed=rank.fixed, subspace, precision,
-                               dispersion, start.cov=est0$cov, parallel=parallel)
+                               dispersion, start.cov=est0$cov, 
+                               parallel=parallel, verbose=verbose)
         }
     })
     est <- moment.est(coef, nfixed=rank.fixed, subspace, precision, dispersion,
