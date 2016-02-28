@@ -140,12 +140,11 @@ mhglm <- function(formula, family = gaussian, data, weights, subset,
     etastart <- model.extract(mf, "etastart")
 
     # group-specific estimates
-    # at this point in the code, method = mhglm.fit
     fit <- eval(call(if (is.function(method)) "method" else method,
                      x = X, z = Z, y = Y, group = Group,
                      weights = weights, start = start, etastart = etastart,
                      mustart = mustart, offset = offset, family = family,
-                     control = control, parallel = parallel,
+                     control = control, parallel = parallel, verbose=verbose,
                      intercept = attr(mt.fixed, "intercept") > 0L))
     fit$contrasts.fixed <- attr(X, "contrasts")
     fit$contrasts.random <- attr(Z, "contrasts")
