@@ -44,7 +44,7 @@ rdglm.group.fit <- function(x, y, group, weights = rep(1, nobs), start = NULL,
     subset <- lapply(group.size, integer) # group => vector of indices
     group.pos <- integer(ngroups)
 
-    .Call(C_rdglm_index_loop, group, subset)
+    .Call(C_rdglm_index_loop, group.int, subset)
 
     if(parallel) {
       if(verbose) logging::loginfo("Fitting models in ||")
