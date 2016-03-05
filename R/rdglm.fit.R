@@ -16,7 +16,8 @@
 # fit rank-deficient generalized linear model
 rdglm.fit <- function(x, y, weights = rep(1, nobs), start = NULL,
                       etastart = NULL, mustart = NULL, offset = rep(0, nobs),
-                      family = gaussian(), control = list(), parallel=FALSE,
+                      family = gaussian(), control = list(), 
+                      parallel=FALSE, verbose=FALSE,
                       method = "firthglm.fit", intercept = TRUE)
 {
     # method
