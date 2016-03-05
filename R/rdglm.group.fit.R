@@ -16,13 +16,13 @@
 # fit group-specific rank-deficient generalized linear models
 rdglm.group.fit <- function(x, y, group, weights = rep(1, nobs), start = NULL,
                             etastart = NULL, mustart = NULL,
-                            offset = rep(0, nobs), family = gaussian(), 
+                            offset = rep(0, nobs), family = gaussian(),
                             control = list(), method = "firthglm.fit",
-                            intercept = TRUE)
+                            intercept = TRUE, parallel=FALSE, verbose=FALSE)
 {
-    x <- as.matrix(x)
+    if(parallel) x <- bigmemory::as.big.matrix(x, shared=TRUE)
     xnames <- dimnames(x)[[2L]]
-    ynames <- if (is.matrix(y)) 
+    ynames <- if (is.matrix(y))
         rownames(y)
     else names(y)
     nobs <- NROW(y)
@@ -39,18 +39,16 @@ rdglm.group.fit <- function(x, y, group, weights = rep(1, nobs), start = NULL,
     rank <- rep(as.integer(NA), ngroups)
     qr <- as.list(rep(NULL, ngroups))
 
-    group.int <- as.integer(group)
-    group.size <- tabulate(group.int, ngroups)
-    subset <- lapply(group.size, integer)
+    group.int <- as.integer(group) # observation index => index of its group
+    group.size <- tabulate(group.int, ngroups) # group index => # obs in that group
+    subset <- lapply(group.size, integer) # group => vector of indices
     group.pos <- integer(ngroups)
-    for (o in seq_len(nobs)) {
-        i <- group.int[o]
-        j <- group.pos[i] + 1L
-        subset[[i]][j] <- o
-        group.pos[i] <- j
-    }
 
-    for (i in seq_len(ngroups)) {
+    .Call(C_rdglm_index_loop, group, subset)
+
+    if(parallel) {
+      if(verbose) logging::loginfo("Fitting models in ||")
+      results <- foreach(i=seq_len(ngroups)) %dopar% {
         j <- subset[[i]]
         yj <- if (is.matrix(y))
             y[j,,drop=FALSE]
@@ -62,12 +60,40 @@ rdglm.group.fit <- function(x, y, group, weights = rep(1, nobs), start = NULL,
                            family = family, control = control,
                            method = method, intercept = intercept)
 
+
+        return(list(model$coefficients,
+                    model$dispersion,
+                    model$df.residual,
+                    model$rank,
+                    model$qr))
+      }
+      coefficients <- t(vapply(results, function(x) x[[1]], numeric(nvars)))
+      dispersion <- vapply(results, function(x) x[[2]], numeric(1))
+      df.residual <- vapply(results, function(x) x[[3]], numeric(1))
+      rank <- lapply(results, function(x) x[[4]])
+      qr <- lapply(results, function(x) x[[5]])
+      rm(results)
+    }
+    else { # non-parallel computation
+      for(i in seq_len(ngroups)) {
+        j <- subset[[i]]
+        yj <- if (is.matrix(y))
+          y[j,,drop=FALSE]
+        else y[j]
+
+        model <- rdglm.fit(x = x[j,,drop=FALSE], y = yj, weights = weights[j],
+                           start = start, etastart = etastart[j],
+                           mustart = mustart[j], offset = offset[j],
+                           parallel=parallel, # cast x as a matrix each time
+                           family = family, control = control,
+                           method = method, intercept = intercept)
         coefficients[i,] <- model$coefficients
         dispersion[i] <- model$dispersion
         df.residual[i] <- model$df.residual
         rank[[i]] <- model$rank
         qr[[i]] <- model$qr
-    }
+      }
+    } # end non-parallel case
 
     colnames(coefficients) <- xnames
     rownames(coefficients) <- levels

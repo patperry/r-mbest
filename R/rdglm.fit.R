@@ -16,14 +16,16 @@
 # fit rank-deficient generalized linear model
 rdglm.fit <- function(x, y, weights = rep(1, nobs), start = NULL,
                       etastart = NULL, mustart = NULL, offset = rep(0, nobs),
-                      family = gaussian(), control = list(),
+                      family = gaussian(), control = list(), 
+                      parallel=FALSE, verbose=FALSE,
                       method = "firthglm.fit", intercept = TRUE)
 {
     # method
     if (!is.character(method) && !is.function(method))
         stop("invalid 'method' argument")
 
-    x <- as.matrix(x)
+    if(!parallel) x <- as.matrix(x)
+    # if running in ||, x is shared across threads 
     xnames <- dimnames(x)[[2L]]
     ynames <- if (is.matrix(y))
         rownames(y)

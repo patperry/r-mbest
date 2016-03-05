@@ -119,7 +119,6 @@ firthglm.eval <- function(coefficients, x, y, weights, offset, family, control)
 }
 
 
-
 firthglm.fit <-
     function(x, y, weights = rep(1, nobs), start = NULL, etastart = NULL,
              mustart = NULL, offset = rep(0, nobs), family = gaussian(),

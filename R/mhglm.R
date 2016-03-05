@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
+
 mhglm.control <- function(standardize = TRUE, steps = 1,
                           fit.method = "firthglm.fit",
                           fit.control = list(...), ...)
@@ -37,8 +39,9 @@ mhglm <- function(formula, family = gaussian, data, weights, subset,
                   na.action, start = NULL, etastart, mustart, offset,
                   control = list(), model = TRUE, method = "mhglm.fit",
                   x = FALSE, z = FALSE, y = TRUE, group = TRUE,
-                  contrasts = NULL)
+                  contrasts = NULL, parallel = FALSE, verbose=FALSE)
 {
+    if(verbose) logging::basicConfig("INFO")
     # call
     call <- match.call()
 
@@ -86,13 +89,13 @@ mhglm <- function(formula, family = gaussian, data, weights, subset,
             names(Y) <- nm
     }
 
-    # design matrix
+    if(verbose) logging::loginfo("Creating design matrix")
     mt.fixed <- delete.response(terms(lme4::nobars(formula), data=data))
     X <- if (!is.empty.model(mt.fixed))
         model.matrix(mt.fixed, mf, contrasts)
     else matrix(, NROW(Y), 0L)
 
-    # grouping factor and random effect design matrix
+    if(verbose) logging::loginfo("grouping factor and random effect design matrix")
     bars <- lme4::findbars(formula)
     if (length(bars) >= 2L)
         stop("Can specify at most one random effect term")
@@ -119,18 +122,18 @@ mhglm <- function(formula, family = gaussian, data, weights, subset,
         Z <- matrix(, NROW(Y), 0L)
     }
 
-    # weights
+    if(verbose) logging::loginfo("weights")
     weights <- as.vector(model.weights(mf))
     if (!is.null(weights) && !is.numeric(weights))
         stop("'weights' must be a numeric vector")
     if (!is.null(weights) && any(weights < 0))
         stop("negative weights not allowed")
 
-    # offset
+    if(verbose) logging::loginfo("offset")
     offset <- as.vector(model.offset(mf))
     if (!is.null(offset)) {
         if (length(offset) != NROW(Y))
-            stop(gettextf("number of offsets is %d should equal %d (number of observations)", 
+            stop(gettextf("number of offsets is %d should equal %d (number of observations)",
                 length(offset), NROW(Y)), domain = NA)
     }
 
@@ -143,7 +146,7 @@ mhglm <- function(formula, family = gaussian, data, weights, subset,
                      x = X, z = Z, y = Y, group = Group,
                      weights = weights, start = start, etastart = etastart,
                      mustart = mustart, offset = offset, family = family,
-                     control = control,
+                     control = control, parallel = parallel, verbose=verbose,
                      intercept = attr(mt.fixed, "intercept") > 0L))
     fit$contrasts.fixed <- attr(X, "contrasts")
     fit$contrasts.random <- attr(Z, "contrasts")
@@ -311,17 +314,20 @@ fixef.mhglm <- function(object, ...)
     object$coefficient.mean
 }
 
+
 vcov.mhglm <- function(object, ...)
 {
     object$coefficient.mean.cov
 }
+
 
 sigma.mhglm <- function(object, ...)
 {
     sqrt(object$dispersion)
 }
 
-VarCorr.mhglm <- function(x, sigma = 1, rdig = 3)
+
+VarCorr.mhglm <- function(x, sigma=1, rdig=3, ...)
 {
     vc <- x$coefficient.cov
     stddev <- sqrt(diag(vc))
@@ -352,13 +358,15 @@ fitted.mhglm <- function(object, ...)
     predict(object, type="response")
 }
 
+
 weights.mhglm <- function (object, ...)
 {
     res <- object$prior.weights
-    if (is.null(object$na.action)) 
+    if (is.null(object$na.action))
         res
     else naresid(object$na.action, res)
 }
+
 
 residuals.mhglm <- function(object, type = c("deviance", "pearson", "response"), ...)
 {
@@ -378,12 +386,10 @@ residuals.mhglm <- function(object, type = c("deviance", "pearson", "response"),
         }, response = {
             y - mu
         })
-    if (!is.null(object$na.action)) 
+    if (!is.null(object$na.action))
         res <- naresid(object$na.action, res)
     res
 }
-
-
 
 
 ranef.mhglm <- function(object, condVar = FALSE, ...)
@@ -454,6 +460,7 @@ ranef.mhglm <- function(object, condVar = FALSE, ...)
     re
 }
 
+
 summary.mhglm <- function(object, ...)
 {
     # fixed effects
@@ -473,6 +480,7 @@ summary.mhglm <- function(object, ...)
                    vcov = vcov, varcor = varcor),
               class = "summary.mhglm")
 }
+
 
 print.VarCorr.mhglm <- function(x, digits = max(3, getOption("digits") - 2),
                                 var.print = FALSE, ...)
@@ -525,7 +533,6 @@ print.VarCorr.mhglm <- function(x, digits = max(3, getOption("digits") - 2),
 }
 
 
-
 print.summary.mhglm <- function(x, digits = max(3L, getOption("digits") - 3L),
                                 signif.stars = getOption("show.signif.stars"), ...)
 {
@@ -541,9 +548,6 @@ print.summary.mhglm <- function(x, digits = max(3L, getOption("digits") - 3L),
 
     cat("\n")
 }
-
-
-
 
 
 print.mhglm <- function(x, digits = max(3L, getOption("digits") - 3L),

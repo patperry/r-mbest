@@ -1,14 +1,20 @@
-Package:     mbest
-Version:     0.3
-Date:        2015-04-20
-Title:       Moment-Based Estimation for Hierarchical Models
-Author:      Patrick O. Perry
-Maintainer:  Patrick O. Perry <pperry@stern.nyu.edu>
-Description: 
-    Implements methods from the paper "Fast Moment-Based Estimation
-    for Hierarchical Models," by Perry (2015).
-Imports:     lme4
-Suggests:    testthat
-LazyData:    Yes
-License:     Apache License (== 2.0) | file LICENSE
-Encoding:    UTF-8
+Package: mbest
+Version: 0.5
+Date: 2016-03-01
+Title: Moment-Based Estimation for Hierarchical Models
+Author: Patrick O. Perry
+Maintainer: Patrick O. Perry <pperry@stern.nyu.edu>
+Contributor: person("Timothy", "Sweetser", email="tsweetser@stitchfix.com")
+Description: Implements methods in parallel from the paper
+     "Fast Moment-Based Estimation for Hierarchical Models," by Perry (2016).
+Imports:
+    lme4,
+    bigmemory,
+    foreach,
+    logging,
+    doMC
+Suggests:
+    testthat
+LazyData: Yes
+License: Apache License (== 2.0) | file LICENSE
+Encoding: UTF-8
