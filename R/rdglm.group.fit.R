@@ -14,8 +14,6 @@
 
 
 # fit group-specific rank-deficient generalized linear models
-#' @useDynLib mbest
-#' @importFrom Rcpp sourceCpp
 rdglm.group.fit <- function(x, y, group, weights = rep(1, nobs), start = NULL,
                             etastart = NULL, mustart = NULL,
                             offset = rep(0, nobs), family = gaussian(),
@@ -46,7 +44,7 @@ rdglm.group.fit <- function(x, y, group, weights = rep(1, nobs), start = NULL,
     subset <- lapply(group.size, integer) # group => vector of indices
     group.pos <- integer(ngroups)
 
-    rdglm_index_loop(group.int, subset)
+    .Call(C_rdglm_index_loop, group, subset)
 
     if(parallel) {
       if(verbose) logging::loginfo("Fitting models in ||")
