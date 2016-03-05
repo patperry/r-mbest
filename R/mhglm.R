@@ -42,7 +42,7 @@ mhglm <- function(formula, family = gaussian, data, weights, subset,
                   x = FALSE, z = FALSE, y = TRUE, group = TRUE,
                   contrasts = NULL, parallel = FALSE, verbose=FALSE)
 {
-    logging::basicConfig("INFO")
+    if(verbose) logging::basicConfig("INFO")
     # call
     call <- match.call()
 
@@ -181,20 +181,20 @@ mhglm <- function(formula, family = gaussian, data, weights, subset,
     fit
 }
 
-
+#' @export
 family.mhglm <- function(object, ...)
 {
     object$family
 }
 
-
+#' @export
 terms.mhglm <- function(x, type=c("fixed", "random"), ...)
 {
     type <- match.arg(type)
     switch(type, fixed = x$terms.fixed, random = x$terms.random)
 }
 
-
+#' @export
 model.frame.mhglm <- function(formula, ...)
 {
     dots <- list(...)
@@ -212,7 +212,7 @@ model.frame.mhglm <- function(formula, ...)
     else formula$model
 }
 
-
+#' @export
 model.matrix.mhglm <- function(object, type=c("fixed", "random"), ...)
 {
     type <- match.arg(type)
@@ -227,7 +227,7 @@ model.matrix.mhglm <- function(object, type=c("fixed", "random"), ...)
     else matrix(, nobs(object), 0L)
 }
 
-
+#' @export
 predict.mhglm <- function(object, newdata = NULL,
                           type = c("link", "response"),
                           se.fit = FALSE, na.action = na.pass, ...)
@@ -309,23 +309,26 @@ predict.mhglm <- function(object, newdata = NULL,
     pred
 }
 
-
+#' @export
 fixef.mhglm <- function(object, ...)
 {
     object$coefficient.mean
 }
 
+#' @export
 vcov.mhglm <- function(object, ...)
 {
     object$coefficient.mean.cov
 }
 
+#' @export
 sigma.mhglm <- function(object, ...)
 {
     sqrt(object$dispersion)
 }
 
-VarCorr.mhglm <- function(x, sigma = 1, rdig = 3)
+#' @export
+VarCorr.mhglm <- function(x, sigma=1, rdig=3, ...)
 {
     vc <- x$coefficient.cov
     stddev <- sqrt(diag(vc))
@@ -344,18 +347,19 @@ VarCorr.mhglm <- function(x, sigma = 1, rdig = 3)
     varcor
 }
 
-
+#' @export
 coef.mhglm <- function(object, ...)
 {
     stop("Use 'fixef' and 'ranef' methods for mhglm objects")
 }
 
-
+#' @export
 fitted.mhglm <- function(object, ...)
 {
     predict(object, type="response")
 }
 
+#' @export
 weights.mhglm <- function (object, ...)
 {
     res <- object$prior.weights
@@ -364,6 +368,7 @@ weights.mhglm <- function (object, ...)
     else naresid(object$na.action, res)
 }
 
+#' @export
 residuals.mhglm <- function(object, type = c("deviance", "pearson", "response"), ...)
 {
     type <- match.arg(type)
@@ -387,9 +392,7 @@ residuals.mhglm <- function(object, type = c("deviance", "pearson", "response"),
     res
 }
 
-
-
-
+#' @export
 ranef.mhglm <- function(object, condVar = FALSE, ...)
 {
     nvars <- ncol(object$coefficients)
@@ -458,6 +461,7 @@ ranef.mhglm <- function(object, condVar = FALSE, ...)
     re
 }
 
+#' @export
 summary.mhglm <- function(object, ...)
 {
     # fixed effects
@@ -478,6 +482,7 @@ summary.mhglm <- function(object, ...)
               class = "summary.mhglm")
 }
 
+#' @export
 print.VarCorr.mhglm <- function(x, digits = max(3, getOption("digits") - 2),
                                 var.print = FALSE, ...)
 {
@@ -528,8 +533,7 @@ print.VarCorr.mhglm <- function(x, digits = max(3, getOption("digits") - 2),
     print.table(table)
 }
 
-
-
+#' @export
 print.summary.mhglm <- function(x, digits = max(3L, getOption("digits") - 3L),
                                 signif.stars = getOption("show.signif.stars"), ...)
 {
@@ -546,10 +550,7 @@ print.summary.mhglm <- function(x, digits = max(3L, getOption("digits") - 3L),
     cat("\n")
 }
 
-
-
-
-
+#' @export
 print.mhglm <- function(x, digits = max(3L, getOption("digits") - 3L),
                         signif.stars = getOption("show.signif.stars"), ...)
 {

@@ -14,6 +14,8 @@
 
 
 # fit group-specific rank-deficient generalized linear models
+#' @useDynLib mbest
+#' @importFrom Rcpp sourceCpp
 rdglm.group.fit <- function(x, y, group, weights = rep(1, nobs), start = NULL,
                             etastart = NULL, mustart = NULL,
                             offset = rep(0, nobs), family = gaussian(),
