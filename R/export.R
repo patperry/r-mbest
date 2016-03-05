@@ -8,9 +8,6 @@ fixef.mhglm <- lme4::fixef
 model.matrix.mhglm <- stats::model.matrix
 
 #' @export
-model.matrix <- stats::model.matrix
-
-#' @export
 ranef.mhglm <- lme4::ranef
 
 #' @export
