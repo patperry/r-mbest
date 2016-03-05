@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+#' @export
 mhglm.fit <- function(x, z, y, group, weights = rep(1, nobs),
                       start = NULL, etastart = NULL, mustart = NULL,
                       offset = rep(0, nobs), family = gaussian(),

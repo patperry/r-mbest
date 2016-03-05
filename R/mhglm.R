@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
+
+#' @export
 mhglm.control <- function(standardize = TRUE, steps = 1,
                           fit.method = "firthglm.fit",
                           fit.control = list(...), ...)
@@ -32,7 +35,7 @@ mhglm.control <- function(standardize = TRUE, steps = 1,
          fit.method = fit.method, fit.control = fit.control)
 }
 
-
+#' @export
 mhglm <- function(formula, family = gaussian, data, weights, subset,
                   na.action, start = NULL, etastart, mustart, offset,
                   control = list(), model = TRUE, method = "mhglm.fit",
