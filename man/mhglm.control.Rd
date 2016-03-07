@@ -9,8 +9,8 @@ internally by \code{\link{mhglm.fit}}, but may be used to construct a
 control argument to either function.
 }
 \usage{
-mhglm.control(standardize = TRUE, steps = 1, fit.method = "firthglm.fit",
-              fit.control = list(...), ...)
+mhglm.control(standardize = TRUE, steps = 1, parallel = FALSE,
+              fit.method = "firthglm.fit", fit.control = list(...), ...)
 }
 \arguments{
   \item{standardize}{
@@ -19,6 +19,9 @@ mhglm.control(standardize = TRUE, steps = 1, fit.method = "firthglm.fit",
 }
   \item{steps}{
     number of refinement steps
+}
+  \item{parallel}{
+    fit the group-specific estimates in parallel rather than sequentially
 }
   \item{fit.method}{
     method for obtaining group-specific effect estimates

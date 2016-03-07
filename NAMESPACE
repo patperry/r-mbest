@@ -8,7 +8,8 @@ importFrom("stats", .checkMFClasses, .getXlevels, coef, delete.response,
     update, vcov, weights)
 
 ## Recommended packages
-importFrom("lme4", findbars, fixef, nobars, ranef, subbars, VarCorr)
+importFrom("lme4", findbars, nobars, subbars)
+importFrom("nlme", fixef, ranef, VarCorr)
 
 ## S3 generic for sigma():
 ##   exported from 'stats' for R >= 3.3.0; from 'lme4' for R <= 3.2.x
@@ -20,7 +21,9 @@ if(getRversion() >= "3.3.0") {
 
 
 ## Contributed packages
-import(foreach)
+importFrom("bigmemory", as.big.matrix)
+importFrom("logging", loginfo)
+importFrom("foreach", foreach, "%dopar%")
 
 ## Exports
 export(VarCorr.mhglm)
@@ -36,6 +39,7 @@ export(sigma.mhglm)
 ## Methods
 S3method(coef,mhglm)
 S3method(family,mhglm)
+S3method(fixef,mhglm)
 S3method(fitted,mhglm)
 S3method(model.frame,mhglm)
 S3method(model.matrix,mhglm)
@@ -43,8 +47,10 @@ S3method(predict,mhglm)
 S3method(print,VarCorr.mhglm)
 S3method(print,mhglm)
 S3method(print,summary.mhglm)
+S3method(ranef,mhglm)
 S3method(residuals,mhglm)
 S3method(summary,mhglm)
 S3method(terms,mhglm)
+S3method(VarCorr,mhglm)
 S3method(vcov,mhglm)
 S3method(weights,mhglm)

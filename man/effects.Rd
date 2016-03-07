@@ -22,7 +22,7 @@ effect estimates.
 
 \method{vcov}{mhglm}(object, ...)
 
-\method{VarCorr}{mhglm}(x, sigma = 1, rdig = 3)
+\method{VarCorr}{mhglm}(x, sigma = 1, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -31,9 +31,6 @@ effect estimates.
   }
   \item{sigma}{
     a factor by which to scale the random effect variance-covariance matrix.
-  }
-  \item{rdig}{
-    ignored.
   }
   \item{condVar}{
     a logical indicating whether conditional covariance matrices for the
@@ -50,10 +47,10 @@ variance-covariance matrix of the fixed effect estimates.
 \code{VarCorr} returns the random effect covariance matrix.  \code{ranef}
 returns the empirical Bayes random effect estimates.
 
-These functions behave like their counterparts in the \CRANpkg{lme4} package.
+These functions behave like their counterparts in the \CRANpkg{nlme} package.
 }
 \seealso{
-  \code{\link[lme4]{fixef}}, \code{\link[lme4]{ranef}}, \code{\link[lme4]{VarCorr}},
-  from package \CRANpkg{lme4}.
+  \code{\link[nlme]{fixef}}, \code{\link[nlme]{ranef}}, \code{\link[nlme]{VarCorr}},
+  from package \CRANpkg{nlme}.
 }
 \keyword{models}

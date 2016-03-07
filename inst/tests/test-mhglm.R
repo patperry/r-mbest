@@ -3,7 +3,6 @@ context("mhglm")
 
 library("lme4")
 library("doMC")
-registerDoMC(4)
 
 test_that("succeeds on sleepstudy", {
     model <- mhglm(Reaction ~ Days + (Days | Subject), data=sleepstudy)

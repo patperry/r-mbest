@@ -334,7 +334,7 @@ sigma.mhglm <- function(object, ...)
 }
 
 
-VarCorr.mhglm <- function(x, sigma=1, rdig=3, ...)
+VarCorr.mhglm <- function(x, sigma=1, ...)
 {
     vc <- x$coefficient.cov
     stddev <- sqrt(diag(vc))
