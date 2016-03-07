@@ -16,7 +16,6 @@
 # improve.tol = 1e-4 suggested by Nocedal & Wright (c1, p. 38)
 # curvature.tol = 0.9 suggested by Nocedal & Wright (c2, p. 39)
 
-#' @export
 firthglm.control <- function(epsilon = 1e-8, maxit = 25, qr.tol = 1e-7,
                              improve.tol = 1e-4, curvature.tol = 0.9,
                              linesearch.method = "linesearch",
@@ -120,7 +119,6 @@ firthglm.eval <- function(coefficients, x, y, weights, offset, family, control)
 }
 
 
-#' @export
 firthglm.fit <-
     function(x, y, weights = rep(1, nobs), start = NULL, etastart = NULL,
              mustart = NULL, offset = rep(0, nobs), family = gaussian(),

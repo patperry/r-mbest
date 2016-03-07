@@ -1,23 +1,24 @@
 Package: mbest
 Version: 0.5
-Date: 2016-03-01
+Date: 2016-03-07
 Title: Moment-Based Estimation for Hierarchical Models
-Author: Patrick O. Perry
+Authors@R: c(person(c("Patrick", "O."), "Perry", role = c("aut", "cre"),
+		            email = "pperry@stern.nyu.edu"),
+             person("Timothy", "Sweetser", role = "ctb",
+                    email = "tsweetser@stitchfix.com"))
 Maintainer: Patrick O. Perry <pperry@stern.nyu.edu>
-Contributor: person("Timothy", "Sweetser", email="tsweetser@stitchfix.com")
-Description: Implements methods in parallel from the paper
-     "Fast Moment-Based Estimation for Hierarchical Models," by Perry (2015).
+Description: Implements methods from the paper
+     "Fast Moment-Based Estimation for Hierarchical Models," by Perry (2016).
+Depends:
+    nlme (>= 3.1-124)
 Imports:
     lme4,
     bigmemory,
     foreach,
-    logging,
-    doMC,
-    Rcpp
+    logging
 Suggests:
-    testthat
+    doMC, testthat
 LazyData: Yes
 License: Apache License (== 2.0) | file LICENSE
+URL: https://github.com/patperry/r-mbest
 Encoding: UTF-8
-LinkingTo: Rcpp
-RoxygenNote: 5.0.1
