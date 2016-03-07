@@ -15,6 +15,7 @@
 
 
 mhglm.control <- function(standardize = TRUE, steps = 1,
+                          parallel = FALSE, verbose = FALSE,
                           fit.method = "firthglm.fit",
                           fit.control = list(...), ...)
 {
@@ -22,6 +23,10 @@ mhglm.control <- function(standardize = TRUE, steps = 1,
         stop("value of 'standardize' must be TRUE or FALSE")
     if (!is.numeric(steps) || steps < 0)
         stop("number of steps must be >= 0")
+    if (!is.logical(parallel) || is.na(parallel))
+        stop("value of 'parallel' must be TRUE or FALSE")
+    if (!is.logical(verbose) || is.na(verbose))
+        stop("value of 'verbose' must be TRUE or FALSE")
 
     if (!is.character(fit.method) && !is.function(fit.method))
         stop("invalid 'fit.method' argument")
@@ -30,8 +35,9 @@ mhglm.control <- function(standardize = TRUE, steps = 1,
     if (identical(fit.method, "glm.fit"))
         fit.control <- do.call("glm.control", fit.control)
 
-    list(standardize = standardize, steps = steps,
-         fit.method = fit.method, fit.control = fit.control)
+    list(standardize = standardize, steps = steps, parallel = parallel,
+         verbose = verbose, fit.method = fit.method,
+         fit.control = fit.control)
 }
 
 
@@ -39,9 +45,8 @@ mhglm <- function(formula, family = gaussian, data, weights, subset,
                   na.action, start = NULL, etastart, mustart, offset,
                   control = list(), model = TRUE, method = "mhglm.fit",
                   x = FALSE, z = FALSE, y = TRUE, group = TRUE,
-                  contrasts = NULL, parallel = FALSE, verbose=FALSE)
+                  contrasts = NULL)
 {
-    if(verbose) logging::basicConfig("INFO")
     # call
     call <- match.call()
 
@@ -77,6 +82,9 @@ mhglm <- function(formula, family = gaussian, data, weights, subset,
     if (identical(method, "mhglm.fit"))
         control <- do.call("mhglm.control", control)
 
+    if(control$verbose)
+        logging::basicConfig("INFO")
+
     # terms
     mt <- attr(mf, "terms")
 
@@ -89,13 +97,17 @@ mhglm <- function(formula, family = gaussian, data, weights, subset,
             names(Y) <- nm
     }
 
-    if(verbose) logging::loginfo("Creating design matrix")
+    if(control$verbose)
+        logging::loginfo("Creating design matrix")
+
     mt.fixed <- delete.response(terms(lme4::nobars(formula), data=data))
     X <- if (!is.empty.model(mt.fixed))
         model.matrix(mt.fixed, mf, contrasts)
     else matrix(, NROW(Y), 0L)
 
-    if(verbose) logging::loginfo("grouping factor and random effect design matrix")
+    if(control$verbose)
+        logging::loginfo("Grouping factor and random effect design matrix")
+
     bars <- lme4::findbars(formula)
     if (length(bars) >= 2L)
         stop("Can specify at most one random effect term")
@@ -122,14 +134,18 @@ mhglm <- function(formula, family = gaussian, data, weights, subset,
         Z <- matrix(, NROW(Y), 0L)
     }
 
-    if(verbose) logging::loginfo("weights")
+    if(control$verbose)
+        logging::loginfo("Setting weights")
+
     weights <- as.vector(model.weights(mf))
     if (!is.null(weights) && !is.numeric(weights))
         stop("'weights' must be a numeric vector")
     if (!is.null(weights) && any(weights < 0))
         stop("negative weights not allowed")
 
-    if(verbose) logging::loginfo("offset")
+    if(control$verbose)
+        logging::loginfo("Setting offset")
+
     offset <- as.vector(model.offset(mf))
     if (!is.null(offset)) {
         if (length(offset) != NROW(Y))
@@ -146,7 +162,7 @@ mhglm <- function(formula, family = gaussian, data, weights, subset,
                      x = X, z = Z, y = Y, group = Group,
                      weights = weights, start = start, etastart = etastart,
                      mustart = mustart, offset = offset, family = family,
-                     control = control, parallel = parallel, verbose=verbose,
+                     control = control,
                      intercept = attr(mt.fixed, "intercept") > 0L))
     fit$contrasts.fixed <- attr(X, "contrasts")
     fit$contrasts.random <- attr(Z, "contrasts")

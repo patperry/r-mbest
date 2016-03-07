@@ -6,7 +6,7 @@ require(doMC)
 registerDoMC(4)
 
 test_that("succeeds on sleepstudy", {
-    model <- mhglm(Reaction ~ Days + (Days | Subject), data=sleepstudy, parallel=FALSE)
+    model <- mhglm(Reaction ~ Days + (Days | Subject), data=sleepstudy)
 
     # fixef
     fixef0 <- c("(Intercept)" = 251.4, "Days" = 10.5)
@@ -44,7 +44,8 @@ test_that("succeeds on sleepstudy", {
 
 test_that("succeeds on sleepstudy in parallel", {
     
-    model <- mhglm(Reaction ~ Days + (Days | Subject), data=sleepstudy, parallel=TRUE)
+    model <- mhglm(Reaction ~ Days + (Days | Subject), data=sleepstudy,
+                   control=list(parallel=TRUE))
     # fixef
     fixef0 <- c("(Intercept)" = 251.4, "Days" = 10.5)
     expect_that(round(fixef(model), 1), equals(fixef0))
@@ -83,7 +84,7 @@ test_that("succeeds on sleepstudy in parallel", {
 test_that("succeeds on cbpp", {
     suppressWarnings({
         model <- mhglm(cbind(incidence, size - incidence) ~ period + (period | herd),
-                       data=cbpp, family=binomial, parallel=FALSE)
+                       data=cbpp, family=binomial)
     })
 
     # fixef
@@ -130,7 +131,8 @@ test_that("succeeds on cbpp", {
 test_that("succeeds on cbpp in parallel", {
     suppressWarnings({
         model <- mhglm(cbind(incidence, size - incidence) ~ period + (period | herd),
-                       data=cbpp, family=binomial, parallel=TRUE)
+                       data=cbpp, family=binomial,
+                       control=list(parallel=TRUE))
     })
 
     # fixef

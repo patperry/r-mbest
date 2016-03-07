@@ -16,8 +16,7 @@
 mhglm.fit <- function(x, z, y, group, weights = rep(1, nobs),
                       start = NULL, etastart = NULL, mustart = NULL,
                       offset = rep(0, nobs), family = gaussian(),
-                      control = list(), intercept = TRUE, 
-                      parallel = FALSE, verbose=FALSE)
+                      control = list(), intercept = TRUE)
 {
     control <- do.call("mhglm.control", control)
     x <- as.matrix(x)
@@ -44,11 +43,14 @@ mhglm.fit <- function(x, z, y, group, weights = rep(1, nobs),
     }
 
     # group-specific estimates
-    m <- rdglm.group.fit(x = cbind(x, z), y = y, group = group, weights = weights,
-                         start = start, etastart = etastart, mustart = mustart,
+    m <- rdglm.group.fit(x = cbind(x, z), y = y, group = group,
+                         weights = weights, start = start,
+                         etastart = etastart, mustart = mustart,
                          offset = offset, family = family, 
-                         parallel = parallel, verbose=verbose,
-                         control = control$fit.control, method = control$fit.method,
+                         parallel = control$parallel,
+                         verbose = control$verbose,
+                         control = control$fit.control,
+                         method = control$fit.method,
                          intercept = intercept)
     ngroups <- m$ngroups
 
@@ -63,7 +65,7 @@ mhglm.fit <- function(x, z, y, group, weights = rep(1, nobs),
     # compute group-sqecific precision square root (unpivoted)
     Rp <- as.list(rep(NULL, ngroups))
 
-    if(parallel) {
+    if(control$parallel) {
       Rp <- foreach(i = seq_len(ngroups)) %dopar% {
         qr.i <- m$qr[[i]]
         rank.i <- qr.i$rank
@@ -95,7 +97,7 @@ mhglm.fit <- function(x, z, y, group, weights = rep(1, nobs),
     if (control$standardize) {
         # compute averge precision of estimates
         prec.avg <- matrix(0, nvars, nvars)
-        if(parallel) {
+        if(control$parallel) {
           prec.avg <- foreach(i = seq_len(ngroups)) %dopar% {
             scale.i <- sqrt(1/dispersion[i])
             return(crossprod(scale.i * Rp[[i]]))
@@ -161,7 +163,7 @@ mhglm.fit <- function(x, z, y, group, weights = rep(1, nobs),
     coef <- m$coefficients[,pivot[r1],drop=FALSE] %*% t(R)
 
     # compute group-specific subspace and precisions
-    if(parallel) {
+    if(control$parallel) {
       results <- foreach(i = seq_len(ngroups)) %dopar% {
         if (nrow(Rp[[i]]) > 0L) {
           prec.sqrt <- backsolve(R, t(Rp[[i]][,pivot[r1],drop=FALSE]),
@@ -202,11 +204,13 @@ mhglm.fit <- function(x, z, y, group, weights = rep(1, nobs),
         for (s in seq_len(control$steps)) {
             est0 <- moment.est(coef, nfixed=rank.fixed, subspace, precision,
                                dispersion, start.cov=est0$cov, 
-                               parallel=parallel, verbose=verbose)
+                               parallel=control$parallel,
+                               verbose=control$verbose)
         }
     })
     est <- moment.est(coef, nfixed=rank.fixed, subspace, precision, dispersion,
-                      start.cov=est0$cov, parallel=parallel)
+                      start.cov=est0$cov, parallel=control$parallel,
+                      verbose=control$verbose)
     mean <- est$mean
     mean.cov <- est$mean.cov
     cov <- est$cov
