@@ -7,15 +7,15 @@ title <- paste(meta$Package, meta$Title, sep=": ")
 year <- sub(".*(2[[:digit:]]{3})-.*", "\\1", meta$Date)
 vers <- paste("R package version", meta$Version)
 
-citEntry(entry="Unpublished",
-         title="Fast Moment-Based Estimation for Hierarchical Models",
+citEntry(entry="Article",
          author=personList(as.person("Patrick O. Perry")),
-         year="2014", note="Submitted for publication",
-         textVersion=paste("P. O. Perry (2015).",
-                           "Fast Moment-Based Estimation for Hierarchical Models.",
-                           "Submitted for publication."))
-
-#citEntry(entry="Manual", title=title,
-#         author=personList(as.person(meta$Author)),
-#         year=year, note=vers,
-#         textVersion=paste(meta$Author, " ", "(", year, "). ", title, ". ", vers, ".", sep="" )) 
+         year="2016",
+         title="Fast moment-based estimation for hierarchical models",
+         journal=paste0("Journal of the Royal Statistical Society:",
+                        " Series B (Statistical Methodology)"),
+         note="Forthcoming",
+         textVersion=paste0("P. O. Perry (2016). Fast moment-based",
+                            " estimation for hierarchical models.",
+                            " Journal of the Royal Statistical Society:",
+                            " Series B (Statistical Methodology).",
+                            " Forthcoming."))
