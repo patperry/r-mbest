@@ -47,53 +47,55 @@ rdglm.group.fit <- function(x, y, group, weights = rep(1, nobs), start = NULL,
     .Call(C_rdglm_index_loop, group.int, subset)
 
     if(parallel) {
-      logging::loginfo("Fitting models in parallel", logger="mbest.mhglm.fit")
-      results <- foreach(i=seq_len(ngroups)) %dopar% {
-        j <- subset[[i]]
-        yj <- if (is.matrix(y))
-            y[j,,drop=FALSE]
-        else y[j]
+        logging::loginfo("Fitting models in parallel", logger="mbest.mhglm.fit")
+        results <- foreach(i=seq_len(ngroups)) %dopar% {
+            j <- subset[[i]]
+            yj <- if (is.matrix(y))
+                y[j,,drop=FALSE]
+            else y[j]
 
-        model <- rdglm.fit(x = x[j,,drop=FALSE], y = yj, weights = weights[j],
-                           start = start, etastart = etastart[j],
-                           mustart = mustart[j], offset = offset[j],
-                           family = family, control = control,
-                           method = method, intercept = intercept)
+            model <- rdglm.fit(x = x[j,,drop=FALSE], y = yj,
+                               weights = weights[j], start = start,
+                               etastart = etastart[j], mustart = mustart[j],
+                               offset = offset[j], family = family,
+                               control = control, method = method,
+                               intercept = intercept)
 
+            return(list(model$coefficients,
+                        model$dispersion,
+                        model$df.residual,
+                        model$rank,
+                        model$qr))
+        }
 
-        return(list(model$coefficients,
-                    model$dispersion,
-                    model$df.residual,
-                    model$rank,
-                    model$qr))
-      }
-      coefficients <- t(vapply(results, function(x) x[[1]], numeric(nvars)))
-      dispersion <- vapply(results, function(x) x[[2]], numeric(1))
-      df.residual <- vapply(results, function(x) x[[3]], numeric(1))
-      rank <- lapply(results, function(x) x[[4]])
-      qr <- lapply(results, function(x) x[[5]])
-      rm(results)
+        coefficients <- t(vapply(results, function(x) x[[1]], numeric(nvars)))
+        dispersion <- vapply(results, function(x) x[[2]], numeric(1))
+        df.residual <- vapply(results, function(x) x[[3]], numeric(1))
+        rank <- lapply(results, function(x) x[[4]])
+        qr <- lapply(results, function(x) x[[5]])
+        rm(results)
+    } else {
+        logging::loginfo("Fitting models in sequence", logger="mbest.mhglm.fit")
+        for(i in seq_len(ngroups)) {
+            j <- subset[[i]]
+            yj <- if (is.matrix(y))
+                y[j,,drop=FALSE]
+            else y[j]
+
+            model <- rdglm.fit(x = x[j,,drop=FALSE], y = yj,
+                               weights = weights[j], start = start,
+                               etastart = etastart[j], mustart = mustart[j],
+                               offset = offset[j],
+                               parallel=parallel, # cast x as matrix each time
+                               family = family, control = control,
+                               method = method, intercept = intercept)
+            coefficients[i,] <- model$coefficients
+            dispersion[i] <- model$dispersion
+            df.residual[i] <- model$df.residual
+            rank[[i]] <- model$rank
+            qr[[i]] <- model$qr
+        }
     }
-    else { # non-parallel computation
-      for(i in seq_len(ngroups)) {
-        j <- subset[[i]]
-        yj <- if (is.matrix(y))
-          y[j,,drop=FALSE]
-        else y[j]
-
-        model <- rdglm.fit(x = x[j,,drop=FALSE], y = yj, weights = weights[j],
-                           start = start, etastart = etastart[j],
-                           mustart = mustart[j], offset = offset[j],
-                           parallel=parallel, # cast x as a matrix each time
-                           family = family, control = control,
-                           method = method, intercept = intercept)
-        coefficients[i,] <- model$coefficients
-        dispersion[i] <- model$dispersion
-        df.residual[i] <- model$df.residual
-        rank[[i]] <- model$rank
-        qr[[i]] <- model$qr
-      }
-    } # end non-parallel case
 
     colnames(coefficients) <- xnames
     rownames(coefficients) <- levels
