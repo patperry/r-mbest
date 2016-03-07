@@ -1,8 +1,8 @@
 
 context("mhglm")
 
-require(lme4)
-require(doMC)
+library("lme4")
+library("doMC")
 registerDoMC(4)
 
 test_that("succeeds on sleepstudy", {
