@@ -1,3 +1,3 @@
 library(mbest)
 library(testthat)
-test_package("mbest")
+test_check("mbest")
