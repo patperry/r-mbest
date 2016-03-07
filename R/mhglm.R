@@ -167,6 +167,7 @@ mhglm <- function(formula, family = gaussian, data, weights, subset,
     fit$group.levels <- levels(Group)
 
     fit$call <- call
+    fit$control <- control
     fit$terms <- mt
     fit$terms.fixed <- mt.fixed
     fit$terms.random <- mt.random
