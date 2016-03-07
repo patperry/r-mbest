@@ -18,7 +18,7 @@ rdglm.group.fit <- function(x, y, group, weights = rep(1, nobs), start = NULL,
                             etastart = NULL, mustart = NULL,
                             offset = rep(0, nobs), family = gaussian(),
                             control = list(), method = "firthglm.fit",
-                            intercept = TRUE, parallel=FALSE, verbose=FALSE)
+                            intercept = TRUE, parallel = FALSE)
 {
     if(parallel) x <- bigmemory::as.big.matrix(x, shared=TRUE)
     xnames <- dimnames(x)[[2L]]
@@ -47,7 +47,7 @@ rdglm.group.fit <- function(x, y, group, weights = rep(1, nobs), start = NULL,
     .Call(C_rdglm_index_loop, group.int, subset)
 
     if(parallel) {
-      if(verbose) logging::loginfo("Fitting models in ||")
+      logging::loginfo("Fitting models in parallel", logger="mbest.mhglm.fit")
       results <- foreach(i=seq_len(ngroups)) %dopar% {
         j <- subset[[i]]
         yj <- if (is.matrix(y))

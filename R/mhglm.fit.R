@@ -48,7 +48,6 @@ mhglm.fit <- function(x, z, y, group, weights = rep(1, nobs),
                          etastart = etastart, mustart = mustart,
                          offset = offset, family = family, 
                          parallel = control$parallel,
-                         verbose = control$verbose,
                          control = control$fit.control,
                          method = control$fit.method,
                          intercept = intercept)
@@ -199,18 +198,20 @@ mhglm.fit <- function(x, z, y, group, weights = rep(1, nobs),
     }
 
     # compute coefficient mean and covariance estimates
+    logging::loginfo("Computing mean and covariance estimates",
+                     logger="mbest.mhglm.fit")
     est0 <- NULL
     suppressWarnings({
         for (s in seq_len(control$steps)) {
             est0 <- moment.est(coef, nfixed=rank.fixed, subspace, precision,
                                dispersion, start.cov=est0$cov, 
-                               parallel=control$parallel,
-                               verbose=control$verbose)
+                               parallel=control$parallel)
+            logging::loginfo("Refining mean and covariance estimates",
+                             logger="mbest.mhglm.fit")
         }
     })
     est <- moment.est(coef, nfixed=rank.fixed, subspace, precision, dispersion,
-                      start.cov=est0$cov, parallel=control$parallel,
-                      verbose=control$verbose)
+                      start.cov=est0$cov, parallel=control$parallel)
     mean <- est$mean
     mean.cov <- est$mean.cov
     cov <- est$cov

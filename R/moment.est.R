@@ -14,9 +14,9 @@
 
 
 moment.est <- function(coefficients, nfixed, subspace, precision, dispersion,
-                       start.cov = NULL, parallel=FALSE, verbose=FALSE)
+                       start.cov = NULL, parallel = FALSE)
 {
-    if(verbose) logging::loginfo("Estimating moments")
+    logging::loginfo("Estimating moments", logger="mbest.mhglm.fit")
     ngroups <- nrow(coefficients)
     dim <- ncol(coefficients)
     nrandom <- dim - nfixed
@@ -34,8 +34,9 @@ moment.est <- function(coefficients, nfixed, subspace, precision, dispersion,
     if (is.null(start.cov))
         start.cov <- diag(nrandom)
 
+    logging::loginfo("Computing mean estimate and covariance bias correction",
+                     logger="mbest.mhglm.fit")
     if(parallel) {
-      if(verbose) logging::loginfo("compute mean estimate and covariance bias correction")
       results <- foreach(i = seq_len(ngroups)) %dopar% {
         u <- subspace[[i]]
         u1 <- u[fixed,,drop=FALSE]
@@ -151,8 +152,8 @@ moment.est <- function(coefficients, nfixed, subspace, precision, dispersion,
 
     attr(mean, "deficient") <- attr(mean.cov, "deficient") <- NULL
 
+    logging::loginfo("Computing covariance estimate", logger="mbest.mhglm.fit")
     if(parallel) {
-      if(verbose) logging::loginfo("compute covariance estimate")
       results <- foreach(i=seq_len(ngroups)) %dopar% {
         w12 <- weight12[[i]]
         w22 <- weight22[[i]]
@@ -185,7 +186,8 @@ moment.est <- function(coefficients, nfixed, subspace, precision, dispersion,
       wt.bias <- apply(bias, c(2, 3), mean)
     }
 
-    if(verbose) logging::loginfo("construct an orthonormal basis for the space of symmetric")
+    logging::loginfo("Constructing an orthonormal basis for symmetric space",
+                     logger="mbest.mhglm.fit")
     q <- nrandom
     FF <- matrix(0, q^2, q * (q + 1) / 2)
     j <- 0
@@ -203,7 +205,7 @@ moment.est <- function(coefficients, nfixed, subspace, precision, dispersion,
         }
     }
 
-    if(verbose) logging::loginfo("solve the moment equations")
+    logging::loginfo("Solving moment equations", logger="mbest.mhglm.fit")
     tF.wtot2.F <- t(FF) %*% wtot2 %*% FF
     cov.vec <- pseudo.solve(tF.wtot2.F, t(FF) %*% as.vector(wt.cov))
     bias.vec <- pseudo.solve(tF.wtot2.F, t(FF) %*% as.vector(wt.bias))

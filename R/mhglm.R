@@ -14,8 +14,7 @@
 
 
 
-mhglm.control <- function(standardize = TRUE, steps = 1,
-                          parallel = FALSE, verbose = FALSE,
+mhglm.control <- function(standardize = TRUE, steps = 1, parallel = FALSE,
                           fit.method = "firthglm.fit",
                           fit.control = list(...), ...)
 {
@@ -25,8 +24,6 @@ mhglm.control <- function(standardize = TRUE, steps = 1,
         stop("number of steps must be >= 0")
     if (!is.logical(parallel) || is.na(parallel))
         stop("value of 'parallel' must be TRUE or FALSE")
-    if (!is.logical(verbose) || is.na(verbose))
-        stop("value of 'verbose' must be TRUE or FALSE")
 
     if (!is.character(fit.method) && !is.function(fit.method))
         stop("invalid 'fit.method' argument")
@@ -36,8 +33,7 @@ mhglm.control <- function(standardize = TRUE, steps = 1,
         fit.control <- do.call("glm.control", fit.control)
 
     list(standardize = standardize, steps = steps, parallel = parallel,
-         verbose = verbose, fit.method = fit.method,
-         fit.control = fit.control)
+         fit.method = fit.method, fit.control = fit.control)
 }
 
 
@@ -82,9 +78,6 @@ mhglm <- function(formula, family = gaussian, data, weights, subset,
     if (identical(method, "mhglm.fit"))
         control <- do.call("mhglm.control", control)
 
-    if(control$verbose)
-        logging::basicConfig("INFO")
-
     # terms
     mt <- attr(mf, "terms")
 
@@ -97,16 +90,15 @@ mhglm <- function(formula, family = gaussian, data, weights, subset,
             names(Y) <- nm
     }
 
-    if(control$verbose)
-        logging::loginfo("Creating design matrix")
+    logging::loginfo("Creating design matrix", logger="mbest.mhglm")
 
     mt.fixed <- delete.response(terms(lme4::nobars(formula), data=data))
     X <- if (!is.empty.model(mt.fixed))
         model.matrix(mt.fixed, mf, contrasts)
     else matrix(, NROW(Y), 0L)
 
-    if(control$verbose)
-        logging::loginfo("Grouping factor and random effect design matrix")
+    logging::loginfo("Grouping factor and random effect design matrix",
+                     logger="mbest.mhglm")
 
     bars <- lme4::findbars(formula)
     if (length(bars) >= 2L)
@@ -134,8 +126,7 @@ mhglm <- function(formula, family = gaussian, data, weights, subset,
         Z <- matrix(, NROW(Y), 0L)
     }
 
-    if(control$verbose)
-        logging::loginfo("Setting weights")
+    logging::loginfo("Setting weights", logger="mbest.mhglm")
 
     weights <- as.vector(model.weights(mf))
     if (!is.null(weights) && !is.numeric(weights))
@@ -143,8 +134,7 @@ mhglm <- function(formula, family = gaussian, data, weights, subset,
     if (!is.null(weights) && any(weights < 0))
         stop("negative weights not allowed")
 
-    if(control$verbose)
-        logging::loginfo("Setting offset")
+    logging::loginfo("Setting offset", logger="mbest.mhglm")
 
     offset <- as.vector(model.offset(mf))
     if (!is.null(offset)) {
@@ -158,6 +148,7 @@ mhglm <- function(formula, family = gaussian, data, weights, subset,
     etastart <- model.extract(mf, "etastart")
 
     # group-specific estimates
+    logging::loginfo("Fitting model", logger="mbest.mhglm")
     fit <- eval(call(if (is.function(method)) "method" else method,
                      x = X, z = Z, y = Y, group = Group,
                      weights = weights, start = start, etastart = etastart,
