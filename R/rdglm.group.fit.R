@@ -42,7 +42,6 @@ rdglm.group.fit <- function(x, y, group, weights = rep(1, nobs), start = NULL,
     group.int <- as.integer(group) # observation index => index of its group
     group.size <- tabulate(group.int, ngroups) # group index => # obs in that group
     subset <- lapply(group.size, integer) # group => vector of indices
-    group.pos <- integer(ngroups)
 
     .Call(C_rdglm_index_loop, group.int, subset)
 
