@@ -20,7 +20,6 @@ rdglm.group.fit <- function(x, y, group, weights = rep(1, nobs), start = NULL,
                             control = list(), method = "firthglm.fit",
                             intercept = TRUE, parallel = FALSE)
 {
-    if(parallel) x <- bigmemory::as.big.matrix(x, shared=TRUE)
     xnames <- dimnames(x)[[2L]]
     ynames <- if (is.matrix(y))
         rownames(y)
@@ -42,6 +41,9 @@ rdglm.group.fit <- function(x, y, group, weights = rep(1, nobs), start = NULL,
 
     if(parallel) {
         logging::loginfo("Fitting models in parallel", logger="mbest.mhglm.fit")
+
+        x <- bigmemory::as.big.matrix(x, shared=TRUE)
+
         results <- foreach(i=seq_len(ngroups)) %dopar% {
             j <- subsets[[i]]
             yj <- if (is.matrix(y))
@@ -70,6 +72,9 @@ rdglm.group.fit <- function(x, y, group, weights = rep(1, nobs), start = NULL,
         rm(results)
     } else {
         logging::loginfo("Fitting models in sequence", logger="mbest.mhglm.fit")
+
+        x <- as.matrix(x)
+
         for(i in seq_len(ngroups)) {
             j <- subsets[[i]]
             yj <- if (is.matrix(y))
@@ -80,7 +85,6 @@ rdglm.group.fit <- function(x, y, group, weights = rep(1, nobs), start = NULL,
                                weights = weights[j], start = start,
                                etastart = etastart[j], mustart = mustart[j],
                                offset = offset[j],
-                               parallel=parallel, # cast x as matrix each time
                                family = family, control = control,
                                method = method, intercept = intercept)
             coefficients[i,] <- model$coefficients
