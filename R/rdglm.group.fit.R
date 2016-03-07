@@ -29,8 +29,9 @@ rdglm.group.fit <- function(x, y, group, weights = rep(1, nobs), start = NULL,
     nvars <- ncol(x)
 
     group <- as.factor(group)
+    ngroups <- nlevels(group)
     levels <- levels(group)
-    ngroups <- length(levels)
+    subsets <- .Call(C_group_subsets, group, ngroups) # group => indices
 
     coefficients <- matrix(NA, ngroups, nvars)
     dispersion <- rep(NA, ngroups)
@@ -39,16 +40,10 @@ rdglm.group.fit <- function(x, y, group, weights = rep(1, nobs), start = NULL,
     rank <- rep(as.integer(NA), ngroups)
     qr <- as.list(rep(NULL, ngroups))
 
-    group.int <- as.integer(group) # observation index => index of its group
-    group.size <- tabulate(group.int, ngroups) # group index => # obs in that group
-    subset <- lapply(group.size, integer) # group => vector of indices
-
-    .Call(C_rdglm_index_loop, group.int, subset)
-
     if(parallel) {
         logging::loginfo("Fitting models in parallel", logger="mbest.mhglm.fit")
         results <- foreach(i=seq_len(ngroups)) %dopar% {
-            j <- subset[[i]]
+            j <- subsets[[i]]
             yj <- if (is.matrix(y))
                 y[j,,drop=FALSE]
             else y[j]
@@ -76,7 +71,7 @@ rdglm.group.fit <- function(x, y, group, weights = rep(1, nobs), start = NULL,
     } else {
         logging::loginfo("Fitting models in sequence", logger="mbest.mhglm.fit")
         for(i in seq_len(ngroups)) {
-            j <- subset[[i]]
+            j <- subsets[[i]]
             yj <- if (is.matrix(y))
                 y[j,,drop=FALSE]
             else y[j]

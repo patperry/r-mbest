@@ -17,6 +17,6 @@
 #ifndef RMBEST_H
 #define RMBEST_H
 
-SEXP rdglm_index_loop(SEXP sgroup, SEXP subset);
+SEXP group_subsets(SEXP group, SEXP ngroups);
 
 #endif /* RMBEST_H */

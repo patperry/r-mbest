@@ -21,7 +21,7 @@
 #define CALLDEF(name, n)  {#name, (DL_FUNC) &name, n}
 
 static const R_CallMethodDef CallEntries[] = {
-        CALLDEF(rdglm_index_loop, 2),
+        CALLDEF(group_subsets, 2),
 	{NULL, NULL, 0}
 };
 
