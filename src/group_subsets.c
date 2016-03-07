@@ -43,7 +43,7 @@ SEXP group_subsets(SEXP sgroup, SEXP sngroups)
 	group_size = (void *)R_alloc(ngroups, sizeof(*group_size));
 	memset(group_size, 0, ngroups * sizeof(*group_size));
 
-	for(i = 0; i < nobs; i++) {
+	for (i = 0; i < nobs; i++) {
 		sg = group[i];
 		if (sg == NA_INTEGER || sg <= 0) {
 			/* ignore observations with invalid group indices */
@@ -62,7 +62,7 @@ SEXP group_subsets(SEXP sgroup, SEXP sngroups)
 	}
 
 	/* copy group index vectors */
-	for(i = 0; i < nobs; i++) {
+	for (i = 0; i < nobs; i++) {
 		sg = group[i];
 		if (sg == NA_INTEGER || sg <= 0) {
 			continue;
