@@ -1,13 +1,11 @@
 context("mhglm")
 
 library("lme4")
-library("doMC")
 library(logging)
 
 test_that("sleepstudy predictions regression test", {
     m_seq <- mhglm(Reaction ~ Days + (Days | Subject), data=sleepstudy,
                  control=list(parallel=FALSE))
-    registerDoMC(2)
     basicConfig("INFO")
     m_par <- mhglm(Reaction ~ Days + (Days | Subject), data=sleepstudy,
                  control=list(parallel=TRUE))
@@ -38,13 +36,11 @@ test_that("Simulated data predictions regression test", {
     test.df <- train.df
     test.df$y <- 1 + test.df$x * test.df$beta + .75*rnorm(n = J*N)
     
-    registerDoMC(6)
     mhglm(y ~ x + (1+x|unit), data = train.df,
           control=list(parallel=TRUE))
   
     m_seq <- mhglm(y ~ 1 + x + (1+x|unit), data = train.df,
                    control=list(parallel=FALSE))
-    registerDoMC(4)
     basicConfig("INFO")
     m_par <- mhglm(y ~ 1 + x + (1 + x | unit), data=train.df,
                    control=list(parallel=TRUE))
