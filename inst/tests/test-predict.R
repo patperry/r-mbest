@@ -59,3 +59,4 @@ test_that("Simulated data predictions regression test", {
     expect_equal(sequential_predictions[['residual.scale']], 
                  parallel_predictions[['residual.scale']])
 })
+
