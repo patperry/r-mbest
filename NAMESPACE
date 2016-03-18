@@ -25,6 +25,7 @@ importFrom("bigmemory", as.big.matrix)
 importFrom("logging", loginfo)
 importFrom("foreach", foreach, "%dopar%")
 
+
 ## Exports
 export(VarCorr.mhglm)
 export(firthglm.control)

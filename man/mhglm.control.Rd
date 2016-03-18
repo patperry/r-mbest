@@ -9,7 +9,7 @@ internally by \code{\link{mhglm.fit}}, but may be used to construct a
 control argument to either function.
 }
 \usage{
-mhglm.control(standardize = TRUE, steps = 1, parallel = FALSE,
+mhglm.control(standardize = TRUE, steps = 1, parallel = FALSE, diagcov = FALSE,
               fit.method = "firthglm.fit", fit.control = list(...), ...)
 }
 \arguments{
@@ -22,6 +22,9 @@ mhglm.control(standardize = TRUE, steps = 1, parallel = FALSE,
 }
   \item{parallel}{
     fit the group-specific estimates in parallel rather than sequentially
+}
+  \item{diagcov}{
+    estimate random effect covairance matrix with diagonal approximation 
 }
   \item{fit.method}{
     method for obtaining group-specific effect estimates

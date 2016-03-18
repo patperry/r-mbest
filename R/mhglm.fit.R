@@ -67,27 +67,14 @@ mhglm.fit <- function(x, z, y, group, weights = rep(1, nobs),
 
     if(control$parallel) {
         Rp <- foreach(i = seq_len(ngroups)) %dopar% {
-            qr.i <- m$qr[[i]]
-            rank.i <- qr.i$rank
-            Rp <- matrix(0, rank.i, nvars)
-            if (rank.i > 0L) {
-                R.i <- qr.R(qr.i)
-                pivot.i <- qr.i$pivot
-                Rp[, pivot.i] <- R.i[seq_len(rank.i), ]
-            }
-            return(Rp)
-        }
+	  qr.i <- m$qr[[i]]
+	  return(unpivotRp(qr.i,nvars))
+	}
     } else {
         for(i in seq_len(ngroups)) {
-            qr.i <- m$qr[[i]]
-            rank.i <- qr.i$rank
-            Rp[[i]] <- matrix(0, rank.i, nvars)
-            if (rank.i > 0L) {
-                R.i <- qr.R(qr.i)
-                pivot.i <- qr.i$pivot
-                Rp[[i]][,pivot.i] <- R.i[seq_len(rank.i),]
-            }
-        }
+	  qr.i <- m$qr[[i]]
+	  Rp[[i]] <- unpivotRp(qr.i,nvars)
+	}
     }
 
     # change coordinates so that average precision is identity
@@ -96,11 +83,11 @@ mhglm.fit <- function(x, z, y, group, weights = rep(1, nobs),
         # compute averge precision of estimates
         prec.avg <- matrix(0, nvars, nvars)
         if(control$parallel) {
-            prec.avg <- foreach(i = seq_len(ngroups)) %dopar% {
-                scale.i <- sqrt(1/dispersion[i])
-                return(crossprod(scale.i * Rp[[i]]))
-            }
-            prec.avg <- Reduce('+', prec.avg)
+	  prec.avg <- foreach(i = seq_len(ngroups)) %dopar% {
+	    scale.i <- sqrt(1/dispersion[i])
+	    return(crossprod(scale.i * Rp[[i]]))
+	  }
+	  prec.avg <- Reduce('+', prec.avg)
         } else {
             for (i in seq_len(ngroups)) {
                 scale.i <- sqrt(1/dispersion[i])
@@ -200,13 +187,13 @@ mhglm.fit <- function(x, z, y, group, weights = rep(1, nobs),
         for (s in seq_len(control$steps)) {
             est0 <- moment.est(coef, nfixed=rank.fixed, subspace, precision,
                                dispersion, start.cov=est0$cov, 
-                               parallel=control$parallel)
+                               parallel=control$parallel,diagcov = control$diagcov)
             logging::loginfo("Refining mean and covariance estimates",
                              logger="mbest.mhglm.fit")
         }
     })
     est <- moment.est(coef, nfixed=rank.fixed, subspace, precision, dispersion,
-                      start.cov=est0$cov, parallel=control$parallel)
+                      start.cov=est0$cov, parallel=control$parallel, diagcov = control$diagcov)
     mean <- est$mean
     mean.cov <- est$mean.cov
     cov <- est$cov

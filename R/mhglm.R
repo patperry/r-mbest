@@ -14,7 +14,8 @@
 
 
 
-mhglm.control <- function(standardize = TRUE, steps = 1, parallel = FALSE,
+mhglm.control <- function(standardize = TRUE, steps = 1, 
+			  parallel = FALSE, diagcov = FALSE,
                           fit.method = "firthglm.fit",
                           fit.control = list(...), ...)
 {
@@ -24,6 +25,8 @@ mhglm.control <- function(standardize = TRUE, steps = 1, parallel = FALSE,
         stop("number of steps must be >= 0")
     if (!is.logical(parallel) || is.na(parallel))
         stop("value of 'parallel' must be TRUE or FALSE")
+    if (!is.logical(diagcov) || is.na(diagcov))
+      stop("value of 'diagcov' must be TRUE or FALSE")
 
     if (!is.character(fit.method) && !is.function(fit.method))
         stop("invalid 'fit.method' argument")
@@ -32,7 +35,7 @@ mhglm.control <- function(standardize = TRUE, steps = 1, parallel = FALSE,
     if (identical(fit.method, "glm.fit"))
         fit.control <- do.call("glm.control", fit.control)
 
-    list(standardize = standardize, steps = steps, parallel = parallel,
+    list(standardize = standardize, steps = steps, parallel = parallel, diagcov = diagcov,
          fit.method = fit.method, fit.control = fit.control)
 }
 
