@@ -228,9 +228,9 @@ moment.est.cov.reducer.diag<- function(...)
   LHSinv <- solve(wtot2)
   diag_1 <- LHSinv %*% wt.cov
   diag_2 <- LHSinv %*% wt.bias
-#  gamma <- min(min(diag_1 / diag_2),1)
-#  cov <- diag( c(diag_1 - gamma * diag_2) , nrow = nrandom)
-  cov <- diag( c(diag_1 -  diag_2) , nrow = nrandom)
+  gamma <- min(min(diag_1 / diag_2),1)
+  cov <- diag( c(diag_1 - gamma * diag_2) , nrow = nrandom)
+# cov <- diag( c(diag_1 -  diag_2) , nrow = nrandom)
 
   cov <- proj.psd(cov)  # ensure positive definite
   if (attr(cov, "modified") )
