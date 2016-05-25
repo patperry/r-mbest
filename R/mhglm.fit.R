@@ -59,8 +59,8 @@ mhglm.fit <- function(x, z, y, group, weights = rep(1, nobs),
     df.residual.tot <- sum(m$df.residual)
     dispersion <- rep(dispersion.tot, ngroups)
 
-    if (dispersion.tot == 0)
-        stop("cannot estimate dispersion (no residual degrees of freedom)")
+#    if (dispersion.tot == 0)
+#        stop("cannot estimate dispersion (no residual degrees of freedom)")
 
     # compute group-sqecific precision square root (unpivoted)
     Rp <- as.list(rep(NULL, ngroups))
@@ -76,6 +76,7 @@ mhglm.fit <- function(x, z, y, group, weights = rep(1, nobs),
 	  Rp[[i]] <- unpivotRp(qr.i,nvars)
 	}
     }
+    names(Rp) <- names(m$qr)
 
     # change coordinates so that average precision is identity
 
@@ -178,6 +179,8 @@ mhglm.fit <- function(x, z, y, group, weights = rep(1, nobs),
             }
         }
     }
+    names(subspace) <- names(Rp)
+    names(precision) <- names(Rp)
 
     # compute coefficient mean and covariance estimates
     logging::loginfo("Computing mean and covariance estimates",
@@ -224,6 +227,7 @@ mhglm.fit <- function(x, z, y, group, weights = rep(1, nobs),
                 R = R, rank = rank, rank.fixed = rank.fixed,
                 rank.random = rank.random, pivot = pivot, y = y, group = group,
                 prior.weights = weights, offset = offset, nobs = nobs)
+		
     fit
 }
 
