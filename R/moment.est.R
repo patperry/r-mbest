@@ -31,6 +31,8 @@ moment.est.mean.mapper <- function(coefficients, nfixed, subspace, precision, di
   if (is.null(start.cov))
     start.cov <- diag(nrandom)
 
+
+
   # compute mean estimate and covariance bias correction
   weight11.sum <- matrix(0,  nfixed, nfixed)
   weight1.coef.sum <- matrix(0,  nfixed, 1)
@@ -126,6 +128,7 @@ moment.est.cov.mapper <- function(coefficients, nfixed, subspace, precision, dis
 
   if (is.null(start.cov))
     start.cov <- diag(nrandom)
+
 
   # compute mean estimate and covariance bias correction
   if(diagcov){
@@ -226,7 +229,7 @@ moment.est.cov.reducer <- function(ret, diagcov)
   nrandom <- nrow(wt.bias)
 
   if(diagcov){
-    LHSinv <- solve(wtot2)
+    LHSinv <- pseudo.solve(wtot2)
     diag_1 <- LHSinv %*% wt.cov
     diag_2 <- LHSinv %*% wt.bias
 
