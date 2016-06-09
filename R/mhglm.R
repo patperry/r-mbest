@@ -103,7 +103,15 @@ mhglm <- function(formula, family = gaussian, data, weights, subset,
     logging::loginfo("Grouping factor and random effect design matrix",
                      logger="mbest.mhglm")
 
+    if(lme4::expandDoubleVerts(formula) != formula){
+      control$diagcov <- TRUE
+      formula <- singlebars(formula)
+    } else {
+      control$diagcov <- FALSE
+    }
+
     bars <- lme4::findbars(formula)
+
     if (length(bars) >= 2L)
         stop("Can specify at most one random effect term")
     if (length(bars) == 1L) {
@@ -602,4 +610,20 @@ print.mhglm <- function(x, digits = max(3L, getOption("digits") - 3L),
         sep="")
 
     cat("\n")
+}
+
+
+singlebars <-  function (term)
+{
+  if (is.name(term) || !is.language(term))
+    return(term)
+  if (length(term) == 2) {
+    term[[2]] <- singlebars(term[[2]])
+    return(term)
+  }
+  stopifnot(length(term) >= 3)
+  if (is.call(term) && term[[1]] == as.name("||"))
+    term[[1]] <- as.name("|")
+  for (j in 2:length(term)) term[[j]] <- singlebars(term[[j]])
+  term
 }
