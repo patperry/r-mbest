@@ -59,8 +59,8 @@ mhglm.fit <- function(x, z, y, group, weights = rep(1, nobs),
     df.residual.tot <- sum(m$df.residual)
     dispersion <- rep(dispersion.tot, ngroups)
 
-#    if (dispersion.tot == 0)
-#        stop("cannot estimate dispersion (no residual degrees of freedom)")
+    if (dispersion.tot == 0)
+        warning("cannot estimate dispersion (no residual degrees of freedom)")
 
     # compute group-sqecific precision square root (unpivoted)
     Rp <- as.list(rep(NULL, ngroups))
@@ -79,38 +79,52 @@ mhglm.fit <- function(x, z, y, group, weights = rep(1, nobs),
     names(Rp) <- names(m$qr)
 
     # change coordinates so that average precision is identity
-
     if (control$standardize) {
-        # compute averge precision of estimates
-        prec.avg <- matrix(0, nvars, nvars)
-        if(control$parallel) {
+      # compute averge precision of estimates
+
+      if(control$diagcov){
+	# if assuming independent covariates,
+	# standardize each column separately.
+	prec.avg <- rep(0, nvars)
+	for (i in seq_len(ngroups)) {
+	  scale.i <- sqrt(1/dispersion[i])
+	  prec.avg <- prec.avg + apply((scale.i * Rp[[i]])^2, 2,sum)
+	}
+	prec.avg <- diag(prec.avg,nrow = nvars)
+
+      } else {
+
+	prec.avg <- matrix(0, nvars, nvars)
+	if(control$parallel) {
 	  prec.avg <- foreach(i = seq_len(ngroups)) %dopar% {
 	    scale.i <- sqrt(1/dispersion[i])
 	    return(crossprod(scale.i * Rp[[i]]))
 	  }
 	  prec.avg <- Reduce('+', prec.avg)
-        } else {
-            for (i in seq_len(ngroups)) {
-                scale.i <- sqrt(1/dispersion[i])
-                prec.avg <- prec.avg + crossprod(scale.i * Rp[[i]])
-            }
-        }
-        prec.avg <- prec.avg / ngroups
+	} else {
+	  for (i in seq_len(ngroups)) {
+	    scale.i <- sqrt(1/dispersion[i])
+	    prec.avg <- prec.avg + crossprod(scale.i * Rp[[i]])
+	  }
+	}
+      }
 
-        # cov(coef) = (t(R) R)^{-1} = R^{-1} R^{-T}
-        # cov(R x) = R cov(x) R^T
-        # [cov(R x)]^{-1} = R^{-T} [cov(x)]^{-1} R^{-1}
-        suppressWarnings({
-            R.fixed <- chol(prec.avg[fixed,fixed], pivot = TRUE)
-            R.random <- chol(prec.avg[random,random], pivot = TRUE)
-        })
+      prec.avg <- prec.avg / ngroups
 
-        #pivot <- attr(R, "pivot")
-        #rank <- attr(R, "rank")
-        #r1.fixed <- seq_len(attr(R.fixed, "rank"))
-        #r1.random <- seq_len(attr(R.random, "rank"))
-        #R.fixed <- R.fixed[r1.fixed,r1.fixed,drop=FALSE]
-        #R.random <- R.random[r1.random,r1.random,drop=FALSE]
+      # cov(coef) = (t(R) R)^{-1} = R^{-1} R^{-T}
+      # cov(R x) = R cov(x) R^T
+      # [cov(R x)]^{-1} = R^{-T} [cov(x)]^{-1} R^{-1}
+      suppressWarnings({
+	R.fixed <- chol(prec.avg[fixed,fixed], pivot = TRUE)
+	R.random <- chol(prec.avg[random,random], pivot = TRUE)
+      })
+
+      #pivot <- attr(R, "pivot")
+      #rank <- attr(R, "rank")
+      #r1.fixed <- seq_len(attr(R.fixed, "rank"))
+      #r1.random <- seq_len(attr(R.random, "rank"))
+      #R.fixed <- R.fixed[r1.fixed,r1.fixed,drop=FALSE]
+      #R.random <- R.random[r1.random,r1.random,drop=FALSE]
     }
     else { # control.standardize==FALSE
         R.fixed <- diag(nfixed)
