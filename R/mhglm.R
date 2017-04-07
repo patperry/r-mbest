@@ -14,7 +14,8 @@
 
 
 
-mhglm.control <- function(standardize = TRUE, steps = 1, parallel = FALSE,
+mhglm.control <- function(standardize = TRUE, steps = 1, 
+			  parallel = FALSE, diagcov = FALSE,
                           fit.method = "firthglm.fit",
                           fit.control = list(...), ...)
 {
@@ -24,6 +25,8 @@ mhglm.control <- function(standardize = TRUE, steps = 1, parallel = FALSE,
         stop("number of steps must be >= 0")
     if (!is.logical(parallel) || is.na(parallel))
         stop("value of 'parallel' must be TRUE or FALSE")
+    if (!is.logical(diagcov) || is.na(diagcov))
+      stop("value of 'diagcov' must be TRUE or FALSE")
 
     if (!is.character(fit.method) && !is.function(fit.method))
         stop("invalid 'fit.method' argument")
@@ -32,7 +35,7 @@ mhglm.control <- function(standardize = TRUE, steps = 1, parallel = FALSE,
     if (identical(fit.method, "glm.fit"))
         fit.control <- do.call("glm.control", fit.control)
 
-    list(standardize = standardize, steps = steps, parallel = parallel,
+    list(standardize = standardize, steps = steps, parallel = parallel, diagcov = diagcov,
          fit.method = fit.method, fit.control = fit.control)
 }
 
@@ -100,7 +103,15 @@ mhglm <- function(formula, family = gaussian, data, weights, subset,
     logging::loginfo("Grouping factor and random effect design matrix",
                      logger="mbest.mhglm")
 
+    if(lme4::expandDoubleVerts(formula) != formula){
+      control$diagcov <- TRUE
+      formula <- singlebars(formula)
+    } else {
+      control$diagcov <- FALSE
+    }
+
     bars <- lme4::findbars(formula)
+
     if (length(bars) >= 2L)
         stop("Can specify at most one random effect term")
     if (length(bars) == 1L) {
@@ -611,4 +622,20 @@ print.mhglm <- function(x, digits = max(3L, getOption("digits") - 3L),
         sep="")
 
     cat("\n")
+}
+
+
+singlebars <-  function (term)
+{
+  if (is.name(term) || !is.language(term))
+    return(term)
+  if (length(term) == 2) {
+    term[[2]] <- singlebars(term[[2]])
+    return(term)
+  }
+  stopifnot(length(term) >= 3)
+  if (is.call(term) && term[[1]] == as.name("||"))
+    term[[1]] <- as.name("|")
+  for (j in 2:length(term)) term[[j]] <- singlebars(term[[j]])
+  term
 }
