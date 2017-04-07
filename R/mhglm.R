@@ -448,16 +448,28 @@ ranef.mhglm <- function(object, condVar = FALSE, ...)
 
     if (condVar) {
         cov.eb1 <- attr(coef1, "postVar")
-        cov.eb <- array(NA, c(nrandom, nrandom, ngroups))
-        dimnames(cov.eb) <- list(colnames(object$coefficient.cov),
-                                 colnames(object$coefficient.cov),
-                                 gnames)
-
-        for (i in seq_len(ngroups)) {
-            (cov.eb[pivot.random[r1.random],pivot.random[r1.random],i]
-                <- backsolve(R.random, t(backsolve(R.random, cov.eb1[,,i]))))
+        
+        if (object$control$parallel) {
+            logging::loginfo("Calculating empirical bayes covariance in ||",
+                             logger="mbest.mhglm")
+            cov.eb <- foreach(i=seq_len(ngroups)) %dopar% {
+                backsolve(R.random, t(backsolve(R.random, cov.eb1[,,i])))
+            }
+            cov.eb <- lapply(cov.eb, function(x) {
+                x[pivot.random[r1.random], pivot.random[r1.random]] })
+            cov.eb <- do.call(c, cov.eb)
+            cov.eb <- array(cov.eb, c(nrandom, nrandom, ngroups))
+        }   
+        else {
+            cov.eb <- array(NA, c(nrandom, nrandom, ngroups))
+            for (i in seq_len(ngroups)) {
+                cov.eb[pivot.random[r1.random],pivot.random[r1.random], i] <-
+                    backsolve(R.random, t(backsolve(R.random, cov.eb1[,,i])))
+            }
         }
-
+        dimnames(cov.eb) <- list(colnames(object$coefficient.cov),
+                                     colnames(object$coefficient.cov),
+                                     gnames)
         attr(coef, "postVar") <- cov.eb
     }
 
