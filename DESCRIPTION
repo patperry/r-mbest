@@ -15,6 +15,7 @@ Imports:
     lme4,
     bigmemory,
     foreach,
+    doParallel,
     logging
 Suggests:
     testthat
