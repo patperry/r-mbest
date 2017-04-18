@@ -15,7 +15,7 @@
 
 
 mhglm.control <- function(standardize = TRUE, steps = 1, 
-			  parallel = FALSE, diagcov = FALSE,
+                          parallel = FALSE, diagcov = FALSE,
                           fit.method = "firthglm.fit",
                           fit.control = list(...), ...)
 {
@@ -70,7 +70,16 @@ mhglm <- function(formula, family = gaussian, data, weights, subset,
     mf <- mf[c(1L, m)]
     mf$drop.unused.levels <- TRUE
     mf[[1L]] <- quote(stats::model.frame)
-    mf$formula <- lme4::subbars(mf$formula)
+
+    # formula
+    form_env <- if (is.environment(data)) {
+        data
+    } else {
+        list2env(data)
+    }
+    formula <- as.formula(formula, env = form_env)
+    mf$formula <- lme4::subbars(formula)
+
     mf <- eval(mf, parent.frame())
 
     # method
