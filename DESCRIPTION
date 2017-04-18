@@ -15,9 +15,10 @@ Imports:
     lme4,
     bigmemory,
     foreach,
+    doParallel,
     logging
 Suggests:
-    doMC, testthat
+    testthat
 LazyData: Yes
 License: Apache License (== 2.0) | file LICENSE
 URL: https://github.com/patperry/r-mbest

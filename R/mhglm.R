@@ -14,7 +14,8 @@
 
 
 
-mhglm.control <- function(standardize = TRUE, steps = 1, parallel = FALSE,
+mhglm.control <- function(standardize = TRUE, steps = 1, 
+			  parallel = FALSE, diagcov = FALSE,
                           fit.method = "firthglm.fit",
                           fit.control = list(...), ...)
 {
@@ -24,6 +25,8 @@ mhglm.control <- function(standardize = TRUE, steps = 1, parallel = FALSE,
         stop("number of steps must be >= 0")
     if (!is.logical(parallel) || is.na(parallel))
         stop("value of 'parallel' must be TRUE or FALSE")
+    if (!is.logical(diagcov) || is.na(diagcov))
+      stop("value of 'diagcov' must be TRUE or FALSE")
 
     if (!is.character(fit.method) && !is.function(fit.method))
         stop("invalid 'fit.method' argument")
@@ -32,7 +35,7 @@ mhglm.control <- function(standardize = TRUE, steps = 1, parallel = FALSE,
     if (identical(fit.method, "glm.fit"))
         fit.control <- do.call("glm.control", fit.control)
 
-    list(standardize = standardize, steps = steps, parallel = parallel,
+    list(standardize = standardize, steps = steps, parallel = parallel, diagcov = diagcov,
          fit.method = fit.method, fit.control = fit.control)
 }
 
@@ -100,7 +103,15 @@ mhglm <- function(formula, family = gaussian, data, weights, subset,
     logging::loginfo("Grouping factor and random effect design matrix",
                      logger="mbest.mhglm")
 
+    if(lme4::expandDoubleVerts(formula) != formula){
+      control$diagcov <- TRUE
+      formula <- singlebars(formula)
+    } else {
+      control$diagcov <- FALSE
+    }
+
     bars <- lme4::findbars(formula)
+
     if (length(bars) >= 2L)
         stop("Can specify at most one random effect term")
     if (length(bars) == 1L) {
@@ -448,16 +459,28 @@ ranef.mhglm <- function(object, condVar = FALSE, ...)
 
     if (condVar) {
         cov.eb1 <- attr(coef1, "postVar")
-        cov.eb <- array(NA, c(nrandom, nrandom, ngroups))
-        dimnames(cov.eb) <- list(colnames(object$coefficient.cov),
-                                 colnames(object$coefficient.cov),
-                                 gnames)
-
-        for (i in seq_len(ngroups)) {
-            (cov.eb[pivot.random[r1.random],pivot.random[r1.random],i]
-                <- backsolve(R.random, t(backsolve(R.random, cov.eb1[,,i]))))
+        
+        if (object$control$parallel) {
+            logging::loginfo("Calculating empirical bayes covariance in ||",
+                             logger="mbest.mhglm")
+            cov.eb <- foreach(i=seq_len(ngroups)) %dopar% {
+                backsolve(R.random, t(backsolve(R.random, cov.eb1[,,i])))
+            }
+            cov.eb <- lapply(cov.eb, function(x) {
+                x[pivot.random[r1.random], pivot.random[r1.random]] })
+            cov.eb <- do.call(c, cov.eb)
+            cov.eb <- array(cov.eb, c(nrandom, nrandom, ngroups))
+        }   
+        else {
+            cov.eb <- array(NA, c(nrandom, nrandom, ngroups))
+            for (i in seq_len(ngroups)) {
+                cov.eb[pivot.random[r1.random],pivot.random[r1.random], i] <-
+                    backsolve(R.random, t(backsolve(R.random, cov.eb1[,,i])))
+            }
         }
-
+        dimnames(cov.eb) <- list(colnames(object$coefficient.cov),
+                                     colnames(object$coefficient.cov),
+                                     gnames)
         attr(coef, "postVar") <- cov.eb
     }
 
@@ -599,4 +622,20 @@ print.mhglm <- function(x, digits = max(3L, getOption("digits") - 3L),
         sep="")
 
     cat("\n")
+}
+
+
+singlebars <-  function (term)
+{
+  if (is.name(term) || !is.language(term))
+    return(term)
+  if (length(term) == 2) {
+    term[[2]] <- singlebars(term[[2]])
+    return(term)
+  }
+  stopifnot(length(term) >= 3)
+  if (is.call(term) && term[[1]] == as.name("||"))
+    term[[1]] <- as.name("|")
+  for (j in 2:length(term)) term[[j]] <- singlebars(term[[j]])
+  term
 }
