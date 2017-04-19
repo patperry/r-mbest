@@ -49,8 +49,12 @@ ebayes.est <- function(coefficients, nfixed, subspace, precision, dispersion,
 
         cov.ii <- t(u2s) %*% coef.cov %*% u2s
         h <- cov.ii + diag(dispersion, r, r)
-        w.diff <- u2s %*% solve(h, (t(u1s) %*% (coef[fixed] - coef.mu)
-                                    + t(u2s) %*% coef[random]))
+        #        w.diff <- u2s %*% solve(h, (t(u1s) %*% (coef[fixed] - coef.mu)
+        #                                    + t(u2s) %*% coef[random]))
+        w.diff <- u2s %*% pseudo.solve(h, (t(u1s) %*% (coef[fixed] - coef.mu)
+                                           + t(u2s) %*% coef[random]))
+
+
         coef.eb <- coef.cov %*% w.diff
 
         if (postVar) {
@@ -114,4 +118,138 @@ ebayes.group.est <- function(coefficients, nfixed, subspace, precision, dispersi
 
     coefficients.eb
 }
+
+ranef.unit <- function(object, condVar = FALSE, coefficient.mean = NULL, coefficient.cov = NULL, ...)
+{
+
+    if(is.null(coefficient.mean)){
+        coefficient.mean <- object$coefficient.mean
+    } 
+
+    if(is.null(coefficient.cov)){
+        coefficient.cov <- object$coefficient.cov
+    } 
+
+
+    nvars <- ncol(object$coefficients)
+    xnames <- names(object$coefficient.mean)
+    ngroups <- nrow(object$coefficients)
+    gnames <- rownames(object$coefficients)
+
+    R <- object$R
+    pivot <- object$pivot
+    rank <- object$rank
+    rank.fixed <- object$rank.fixed
+    rank.random <- object$rank.random
+    r1 <- seq_len(rank)
+    nfixed <- length(object$coefficient.mean)
+    nrandom <- nvars - nfixed
+    fixed <- seq_len(rank.fixed)
+    random <- rank.fixed + seq_len(rank.random)
+
+    R.fixed <- R[fixed,fixed,drop=FALSE]
+    pivot.fixed <- pivot[fixed]
+    coef.mean1 <- drop(R.fixed %*% coefficient.mean[pivot.fixed])
+
+    R.random <- R[random,random,drop=FALSE]
+    pivot.random <- pivot[random] - nfixed
+    coef.cov1 <- (R.random
+                  %*% coefficient.cov[pivot.random,
+                                      pivot.random,
+                                      drop=FALSE] %*% t(R.random))
+
+    coef1 <- ebayes.group.est(coefficients=object$coefficients,
+                              nfixed=rank.fixed,
+                              subspace=object$subspace,
+                              precision=object$precision,
+                              dispersion=rep(object$dispersion, ngroups),
+                              coefficient.mean=coef.mean1,
+                              coefficient.cov=coef.cov1,
+                              postVar=condVar)
+
+    # change back to original coordinates
+    r1.random <- seq_len(rank.random)
+    coef <- matrix(NA, ngroups, nrandom)
+    coef[,pivot.random[r1.random]] <- t(backsolve(R.random, t(coef1)))
+    colnames(coef) <- colnames(object$coefficient.cov)
+    rownames(coef) <- gnames
+    coef <- as.data.frame(coef)
+
+    if (condVar) {
+        cov.eb1 <- attr(coef1, "postVar")
+        cov.eb <- array(NA, c(nrandom, nrandom, ngroups))
+        dimnames(cov.eb) <- list(colnames(object$coefficient.cov),
+                                 colnames(object$coefficient.cov),
+                                 gnames)
+
+        for (i in seq_len(ngroups)) {
+            (cov.eb[pivot.random[r1.random],pivot.random[r1.random],i]
+             <- backsolve(R.random, t(backsolve(R.random, cov.eb1[,,i]))))
+        }
+
+        attr(coef, "postVar") <- cov.eb
+    }
+
+    re <- list()
+    group.name <- deparse(object$group.call[[2L]])
+    re[[group.name]] <- coef
+    class(re) <- "ranef.mhglm"
+    re
+}
+
+
+ebayes.est.topdown <- function
+(objectfit, condVar, coefficient.mean, coefficient.cov
+ ){
+
+    if(is.null(objectfit$ranef)){
+        objectfit$ranef <- ranef.unit(objectfit, condVar,
+                                      coefficient.mean = coefficient.mean, 
+                                      coefficient.cov = coefficient.cov)[[1]]
+        return(objectfit)
+    } else {
+
+        groupname <- levels(objectfit$group)
+        for(g in groupname){
+            objectfit[[g]] <- ebayes.est.topdown(objectfit[[g]], condVar,
+                                                 c(coefficient.mean,unlist(objectfit$ranef[g,])), coefficient.cov);
+        }
+
+        return(objectfit)
+
+    }
+}
+
+
+
+
+ebayes.est.print<- function
+(objectfit,r, condVar
+ ){
+    if(r==1){
+        return(objectfit$ranef)
+    } else {
+        groupname <- levels(objectfit$group)
+        estlist <- list()
+
+        for(i in seq_len(length(groupname))){
+            est <- ebayes.est.print(objectfit[[groupname[i]]],r-1, condVar)
+            #      rownames(est) <- paste0(groupname[i],":",rownames(est)) 
+            estlist[[i]] <- est
+        }
+        coef.eb <- Reduce('rbind',estlist)
+
+        if(condVar){
+            require(abind,quietly=TRUE)
+            ret <- lapply(estlist,function(x){attr(x,'postVar')})
+            cov.eb <- Reduce('abind',ret)
+            attr(coef.eb, "postVar") <- cov.eb
+        }
+
+        return(coef.eb)
+    }
+}
+
+
+
 
