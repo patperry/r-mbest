@@ -174,3 +174,32 @@ test_that("succeeds on cbpp in parallel", {
     expect_that(round(as.matrix(ranef(model)[["herd"]]), 1), equals(ranef0))
 })
 
+test_that("formula parameter takes character or variable input", {
+    formula_var <- Reaction ~ Days + (Days | Subject)
+    formula_char_vac <- "Reaction ~ Days + (Days | Subject)"
+
+    model <- mhglm(Reaction ~ Days + (Days | Subject), data=sleepstudy)
+    model_char <- mhglm("Reaction ~ Days + (Days | Subject)", data=sleepstudy)
+    model_var <- mhglm(formula_var, data=sleepstudy)
+    model_var_char <- mhglm(formula_char_vac, data=sleepstudy)
+
+    expect_equal(fixef(model), fixef(model_char))
+    expect_equal(fixef(model), fixef(model_var))
+    expect_equal(fixef(model), fixef(model_var_char))
+
+    expect_equal(ranef(model), ranef(model_char))
+    expect_equal(ranef(model), ranef(model_var))
+    expect_equal(ranef(model), ranef(model_var_char))
+})
+
+test_that("fit model with no data parameter", {
+    Reaction <- sleepstudy$Reaction
+    Days <- sleepstudy$Days
+    Subject <- sleepstudy$Subject
+
+    model <- mhglm(Reaction ~ Days + (Days | Subject), data=sleepstudy)
+    model_no_data <- mhglm(Reaction ~ Days + (Days | Subject))
+
+    expect_equal(fixef(model), fixef(model_no_data))
+    expect_equal(ranef(model), ranef(model_no_data))
+})
