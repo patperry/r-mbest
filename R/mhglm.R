@@ -39,6 +39,31 @@ mhglm.control <- function(standardize = TRUE, steps = 1,
          fit.method = fit.method, fit.control = fit.control)
 }
 
+mhglm_ml.control <- function(standardize = FALSE, steps = 1, 
+                          parallel = FALSE, diagcov = FALSE,
+                          fit.method = "firthglm.fit",
+                          fit.control = list(...), ...)
+{
+    # difference: standardize default to FALSE
+    if (!is.logical(standardize) || is.na(standardize))
+        stop("value of 'standardize' must be TRUE or FALSE")
+    if (!is.numeric(steps) || steps < 0)
+        stop("number of steps must be >= 0")
+    if (!is.logical(parallel) || is.na(parallel))
+        stop("value of 'parallel' must be TRUE or FALSE")
+    if (!is.logical(diagcov) || is.na(diagcov))
+        stop("value of 'diagcov' must be TRUE or FALSE")
+
+    if (!is.character(fit.method) && !is.function(fit.method))
+        stop("invalid 'fit.method' argument")
+    if (identical(fit.method, "firthglm.fit"))
+        fit.control <- do.call("firthglm.control", fit.control)
+    if (identical(fit.method, "glm.fit"))
+        fit.control <- do.call("glm.control", fit.control)
+
+    list(standardize = standardize, steps = steps, parallel = parallel, diagcov = diagcov,
+         fit.method = fit.method, fit.control = fit.control)
+}
 
 mhglm <- function(formula, family = gaussian, data, weights, subset,
                   na.action, start = NULL, etastart, mustart, offset,
@@ -239,7 +264,7 @@ mhglm_ml <- function(formula, family = gaussian, data, weights, subset,
     if (!is.character(method) && !is.function(method))
         stop("invalid 'method' argument")
     if (identical(method, "mhglm.fit.multilevel"))
-        control <- do.call("mhglm.control", control)
+        control <- do.call("mhglm_ml.control", control)
 
     # terms
     mt <- attr(mf, "terms")

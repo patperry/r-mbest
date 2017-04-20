@@ -45,8 +45,7 @@ test_that("succeeds on sleepstudy with two hiererchies", {
     set.seed(0)
     fakegroup <- paste0(sleepstudy[,'Subject'],"_",sample(c(1:2),180,replace = TRUE))
     sleepstudy2 <- data.frame(sleepstudy, fakegroup)
-    model <- suppressWarnings(mhglm_ml(Reaction ~ Days + (Days | Subject ) + (Days |  fakegroup), data = sleepstudy2,
-                      control = list(standardize = FALSE, diagcov = FALSE)))
+    model <- suppressWarnings(mhglm_ml(Reaction ~ Days + (Days | Subject ) + (Days |  fakegroup), data = sleepstudy2))
 
 
     # fixef
@@ -108,12 +107,11 @@ test_that("succeeds on parsing three-level models, using different formulas",{
     fakegroup <- sample(c(1:2),180,replace = TRUE)
     fakegroup2 <- paste0(sleepstudy[,'Subject'],"_",fakegroup)
     sleepstudy2 <- data.frame(sleepstudy, fakegroup, fakegroup2)
-    control <- list(standardize = FALSE, diagcov = FALSE)
-    model1 <- suppressWarnings(mhglm_ml(Reaction ~ Days + (Days | Subject) + (Days | fakegroup2 ), data = sleepstudy2, control = control))
-    model2 <- suppressWarnings(mhglm_ml(Reaction ~ Days + (Days | Subject/fakegroup ), data = sleepstudy2, control = control))
-    model3 <- suppressWarnings(mhglm_ml(Reaction ~ Days + (Days | Subject/fakegroup2 ), data = sleepstudy2,control = control))
-    model4 <- suppressWarnings(mhglm_ml(Reaction ~ Days + (Days | Subject) + (Days|Subject:fakegroup ), data = sleepstudy2,control = control))
-    model5 <- suppressWarnings(mhglm_ml(Reaction ~ Days + (Days | Subject) + (Days|Subject:fakegroup2 ), data = sleepstudy2,control = control))
+    model1 <- suppressWarnings(mhglm_ml(Reaction ~ Days + (Days | Subject) + (Days | fakegroup2 ), data = sleepstudy2))
+    model2 <- suppressWarnings(mhglm_ml(Reaction ~ Days + (Days | Subject/fakegroup ), data = sleepstudy2))
+    model3 <- suppressWarnings(mhglm_ml(Reaction ~ Days + (Days | Subject/fakegroup2 ), data = sleepstudy2))
+    model4 <- suppressWarnings(mhglm_ml(Reaction ~ Days + (Days | Subject) + (Days|Subject:fakegroup ), data = sleepstudy2))
+    model5 <- suppressWarnings(mhglm_ml(Reaction ~ Days + (Days | Subject) + (Days|Subject:fakegroup2 ), data = sleepstudy2))
 
 
     # fixef
