@@ -45,8 +45,8 @@ test_that("succeeds on sleepstudy with two hiererchies", {
     set.seed(0)
     fakegroup <- paste0(sleepstudy[,'Subject'],"_",sample(c(1:2),180,replace = TRUE))
     sleepstudy2 <- data.frame(sleepstudy, fakegroup)
-    model <- mhglm_ml(Reaction ~ Days + (Days | Subject ) + (Days |  fakegroup), data = sleepstudy2,
-                      control = list(standardize = FALSE, diagcov = FALSE))
+    model <- suppressWarnings(mhglm_ml(Reaction ~ Days + (Days | Subject ) + (Days |  fakegroup), data = sleepstudy2,
+                      control = list(standardize = FALSE, diagcov = FALSE)))
 
 
     # fixef
@@ -101,5 +101,69 @@ test_that("succeeds on sleepstudy with two hiererchies", {
     expect_that(round(as.matrix(ranef.est[[1]]),1), equals(ranef0_1))
     expect_that(round(as.matrix(ranef.est[[2]]),1), equals(ranef0_2))
 
+})
+
+test_that("succeeds on parsing three-level models, using different formulas",{
+    set.seed(0)
+    fakegroup <- sample(c(1:2),180,replace = TRUE)
+    fakegroup2 <- paste0(sleepstudy[,'Subject'],"_",fakegroup)
+    sleepstudy2 <- data.frame(sleepstudy, fakegroup, fakegroup2)
+    control <- list(standardize = FALSE, diagcov = FALSE)
+    model1 <- suppressWarnings(mhglm_ml(Reaction ~ Days + (Days | Subject) + (Days | fakegroup2 ), data = sleepstudy2, control = control))
+    model2 <- suppressWarnings(mhglm_ml(Reaction ~ Days + (Days | Subject/fakegroup ), data = sleepstudy2, control = control))
+    model3 <- suppressWarnings(mhglm_ml(Reaction ~ Days + (Days | Subject/fakegroup2 ), data = sleepstudy2,control = control))
+    model4 <- suppressWarnings(mhglm_ml(Reaction ~ Days + (Days | Subject) + (Days|Subject:fakegroup ), data = sleepstudy2,control = control))
+    model5 <- suppressWarnings(mhglm_ml(Reaction ~ Days + (Days | Subject) + (Days|Subject:fakegroup2 ), data = sleepstudy2,control = control))
+
+
+    # fixef
+    fixef0 <- c("(Intercept)"= 251.4, "Days" = 10.3)
+    expect_that(round(fixef(model1),1), equals(fixef0))
+    expect_that(round(fixef(model2),1), equals(fixef0))
+    expect_that(round(fixef(model3),1), equals(fixef0))
+    expect_that(round(fixef(model4),1), equals(fixef0))
+    expect_that(round(fixef(model5),1), equals(fixef0))
+
+    # ranef
+    ranef.est1  <- ranef(model1)
+    ranef.est2  <- ranef(model2)
+    ranef.est3  <- ranef(model3)
+    ranef.est4  <- ranef(model4)
+    ranef.est5  <- ranef(model5)
+    ranef0_1 <- matrix(c(9.8, -45.4, -45.1, 22.4, 23, 1.1, 21.4, -8, 5.1, 37, 
+                         -31, -13.4, 5.8, 22.5, 3.5, -31.3, 0.9, 14.8, 7, -8.1, 
+                         -4.6, -4.6, -3, 0.8, -0.8, 1.3, -12.1, 8.6, 2.3, 6.8, 
+                         -3.1, 3.5, 1, 6, -0.9, 1.1),ncol = 2)
+    rownames(ranef0_1) <- as.character(c(308, 309, 310, 330, 331, 332, 333, 334,
+                                       335, 337, 349, 350, 351, 352, 369, 370,
+                                       371, 372))
+    colnames(ranef0_1) <- c("(Intercept)","Days")
+
+    ranef0_2 <- matrix(c(-0.5, -0.3, 0.2, -1.1, 0.7, -1.6, 4.9, -1.5, 1.2, 0.4, 
+                         0, 0.5, -1.1, 2.4, 0, -0.6, 8.9, -3.2, 0.1, 0.2, 
+                         -1.3, -0.5, -1.7, -0.1, -1.4, 2.1, 1.9, -1.4, -0.8, 0.7, 
+                         -2.4, -0.1, 1, -0.8, -0.7, 1.1, 0.1, 0.1, 0, 0.2, 
+                         -0.1, 0.2, -0.9, 0.3, -0.2, 0, 0, -0.1, 0.2, -0.4, 
+                         0, 0.1, -1.5, 0.5, 0, 0, 0.2, 0.1, 0.3, 0, 
+                         0.3, -0.4, -0.3, 0.2, 0.1, -0.1, 0.4, 0.1, -0.2, 0.2, 0.1, -0.1),ncol = 2)
+    colnames(ranef0_2) <- c("(Intercept)","Days")
+
+    expect_that(round(as.matrix(ranef.est1[[1]]),1), equals(ranef0_1))
+    expect_that(round(as.matrix(ranef.est2[[1]]),1), equals(ranef0_1))
+    expect_that(round(as.matrix(ranef.est3[[1]]),1), equals(ranef0_1))
+    expect_that(round(as.matrix(ranef.est4[[1]]),1), equals(ranef0_1))
+    expect_that(round(as.matrix(ranef.est5[[1]]),1), equals(ranef0_1))
+
+    tmp <- round(as.matrix(ranef.est1[[2]]),1); rownames(tmp) <- NULL; expect_that(tmp, equals(ranef0_2))
+    tmp <- round(as.matrix(ranef.est3[[2]]),1); rownames(tmp) <- NULL; expect_that(tmp, equals(ranef0_2))
+    tmp <- round(as.matrix(ranef.est4[[2]]),1); rownames(tmp) <- NULL; expect_that(tmp, equals(ranef0_2))
+    tmp <- round(as.matrix(ranef.est5[[2]]),1); rownames(tmp) <- NULL; expect_that(tmp, equals(ranef0_2))
+
+    # reverse the ranef group name from fakegroup:Study to Study:fakegroup, then sort by rownames
+    tmp <- round(as.matrix(ranef.est2[[2]]),1); 
+    rownames(tmp) <- apply(array(rownames(tmp)) , 1, function(x){
+                               y = strsplit(x,":")[[1]];
+                               paste0(y[2] ,":",y[1]) })
+    tmp <- tmp[order(rownames(tmp)),]; rownames(tmp) <- NULL; expect_that(tmp, equals(ranef0_2)) 
 })
 
