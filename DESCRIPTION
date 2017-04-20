@@ -3,12 +3,12 @@ Version: 0.5
 Date: 2016-03-07
 Title: Moment-Based Estimation for Hierarchical Models
 Authors@R: c(person(c("Patrick", "O."), "Perry", role = c("aut", "cre"),
-		            email = "pperry@stern.nyu.edu"),
-             person("Timothy", "Sweetser", role = "ctb",
-                    email = "tsweetser@stitchfix.com"))
+            email = "pperry@stern.nyu.edu"),
+        person("Timothy", "Sweetser", role = "ctb",
+            email = "tsweetser@stitchfix.com"))
 Maintainer: Patrick O. Perry <pperry@stern.nyu.edu>
 Description: Implements methods from the paper
-     "Fast Moment-Based Estimation for Hierarchical Models," by Perry (2016).
+    "Fast Moment-Based Estimation for Hierarchical Models," by Perry (2016).
 Depends:
     nlme (>= 3.1-124)
 Imports:
