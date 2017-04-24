@@ -14,7 +14,7 @@
 
 
 
-mhglm.control <- function(standardize = TRUE, steps = 1, 
+mhglm.control <- function(standardize = TRUE, steps = 1,
                           parallel = FALSE, diagcov = FALSE,
                           fit.method = "firthglm.fit",
                           fit.control = list(...), ...)
@@ -39,7 +39,7 @@ mhglm.control <- function(standardize = TRUE, steps = 1,
          fit.method = fit.method, fit.control = fit.control)
 }
 
-mhglm_ml.control <- function(standardize = FALSE, steps = 1, 
+mhglm_ml.control <- function(standardize = FALSE, steps = 1,
                           parallel = FALSE, diagcov = FALSE,
                           fit.method = "firthglm.fit",
                           fit.control = list(...), ...)
@@ -229,7 +229,7 @@ mhglm_ml <- function(formula, family = gaussian, data, weights, subset,
                   na.action, start = NULL, etastart, mustart, offset,
                   control = list(), model = TRUE, method = "mhglm.fit.multilevel",
                   x = FALSE, z = FALSE, y = TRUE, group = TRUE,
-                  contrasts = NULL) 
+                  contrasts = NULL)
 {
     # call
     call <- match.call()
@@ -291,7 +291,7 @@ mhglm_ml <- function(formula, family = gaussian, data, weights, subset,
     ## use customized findbars
     # so (1|a/b) -> (1|a) + (1|b:a)
     # lme::findbars: (1|a/b) -> (1|b:a) + (1|a)·
-    bars <- findbars(formula) 
+    bars <- findbars(formula)
     if (length(bars) >= 1L) {
       Z <- list()
       Group <- list()
@@ -320,7 +320,7 @@ mhglm_ml <- function(formula, family = gaussian, data, weights, subset,
           Group[[i]] <- group.tmp
           group.call[[i]] <- group.call.tmp
           mt.random[[i]] <- mt.random.tmp
-      } 
+      }
     } else { # length(bars) == 0L
         Group <- factor(character(NROW(Y)))
         mt.random <- terms(~ -1, data=data)
@@ -678,7 +678,7 @@ sigma.mhglm <- function(object, ...)
 {
     sqrt(object$dispersion)
 }
-sigma.mhglm_ml <- sigma.mhglm 
+sigma.mhglm_ml <- sigma.mhglm
 
 VarCorr.mhglm <- function(x, sigma=1, ...)
 {
@@ -727,13 +727,13 @@ coef.mhglm <- function(object, ...)
 {
     stop("Use 'fixef' and 'ranef' methods for mhglm objects")
 }
-coef.mhglm_ml <- coef.mhglm 
+coef.mhglm_ml <- coef.mhglm
 
 fitted.mhglm <- function(object, ...)
 {
     predict(object, type="response")
 }
-fitted.mhglm_ml <- fitted.mhglm 
+fitted.mhglm_ml <- fitted.mhglm
 
 weights.mhglm <- function (object, ...)
 {
@@ -742,7 +742,7 @@ weights.mhglm <- function (object, ...)
         res
     else naresid(object$na.action, res)
 }
-weights.mhglm_ml <- weights.mhglm 
+weights.mhglm_ml <- weights.mhglm
 
 residuals.mhglm <- function(object, type = c("deviance", "pearson", "response"), ...)
 {
@@ -766,7 +766,7 @@ residuals.mhglm <- function(object, type = c("deviance", "pearson", "response"),
         res <- naresid(object$na.action, res)
     res
 }
-residuals.mhglm_ml <-  residuals.mhglm 
+residuals.mhglm_ml <-  residuals.mhglm
 
 ranef.mhglm <- function(object, condVar = FALSE, ...)
 {
@@ -816,7 +816,7 @@ ranef.mhglm <- function(object, condVar = FALSE, ...)
 
     if (condVar) {
         cov.eb1 <- attr(coef1, "postVar")
-        
+
         if (object$control$parallel) {
             logging::loginfo("Calculating empirical bayes covariance in ||",
                              logger="mbest.mhglm")
@@ -827,7 +827,7 @@ ranef.mhglm <- function(object, condVar = FALSE, ...)
                 x[pivot.random[r1.random], pivot.random[r1.random]] })
             cov.eb <- do.call(c, cov.eb)
             cov.eb <- array(cov.eb, c(nrandom, nrandom, ngroups))
-        }   
+        }
         else {
             cov.eb <- array(NA, c(nrandom, nrandom, ngroups))
             for (i in seq_len(ngroups)) {
@@ -848,34 +848,30 @@ ranef.mhglm <- function(object, condVar = FALSE, ...)
     re
 }
 
-ranef.mhglm_ml <- function
-(object,condVar = FALSE){
-
-    coef.mean  <- object$fit$coefficient.mean
+ranef.mhglm_ml <- function (object, condVar = FALSE) {
+    coef.mean <- object$fit$coefficient.mean
     dispersion <- object$dispersion
 
     coef.cov.all <- object$coef.cov.all
     ngroupslevel <- length(coef.cov.all)
 
     # compute ranef
-    r <- 1
-    while (r <= ngroupslevel){
-        object$fit <- ebayes.est.topdown(object$fit, condVar,
-                                         coef.mean,
+    for (r in seq_len(ngroupslevel)) {
+        object$fit <- ebayes.est.topdown(object$fit, condVar, coef.mean,
                                          coef.cov.all[[r]])
-        r <- r+1
     }
 
     # print out ranef
-    coefficients.eb<- as.list(rep(NULL,ngroupslevel))
-    for(r in seq_len(ngroupslevel)){
-        #    coefficients.eb[[r]] <- ebayes.est.print(object$fit,r, condVar)
-        coef.eb.tmp  <- ebayes.est.print(object$fit,r, condVar)
-        coefficients.eb[[r]] <- coef.eb.tmp[object$group.levels[[r]],,drop = FALSE]
+    coefficients.eb <- list()
+    for (r in seq_len(ngroupslevel)) {
+        coef.eb.tmp <- ebayes.est.print(object$fit, r, condVar)
+        coefficients.eb[[r]] <- coef.eb.tmp[object$group.levels[[r]], , drop = FALSE]
     }
 
+    group_names <- sapply(object$group.call, function(x) deparse(x[[2L]]))
+    names(coefficients.eb) <- group_names
     class(coefficients.eb) <- 'ranef.mhglm_ml'
-    return(coefficients.eb)
+    coefficients.eb
 }
 
 summary.mhglm <- function(object, ...)
@@ -1065,7 +1061,7 @@ print.mhglm_ml <- function(x, digits = max(3L, getOption("digits") - 3L),
     cat("\n")
 }
 
-singlebars <-  function (term)
+singlebars <- function(term)
 {
     if (is.name(term) || !is.language(term))
         return(term)
@@ -1081,7 +1077,7 @@ singlebars <-  function (term)
 }
 
 
-findbars <- function (term)
+findbars <- function(term)
 {
     fb <- function(term) {
         if (is.name(term) || !is.language(term))
