@@ -135,7 +135,8 @@ mhglm <- function(formula, family = gaussian, data, weights, subset,
       control$diagcov <- FALSE
     }
 
-    bars <- lme4::findbars(formula)
+#    bars <- lme4::findbars(formula)
+    bars <- findbars(formula)
 
     if (length(bars) >= 2L)
         stop("Can specify at most one random effect term")
@@ -1120,7 +1121,7 @@ findbars <- function(term)
         }))
     }
 
-    modterm <- expandDoubleVerts(if (is(term, "formula"))
+    modterm <- lme4::expandDoubleVerts(if (is(term, "formula"))
         term[[length(term)]]
     else term)
     expandSlash(fb(modterm))
