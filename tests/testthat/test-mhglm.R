@@ -13,7 +13,7 @@ test_that("succeeds on sleepstudy", {
     # vcov
     vcov0 <- matrix(c(44.0, -1.4, -1.4, 2.3), 2, 2)
     rownames(vcov0) <- colnames(vcov0) <- c("(Intercept)", "Days")
-    expect_equal_tol1vcov(model, vcov0)
+    expect_equal_tol1(vcov(model), vcov0)
 
     # VarCorr
     varcor0 <- matrix(c(565.5, 11.1, 11.1, 32.7), 2, 2)
@@ -31,8 +31,8 @@ test_that("succeeds on sleepstudy", {
     ranef0 <- matrix(c( 2.8, -40.0, -38.4, 22.8, 21.5,  8.8,  16.4, -7.0,  -1.0,
                        34.7, -24.6, -12.3,  4.3, 20.6,  3.3, -24.7,  0.7,  12.1,
                         9.1,  -8.6,  -5.5, -4.7, -2.9, -0.2,  -0.2,  1.0, -10.6,
-                        8.6,   1.1,   6.5, -3.0,  3.6,  0.9,   4.7, -1.0,   1.3),
-                     18, 2)
+                        8.6,   1.1,   6.5, -3.0,  3.6,  0.9,   4.7, -1.0,   1.3
+                       ), 18, 2)
     rownames(ranef0) <- as.character(c(308, 309, 310, 330, 331, 332, 333, 334,
                                        335, 337, 349, 350, 351, 352, 369, 370,
                                        371, 372))

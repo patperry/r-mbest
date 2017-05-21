@@ -1,33 +1,32 @@
-set.seed(12345)
-n_level_1 <- 10
-n_level_2 <- 5
-n_level_3 <- 2
-n_obs <- 30
+simdata <- function(n, m_per_level, sd_intercept, sd_slope,
+                    family = c("gaussian", "binomial"), seed) {
+    set.seed(seed)
+    total_n <- n * prod(m_per_level)
+    n_levels <- length(m_per_level)
 
-x <- runif(n = n_level_1 * n_obs * n_level_2 * n_level_3, min = -1, max = 1)
-g1 <- rep(seq_len(n_level_1), each = n_obs * n_level_2 * n_level_3)
-g2 <- rep(seq_len(n_level_2 * n_level_1), each = n_obs * n_level_3)
-g3 <- rep(seq_len(n_level_2 * n_level_1 * n_level_3), each = n_obs)
+    groups <- Map(function(n, e) rep(seq_len(n), each = e),
+                  cumprod(m_per_level),
+                  n * rev(cumprod(rev(c(m_per_level[-1], 1)))))
+    names(groups) <- paste0("g", seq_along(groups))
 
-intercept_fix <- runif(1)
-intercept_g1 <- rnorm(n_level_1)
-intercept_g2 <- rnorm(n_level_1 * n_level_2, sd = 0.5)
-intercept_g3 <- rnorm(n_level_1 * n_level_2 * n_level_3, sd = sqrt(0.25))
+    fixed_effects <- setNames(rnorm(2), c("intercept", "slope"))
+    ranef_intercept <- Map(rnorm, n = cumprod(m_per_level), sd = sd_intercept)
+    ranef_slope <- Map(rnorm, n = cumprod(m_per_level), sd = sd_slope)
 
-slope_fix <- runif(1)
-slope_g1 <- rnorm(n_level_1)
-slope_g2 <- rnorm(n_level_1 * n_level_2, sd = sqrt(0.5))
-slope_g3 <- rnorm(n_level_1 * n_level_2 * n_level_3, sd = 0.25)
+    total_ranef_intercept <- Reduce("+", Map("[", ranef_intercept, groups))
+    total_ranef_slope <- Reduce("+", Map("[", ranef_slope, groups))
 
-noise <- rnorm(length(x))
+    x <- runif(n = total_n, min = -1, max = 1)
+    z <- fixed_effects["intercept"] + total_ranef_intercept +
+        x * (fixed_effects["slope"] + total_ranef_slope)
 
-## The model is y ~ 1 + x + (1 + x | g1) + (1 + x | g2) + (1 + x |g3)
-## nested groups, independent covariates.
-y <- x * (slope_fix + slope_g1[g1] + slope_g2[g2] + slope_g3[g3]) +
-  intercept_fix + intercept_g1[g1] + intercept_g2[g2] + intercept_g3[g3] + noise
+    y <- if (family == "gaussian") {
+        z + rnorm(total_n)
+    } else if (family == "binomial") {
+        as.integer(runif(total_n) < plogis(z))
+    } else {
+        stop("family not supported")
+    }
 
-simdata <- data.frame(x, g1, g2, g3, y)
-# devtools::use_data(simdata)
-
-#' Simulated data for testing \code{mhglm_ml}.
-"simdata"
+    cbind(x = x, as.data.frame(groups), y = y)
+}
