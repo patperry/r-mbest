@@ -13,6 +13,7 @@
 # limitations under the License.
 
 
+
 mhglm.control <- function(standardize = TRUE, steps = 1, parallel = FALSE,
                           diagcov = FALSE, fit.method = "firthglm.fit",
                           fixef.rank.warn = FALSE, cov.rank.warn = FALSE,
@@ -40,7 +41,6 @@ mhglm.control <- function(standardize = TRUE, steps = 1, parallel = FALSE,
          cov.psd.warn = cov.psd.warn)
 }
 
-
 mhglm_ml.control <- function(standardize = FALSE, steps = 1, parallel = FALSE,
                           diagcov = FALSE, fit.method = "firthglm.fit",
                           fixef.rank.warn = FALSE, cov.rank.warn = FALSE,
@@ -50,7 +50,6 @@ mhglm_ml.control <- function(standardize = FALSE, steps = 1, parallel = FALSE,
                   fixef.rank.warn, cov.rank.warn, cov.psd.warn, fit.control,
                   ...)
 }
-
 
 mhglm <- function(formula, family = gaussian, data, weights, subset,
                   na.action, start = NULL, etastart, mustart, offset,
@@ -63,7 +62,7 @@ mhglm <- function(formula, family = gaussian, data, weights, subset,
 
     # family
     if (is.character(family))
-        family <- get(family, mode = "function", envir = parent.frame())
+        family <- get(family, mode="function", envir=parent.frame())
     if (is.function(family))
         family <- family()
     if (is.null(family$family)) {
@@ -76,7 +75,7 @@ mhglm <- function(formula, family = gaussian, data, weights, subset,
         data <- environment(formula)
 
     # model frame
-    mf <- match.call(expand.dots = FALSE)
+    mf <- match.call(expand.dots=FALSE)
     m <- match(c("formula", "data", "subset", "weights", "na.action",
                  "etastart", "mustart", "offset"), names(mf), 0L)
     mf <- mf[c(1L, m)]
@@ -112,17 +111,17 @@ mhglm <- function(formula, family = gaussian, data, weights, subset,
             names(Y) <- nm
     }
 
-    logging::loginfo("Creating design matrix", logger = "mbest.mhglm")
+    logging::loginfo("Creating design matrix", logger="mbest.mhglm")
 
-    mt.fixed <- delete.response(terms(lme4::nobars(formula), data = data))
+    mt.fixed <- delete.response(terms(lme4::nobars(formula), data=data))
     X <- if (!is.empty.model(mt.fixed))
         model.matrix(mt.fixed, mf, contrasts)
     else matrix(, NROW(Y), 0L)
 
     logging::loginfo("Grouping factor and random effect design matrix",
-                     logger = "mbest.mhglm")
+                     logger="mbest.mhglm")
 
-    if (lme4::expandDoubleVerts(formula) != formula) {
+    if(lme4::expandDoubleVerts(formula) != formula){
       control$diagcov <- TRUE
       formula <- singlebars(formula)
     } else {
@@ -152,11 +151,11 @@ mhglm <- function(formula, family = gaussian, data, weights, subset,
         else matrix(, NROW(Y), 0L)
     } else { # length(bars) == 0L
         Group <- factor(character(NROW(Y)))
-        mt.random <- terms(~ -1, data = data)
+        mt.random <- terms(~ -1, data=data)
         Z <- matrix(, NROW(Y), 0L)
     }
 
-    logging::loginfo("Setting weights", logger = "mbest.mhglm")
+    logging::loginfo("Setting weights", logger="mbest.mhglm")
 
     weights <- as.vector(model.weights(mf))
     if (!is.null(weights) && !is.numeric(weights))
@@ -164,7 +163,7 @@ mhglm <- function(formula, family = gaussian, data, weights, subset,
     if (!is.null(weights) && any(weights < 0))
         stop("negative weights not allowed")
 
-    logging::loginfo("Setting offset", logger = "mbest.mhglm")
+    logging::loginfo("Setting offset", logger="mbest.mhglm")
 
     offset <- as.vector(model.offset(mf))
     if (!is.null(offset)) {
@@ -178,7 +177,7 @@ mhglm <- function(formula, family = gaussian, data, weights, subset,
     etastart <- model.extract(mf, "etastart")
 
     # group-specific estimates
-    logging::loginfo("Fitting model", logger = "mbest.mhglm")
+    logging::loginfo("Fitting model", logger="mbest.mhglm")
     fit <- eval(call(if (is.function(method)) "method" else method,
                      x = X, z = Z, y = Y, group = Group,
                      weights = weights, start = start, etastart = etastart,
@@ -218,20 +217,19 @@ mhglm <- function(formula, family = gaussian, data, weights, subset,
     fit
 }
 
-
-# mhglm for multilevel
+## mhglm for multilevel
 mhglm_ml <- function(formula, family = gaussian, data, weights, subset,
-                     na.action, start = NULL, etastart, mustart, offset,
-                     control = list(), model = TRUE,
-                     method = "mhglm.fit.multilevel", x = FALSE, z = FALSE,
-                     y = TRUE, group = TRUE, contrasts = NULL)
+                  na.action, start = NULL, etastart, mustart, offset,
+                  control = list(), model = TRUE, method = "mhglm.fit.multilevel",
+                  x = FALSE, z = FALSE, y = TRUE, group = TRUE,
+                  contrasts = NULL)
 {
     # call
     call <- match.call()
 
     # family
     if (is.character(family))
-        family <- get(family, mode = "function", envir = parent.frame())
+        family <- get(family, mode="function", envir=parent.frame())
     if (is.function(family))
         family <- family()
     if (is.null(family$family)) {
@@ -244,7 +242,7 @@ mhglm_ml <- function(formula, family = gaussian, data, weights, subset,
         data <- environment(formula)
 
     # model frame
-    mf <- match.call(expand.dots = FALSE)
+    mf <- match.call(expand.dots=FALSE)
     m <- match(c("formula", "data", "subset", "weights", "na.action",
                  "etastart", "mustart", "offset"), names(mf), 0L)
     mf <- mf[c(1L, m)]
@@ -280,15 +278,15 @@ mhglm_ml <- function(formula, family = gaussian, data, weights, subset,
             names(Y) <- nm
     }
 
-    logging::loginfo("Creating design matrix", logger = "mbest.mhglm")
+    logging::loginfo("Creating design matrix", logger="mbest.mhglm")
 
-    mt.fixed <- delete.response(terms(lme4::nobars(formula), data = data))
+    mt.fixed <- delete.response(terms(lme4::nobars(formula), data=data))
     X <- if (!is.empty.model(mt.fixed))
         model.matrix(mt.fixed, mf, contrasts)
     else matrix(, NROW(Y), 0L)
 
     logging::loginfo("Grouping factor and random effect design matrix",
-                     logger = "mbest.mhglm")
+                     logger="mbest.mhglm")
 
     bars <- lme4::findbars(formula)
     bars <- order_bars_hierarchy(bars)
@@ -299,7 +297,7 @@ mhglm_ml <- function(formula, family = gaussian, data, weights, subset,
       group.call <- list()
       mt.random <- list()
 
-      for (i in seq_along(bars)) {
+      for(i in seq_along(bars)){
           b <- bars[[i]]
           mf1 <- mf
           for (v in all.vars(b[[3L]])) {
@@ -313,7 +311,7 @@ mhglm_ml <- function(formula, family = gaussian, data, weights, subset,
 
           mt.random.tmp <- terms(eval(substitute(~trms, list(trms = b[[2L]]))),
                                  data = data)
-          z.tmp <- if (!is.empty.model(mt.random.tmp)) {
+          z.tmp <- if (!is.empty.model(mt.random.tmp)){
               model.matrix(mt.random.tmp, mf, contrasts)
           }else matrix(, NROW(Y), 0L)
 
@@ -324,11 +322,11 @@ mhglm_ml <- function(formula, family = gaussian, data, weights, subset,
       }
     } else { # length(bars) == 0L
         Group <- factor(character(NROW(Y)))
-        mt.random <- terms(~ -1, data = data)
+        mt.random <- terms(~ -1, data=data)
         Z <- matrix(, NROW(Y), 0L)
     }
 
-    logging::loginfo("Setting weights", logger = "mbest.mhglm")
+    logging::loginfo("Setting weights", logger="mbest.mhglm")
 
     weights <- as.vector(model.weights(mf))
     if (!is.null(weights) && !is.numeric(weights))
@@ -336,7 +334,7 @@ mhglm_ml <- function(formula, family = gaussian, data, weights, subset,
     if (!is.null(weights) && any(weights < 0))
         stop("negative weights not allowed")
 
-    logging::loginfo("Setting offset", logger = "mbest.mhglm")
+    logging::loginfo("Setting offset", logger="mbest.mhglm")
 
     offset <- as.vector(model.offset(mf))
     if (!is.null(offset)) {
@@ -350,7 +348,7 @@ mhglm_ml <- function(formula, family = gaussian, data, weights, subset,
     etastart <- model.extract(mf, "etastart")
 
     # group-specific estimates
-    logging::loginfo("Fitting model", logger = "mbest.mhglm")
+    logging::loginfo("Fitting model", logger="mbest.mhglm")
     fit <- eval(call(if (is.function(method)) "method" else method,
                      x = X, z = Z, y = Y, group = Group,
                      weights = weights, start = start, etastart = etastart,
@@ -359,6 +357,15 @@ mhglm_ml <- function(formula, family = gaussian, data, weights, subset,
                      intercept = attr(mt.fixed, "intercept") > 0L))
     fit$contrasts.fixed <- attr(X, "contrasts")
     fit$contrasts.random <- attr(Z, "contrasts")
+
+#    xlevels <- .getXlevels(mt.fixed, mf)
+#    #xlevels.random <- .getXlevels(mt.random, mf)
+#    xlevels.random <- lapply(mt.random, function(x){.getXlevels(x, mf)})
+#
+#    for (i in names(xlevels.random)) {
+#        xlevels[[i]] <- xlevels.random[[i]]
+#    }
+#    fit$xlevels <- xlevels
 
     fit$group.levels <- lapply(Group, levels)
     fit$call <- call
@@ -383,13 +390,11 @@ mhglm_ml <- function(formula, family = gaussian, data, weights, subset,
     fit
 }
 
-
 family.mhglm <- function(object, ...)
 {
     object$family
 }
 family.mhglm_ml <- family.mhglm
-
 
 terms.mhglm <- function(x, type=c("fixed", "random"), ...)
 {
@@ -397,7 +402,6 @@ terms.mhglm <- function(x, type=c("fixed", "random"), ...)
     switch(type, fixed = x$terms.fixed, random = x$terms.random)
 }
 terms.mhglm_ml <- terms.mhglm
-
 
 model.frame.mhglm <- function(formula, ...)
 {
@@ -416,7 +420,6 @@ model.frame.mhglm <- function(formula, ...)
     else formula$model
 }
 
-
 model.frame.mhglm_ml <- function(formula, ...)
 {
     dots <- list(...)
@@ -434,7 +437,6 @@ model.frame.mhglm_ml <- function(formula, ...)
     else formula$model
 }
 
-
 model.matrix.mhglm <- function(object, type=c("fixed", "random"), ...)
 {
     type <- match.arg(type)
@@ -449,7 +451,6 @@ model.matrix.mhglm <- function(object, type=c("fixed", "random"), ...)
     else matrix(, nobs(object), 0L)
 }
 
-
 model.matrix.mhglm_ml  <- function(object, type=c("fixed", "random"), ...)
 {
     type <- match.arg(type)
@@ -457,25 +458,20 @@ model.matrix.mhglm_ml  <- function(object, type=c("fixed", "random"), ...)
     mf <- model.frame(object)
     mt <- terms(object, type)
 
-    re <- if (type == "fixed") {
-        if (!is.empty.model(mt)) {
-            model.matrix(mt, mf, object$contrasts.fixed)
-        } else {
-            matrix(, nobs(object), 0L)
-        }
-    } else if (type == "random") {
-        if (all(!unlist(lapply(mt, is.empty.model)))) {
-            lapply(mt, function(x) model.matrix(x, mf, object$contrasts.random))
-        } else {
-            matrix(, nobs(object), 0L)
-        }
+    if(type == 'fixed'){
+        if (!is.empty.model(mt)){
+            re <-  model.matrix(mt, mf, object$contrasts.fixed)
+        } else {re <- matrix(, nobs(object), 0L)}
+    } else if (type == 'random'){
+        if(all( !unlist(lapply(mt,is.empty.model)))){
+            re <-  lapply(mt,function(x){model.matrix(x, mf, object$contrasts.random)})
+        } else {re <- matrix(, nobs(object), 0L)}
     } else {
-        stop("Wrong type")
+        stop('Wrong type')
     }
 
     re
 }
-
 
 predict.mhglm <- function(object, newdata = NULL,
                           type = c("link", "response"),
@@ -495,12 +491,12 @@ predict.mhglm <- function(object, newdata = NULL,
         tt <- object$terms
         Terms <- delete.response(tt)
         m <- model.frame(Terms, newdata, na.action = na.action,
-                         xlev = object$xlevels)
+                         xlev=object$xlevels)
         if (!is.null(cl <- attr(Terms, "dataClasses")))
             .checkMFClasses(cl, m)
 
-        x <- model.matrix(tt.fixed, m, contrasts.arg = object$contrasts.fixed)
-        z <- model.matrix(tt.random, m, contrasts.arg = object$contrasts.random)
+        x <- model.matrix(tt.fixed, m, contrasts.arg=object$contrasts.fixed)
+        z <- model.matrix(tt.random, m, contrasts.arg=object$contrasts.random)
 
         offset <- rep(0, nrow(x))
         if (!is.null(off.num <- attr(tt, "offset")))
@@ -516,12 +512,12 @@ predict.mhglm <- function(object, newdata = NULL,
     }
     group <- eval(object$group.call, mg)
 
-    re <- ranef(object, condVar = se.fit)[[1]]
+    re <- ranef(object, condVar=se.fit)[[1]]
     eta <- drop(x %*% fixef(object))
     group.ix <- match(group, object$group.levels)
     old <- !is.na(group.ix)
-    eta[old] <- eta[old] + rowSums(z[old, , drop = FALSE]
-                                   * re[group.ix[old], , drop = FALSE])
+    eta[old] <- eta[old] + rowSums(z[old,,drop=FALSE]
+                                   * re[group.ix[old],,drop=FALSE])
     if (!is.null(offset))
         eta <- eta + offset
 
@@ -530,9 +526,9 @@ predict.mhglm <- function(object, newdata = NULL,
         re.sigma <- attr(re, "postVar")
         sigma0 <- VarCorr(object)[[1]]
         for (i in seq_along(eta)) {
-            zi <- drop(z[i, ])
+            zi <- drop(z[i,])
             sigma <- if (old[i])
-                re.sigma[, , group.ix[i]]
+                re.sigma[,,group.ix[i]]
             else sigma0
 
             eta.se2[i] <- eta.se2[i] + max(0, t(zi) %*% sigma %*% zi)
@@ -553,12 +549,10 @@ predict.mhglm <- function(object, newdata = NULL,
         se.fit <- switch(type,
                          link = eta.se,
                          response = eta.se * abs(family(object)$mu.eta(eta)))
-        pred <- list(fit = fit, se.fit = se.fit,
-                     residual.scale = residual.scale)
+        pred <- list(fit = fit, se.fit = se.fit, residual.scale = residual.scale)
     }
     pred
 }
-
 
 predict.mhglm_ml <- function(object, newdata = NULL,
                              type = c("link", "response"),
@@ -579,13 +573,13 @@ predict.mhglm_ml <- function(object, newdata = NULL,
         tt <- object$terms
         Terms <- delete.response(tt)
         m <- model.frame(Terms, newdata, na.action = na.action,
-                         xlev = object$xlevels)
+                         xlev=object$xlevels)
         if (!is.null(cl <- attr(Terms, "dataClasses")))
             .checkMFClasses(cl, m)
 
-        x <- model.matrix(tt.fixed, m, contrasts.arg = object$contrasts.fixed)
-        z <- lapply(tt.random, function(x)
-            model.matrix(x, m, contrasts.arg = object$contrasts.random))
+        x <- model.matrix(tt.fixed, m, contrasts.arg=object$contrasts.fixed)
+        z <- lapply(tt.random, function(x){
+                        model.matrix(x, m, contrasts.arg=object$contrasts.random)})
 
         offset <- rep(0, nrow(x))
         if (!is.null(off.num <- attr(tt, "offset")))
@@ -596,22 +590,22 @@ predict.mhglm_ml <- function(object, newdata = NULL,
     }
 
     group <- list()
-    for (r in seq_along(object$group.call)) {
+    for(r in seq_along(object$group.call)){
         mg <- m
         for (v in all.vars(object$group.call[[r]])) {
             mg[[v]] <- factor(mg[[v]])
         }
-        group[[r]] <- eval(object$group.call[[r]], mg)
+        group[[r]] <- eval(object$group.call[[r]],mg)
     }
 
-    re <- ranef(object, condVar = se.fit)
+    re <- ranef(object, condVar=se.fit)
     eta <- drop(x %*% fixef(object))
 
-    for (r in seq_len(length(re))) {
+    for(r in seq_len(length(re))){
         group.ix <- match(group[[r]], object$group.levels[[r]])
         old <- !is.na(group.ix)
-        eta[old] <- eta[old] + rowSums(z[[r]][old, , drop = FALSE]
-                                       * re[[r]][group.ix[old], , drop = FALSE])
+        eta[old] <- eta[old] + rowSums(z[[r]][old,,drop=FALSE]
+                                       * re[[r]][group.ix[old],,drop=FALSE])
     }
 
     if (!is.null(offset))
@@ -621,16 +615,16 @@ predict.mhglm_ml <- function(object, newdata = NULL,
         eta.se2 <- pmax(0, rowSums((x %*% vcov(object)) * x))
         var.corr <- VarCorr(object)
 
-        for (r in seq_along(re)) {
+        for(r in seq_along(re)){
             re.sigma <- attr(re[[r]], "postVar")
             sigma0 <- var.corr[[r]]
             group.ix <- match(group[[r]], object$group.levels[[r]])
             old <- !is.na(group.ix)
 
             for (i in seq_along(eta)) {
-                zi <- drop(z[[r]][i, ])
+                zi <- drop(z[[r]][i,])
                 sigma <- if (old[i])
-                    re.sigma[, , group.ix[i]]
+                    re.sigma[,,group.ix[i]]
                 else sigma0
 
                 eta.se2[i] <- eta.se2[i] + max(0, t(zi) %*% sigma %*% zi)
@@ -652,18 +646,15 @@ predict.mhglm_ml <- function(object, newdata = NULL,
         se.fit <- switch(type,
                          link = eta.se,
                          response = eta.se * abs(family(object)$mu.eta(eta)))
-        pred <- list(fit = fit, se.fit = se.fit,
-                     residual.scale = residual.scale)
+        pred <- list(fit = fit, se.fit = se.fit, residual.scale = residual.scale)
     }
     pred
 }
-
 
 fixef.mhglm <- function(object, ...)
 {
     object$coefficient.mean
 }
-
 
 fixef.mhglm_ml <- function(object, ...)
 {
@@ -675,7 +666,6 @@ vcov.mhglm <- function(object, ...)
 {
     object$coefficient.mean.cov
 }
-
 
 vcov.mhglm_ml <- function(object, ...)
 {
@@ -689,12 +679,11 @@ sigma.mhglm <- function(object, ...)
 }
 sigma.mhglm_ml <- sigma.mhglm
 
-
 VarCorr.mhglm <- function(x, sigma=1, ...)
 {
     vc <- x$coefficient.cov
     stddev <- sqrt(diag(vc))
-    cor <- scale(vc, center = FALSE, scale = stddev) / stddev
+    cor <- scale(vc, center=FALSE, scale=stddev) / stddev
 
     attr(cor, "scaled:scale") <- NULL
     attr(vc, "stddev") <- stddev
@@ -709,17 +698,16 @@ VarCorr.mhglm <- function(x, sigma=1, ...)
     varcor
 }
 
-
 VarCorr.mhglm_ml <- function(x, sigma=1, ...)
 {
   coef.cov.all <- x$coef.cov.all
   varcor <- list()
 
-  for (i in seq_along(coef.cov.all)) {
+  for(i in seq_along(coef.cov.all)){
 
     vc <- coef.cov.all[[i]]
     stddev <- sqrt(diag(vc))
-    cor <- scale(vc, center = FALSE, scale = stddev) / stddev
+    cor <- scale(vc, center=FALSE, scale=stddev) / stddev
 
     attr(cor, "scaled:scale") <- NULL
     attr(vc, "stddev") <- stddev
@@ -734,20 +722,17 @@ VarCorr.mhglm_ml <- function(x, sigma=1, ...)
   varcor
 }
 
-
 coef.mhglm <- function(object, ...)
 {
     stop("Use 'fixef' and 'ranef' methods for mhglm objects")
 }
 coef.mhglm_ml <- coef.mhglm
 
-
 fitted.mhglm <- function(object, ...)
 {
-    predict(object, type = "response")
+    predict(object, type="response")
 }
 fitted.mhglm_ml <- fitted.mhglm
-
 
 weights.mhglm <- function (object, ...)
 {
@@ -758,9 +743,7 @@ weights.mhglm <- function (object, ...)
 }
 weights.mhglm_ml <- weights.mhglm
 
-
-residuals.mhglm <- function(object, type = c("deviance", "pearson", "response"),
-                            ...)
+residuals.mhglm <- function(object, type = c("deviance", "pearson", "response"), ...)
 {
     type <- match.arg(type)
 
@@ -771,10 +754,10 @@ residuals.mhglm <- function(object, type = c("deviance", "pearson", "response"),
         wts <- rep(1, NROW(y))
 
     res <- switch(type, deviance = {
-            d.res <- sqrt(pmax(object$family$dev.resids(y, mu, wts), 0))
+            d.res <- sqrt(pmax((object$family$dev.resids)(y, mu, wts), 0))
             ifelse(y > mu, d.res, -d.res)
         }, pearson = {
-            (y - mu) * sqrt(wts) / sqrt(object$family$variance(mu))
+            (y - mu) * sqrt(wts)/sqrt(object$family$variance(mu))
         }, response = {
             y - mu
         })
@@ -784,47 +767,48 @@ residuals.mhglm <- function(object, type = c("deviance", "pearson", "response"),
 }
 residuals.mhglm_ml <-  residuals.mhglm
 
-
 ranef.mhglm <- function(object, condVar = FALSE, ...)
 {
     nvars <- ncol(object$coefficients)
+    xnames <- names(object$coefficient.mean)
     ngroups <- nrow(object$coefficients)
     gnames <- rownames(object$coefficients)
 
     R <- object$R
     pivot <- object$pivot
+    rank <- object$rank
     rank.fixed <- object$rank.fixed
     rank.random <- object$rank.random
-
+    r1 <- seq_len(rank)
     nfixed <- length(object$coefficient.mean)
     nrandom <- nvars - nfixed
     fixed <- seq_len(rank.fixed)
     random <- rank.fixed + seq_len(rank.random)
 
-    R.fixed <- R[fixed, fixed, drop = FALSE]
+    R.fixed <- R[fixed,fixed,drop=FALSE]
     pivot.fixed <- pivot[fixed]
     coef.mean1 <- drop(R.fixed %*% object$coefficient.mean[pivot.fixed])
 
-    R.random <- R[random, random, drop = FALSE]
+    R.random <- R[random,random,drop=FALSE]
     pivot.random <- pivot[random] - nfixed
     coef.cov1 <- (R.random
                   %*% object$coefficient.cov[pivot.random,
                                              pivot.random,
-                                             drop = FALSE] %*% t(R.random))
+                                             drop=FALSE] %*% t(R.random))
 
-    coef1 <- ebayes.group.est(coefficients = object$coefficients,
-                              nfixed = rank.fixed,
-                              subspace = object$subspace,
-                              precision = object$precision,
-                              dispersion = rep(object$dispersion, ngroups),
-                              coefficient.mean = coef.mean1,
-                              coefficient.cov = coef.cov1,
-                              postVar = condVar)
+    coef1 <- ebayes.group.est(coefficients=object$coefficients,
+                              nfixed=rank.fixed,
+                              subspace=object$subspace,
+                              precision=object$precision,
+                              dispersion=rep(object$dispersion, ngroups),
+                              coefficient.mean=coef.mean1,
+                              coefficient.cov=coef.cov1,
+                              postVar=condVar)
 
     # change back to original coordinates
     r1.random <- seq_len(rank.random)
     coef <- matrix(NA, ngroups, nrandom)
-    coef[, pivot.random[r1.random]] <- t(backsolve(R.random, t(coef1)))
+    coef[,pivot.random[r1.random]] <- t(backsolve(R.random, t(coef1)))
     colnames(coef) <- colnames(object$coefficient.cov)
     rownames(coef) <- gnames
     coef <- as.data.frame(coef)
@@ -834,20 +818,20 @@ ranef.mhglm <- function(object, condVar = FALSE, ...)
 
         if (object$control$parallel) {
             logging::loginfo("Calculating empirical bayes covariance in ||",
-                             logger = "mbest.mhglm")
-            cov.eb <- foreach(i = seq_len(ngroups)) %dopar% {
-                backsolve(R.random, t(backsolve(R.random, cov.eb1[, , i])))
+                             logger="mbest.mhglm")
+            cov.eb <- foreach(i=seq_len(ngroups)) %dopar% {
+                backsolve(R.random, t(backsolve(R.random, cov.eb1[,,i])))
             }
-            cov.eb <- lapply(cov.eb, function(x)
-                x[pivot.random[r1.random], pivot.random[r1.random]])
+            cov.eb <- lapply(cov.eb, function(x) {
+                x[pivot.random[r1.random], pivot.random[r1.random]] })
             cov.eb <- do.call(c, cov.eb)
             cov.eb <- array(cov.eb, c(nrandom, nrandom, ngroups))
         }
         else {
             cov.eb <- array(NA, c(nrandom, nrandom, ngroups))
             for (i in seq_len(ngroups)) {
-                cov.eb[pivot.random[r1.random], pivot.random[r1.random], i] <-
-                    backsolve(R.random, t(backsolve(R.random, cov.eb1[, , i])))
+                cov.eb[pivot.random[r1.random],pivot.random[r1.random], i] <-
+                    backsolve(R.random, t(backsolve(R.random, cov.eb1[,,i])))
             }
         }
         dimnames(cov.eb) <- list(colnames(object$coefficient.cov),
@@ -863,9 +847,9 @@ ranef.mhglm <- function(object, condVar = FALSE, ...)
     re
 }
 
-
 ranef.mhglm_ml <- function (object, condVar = FALSE) {
     coef.mean <- object$fit$coefficient.mean
+    dispersion <- object$dispersion
 
     coef.cov.all <- object$coef.cov.all
     ngroupslevel <- length(coef.cov.all)
@@ -880,16 +864,14 @@ ranef.mhglm_ml <- function (object, condVar = FALSE) {
     coefficients.eb <- list()
     for (r in seq_len(ngroupslevel)) {
         coef.eb.tmp <- ebayes.est.print(object$fit, r, condVar)
-        coefficients.eb[[r]] <- coef.eb.tmp[object$group.levels[[r]], ,
-                                            drop = FALSE]
+        coefficients.eb[[r]] <- coef.eb.tmp[object$group.levels[[r]], , drop = FALSE]
     }
 
     group_names <- sapply(object$group.call, function(x) deparse(x[[2L]]))
     names(coefficients.eb) <- group_names
-    class(coefficients.eb) <- "ranef.mhglm_ml"
+    class(coefficients.eb) <- 'ranef.mhglm_ml'
     coefficients.eb
 }
-
 
 summary.mhglm <- function(object, ...)
 {
@@ -897,10 +879,10 @@ summary.mhglm <- function(object, ...)
     vcov <- vcov(object)
     coefs <- cbind("Estimate" = fixef(object),
                    "Std. Error" = sqrt(diag(vcov)))
-    coefs <- cbind(coefs, coefs[, 1] / coefs[, 2], deparse.level = 0)
+    coefs <- cbind(coefs, (cf3 <- coefs[,1]/coefs[,2]), deparse.level=0)
     colnames(coefs)[3] <- "z value"
     coefs <- cbind(coefs, "Pr(>|z|)" =
-                          2 * pnorm(abs(coefs[, 3]), lower.tail = FALSE))
+                          2*pnorm(abs(coefs[,3]), lower.tail = FALSE))
 
     # random effects
     varcor <- VarCorr(object)
@@ -912,7 +894,6 @@ summary.mhglm <- function(object, ...)
 }
 summary.mhglm_ml <- summary.mhglm
 
-
 print.VarCorr.mhglm <- function(x, digits = max(3, getOption("digits") - 2),
                                 var.print = FALSE, ...)
 {
@@ -922,8 +903,7 @@ print.VarCorr.mhglm <- function(x, digits = max(3, getOption("digits") - 2),
     table <- matrix("", sum(dims + attr(x, "useSc")), pmax + 3L)
 
     rownames(table) <- rep("", nrow(table))
-    colnames(table) <- c("Groups", "Name", "Variance", "Std.Dev",
-                         rep("", pmax - 1L))
+    colnames(table) <- c("Groups", "Name", "Variance", "Std.Dev", rep("", pmax - 1L))
     if (pmax > 1L) {
         colnames(table)[5L] <- "Corr"
     }
@@ -936,15 +916,15 @@ print.VarCorr.mhglm <- function(x, digits = max(3, getOption("digits") - 2),
         p <- ncol(cor)
 
         tab <- matrix("", p, p + 3L)
-        tab[1L, 1L] <- names(x)[[i]]
-        tab[, 2L] <- names(stddev)
-        tab[, 3L] <- format(diag(xx), digits = digits, ...)
-        tab[, 4L] <- format(stddev, digits = digits, ...)
+        tab[1L,1L] <- names(x)[[i]]
+        tab[,2L] <- names(stddev)
+        tab[,3L] <- format(diag(xx), digits = digits, ...)
+        tab[,4L] <- format(stddev, digits = digits, ...)
 
         if (p > 1L) {
             cor.str <- format(cor, digits = max(2L, digits - 2L), ...)
             cor.str[row(cor.str) <= col(cor.str)] <- ""
-            tab[, 5L:(p + 3L)] <- cor.str[, -p]
+            tab[,5L:(p+3L)] <- cor.str[,-p]
         }
         table[off + seq_len(p), seq_len(p + 3L)] <- tab
         off <- off + p
@@ -953,27 +933,27 @@ print.VarCorr.mhglm <- function(x, digits = max(3, getOption("digits") - 2),
     if (attr(x, "useSc")) {
         sigma <- attr(x, "sc")
         table[off + 1L, 1L] <- "Residual"
-        table[off + 1L, 3L] <- format(sigma ^ 2, digits = digits, ...)
+        table[off + 1L, 3L] <- format(sigma^2, digits = digits, ...)
         table[off + 1L, 4L] <- format(sigma, digits = digits, ...)
     }
 
     if (!var.print) {
-        table <- table[, -3L]
+        table <- table[,-3L]
     }
 
     print.table(table)
 }
 
 
+
 print.summary.mhglm <- function(x, digits = max(3L, getOption("digits") - 3L),
-                                signif.stars = getOption("show.signif.stars"),
-                                ...)
+                                signif.stars = getOption("show.signif.stars"), ...)
 {
     cat("\nCall:\n", paste(deparse(x$call), sep = "\n", collapse = "\n"),
         "\n", sep = "")
 
     cat("\nRandom effects:\n")
-    print(x$varcor, var.print = TRUE)
+    print(x$varcor, var.print=TRUE)
 
     cat("\nFixed effects:\n")
     printCoefmat(x$coefficients, digits = digits, signif.stars = signif.stars,
@@ -1003,7 +983,7 @@ print.mhglm <- function(x, digits = max(3L, getOption("digits") - 3L),
     if (x$family$family %in% c("binomial", "poisson")) {
         pval <- 2 * pnorm(-abs(tstat))
     } else {
-        pval <- 2 * pt(-abs(tstat), df = x$df.residual) #df here is ad-hoc
+        pval <- 2 * pt(-abs(tstat), df=x$df.residual) #df here is ad-hoc
     }
     fixed <- cbind(est, est.se, tstat, pval)
     colnames(fixed) <- c("Estimate", "Std. Error", "t value", "Pr(> |t|)")
@@ -1020,12 +1000,11 @@ print.mhglm <- function(x, digits = max(3L, getOption("digits") - 3L),
                  na.print = "NA", ...)
 
     cat("\n(Dispersion parameter for ", x$family$family,
-        " family taken to be ", format(x$dispersion, digits = digits), ")\n",
-        sep = "")
+        " family taken to be ", format(x$dispersion, digits=digits), ")\n",
+        sep="")
 
     cat("\n")
 }
-
 
 print.mhglm_ml <- function(x, digits = max(3L, getOption("digits") - 3L),
                         signif.stars = getOption("show.signif.stars"), ...)
@@ -1036,7 +1015,7 @@ print.mhglm_ml <- function(x, digits = max(3L, getOption("digits") - 3L),
     # random effects
     random <- list()
 
-    for (r in seq_along(x$coef.cov.all)) {
+    for(r in seq_along(x$coef.cov.all)){
 
       var <- pmax(0, diag(x$coef.cov.all[[r]]))
       sd <- sqrt(var)
@@ -1055,7 +1034,7 @@ print.mhglm_ml <- function(x, digits = max(3L, getOption("digits") - 3L),
     if (x$family$family %in% c("binomial", "poisson")) {
         pval <- 2 * pnorm(-abs(tstat))
     } else {
-        pval <- 2 * pt(-abs(tstat), df = x$df.residual) #df here is ad-hoc
+        pval <- 2 * pt(-abs(tstat), df=x$df.residual) #df here is ad-hoc
     }
     fixed <- cbind(est, est.se, tstat, pval)
     colnames(fixed) <- c("Estimate", "Std. Error", "t value", "Pr(> |t|)")
@@ -1065,8 +1044,8 @@ print.mhglm_ml <- function(x, digits = max(3L, getOption("digits") - 3L),
         "\n", sep = "")
 
     cat("\nRandom effects:\n")
-    for (r in names(random)) {
-      cat(r, "\n")
+    for(r in names(random)){
+      cat(r,"\n")
       print(random[[r]], digits = digits, na.print = "NA", ...)
     }
 
@@ -1075,8 +1054,56 @@ print.mhglm_ml <- function(x, digits = max(3L, getOption("digits") - 3L),
                  na.print = "NA", ...)
 
     cat("\n(Dispersion parameter for ", x$family$family,
-        " family taken to be ", format(x$dispersion, digits = digits), ")\n",
-        sep = "")
+        " family taken to be ", format(x$dispersion, digits=digits), ")\n",
+        sep="")
 
     cat("\n")
+}
+
+singlebars <- function(term)
+{
+    if (is.name(term) || !is.language(term))
+        return(term)
+    if (length(term) == 2) {
+        term[[2]] <- singlebars(term[[2]])
+        return(term)
+    }
+    stopifnot(length(term) >= 3)
+    if (is.call(term) && term[[1]] == as.name("||"))
+        term[[1]] <- as.name("|")
+    for (j in 2:length(term)) term[[j]] <- singlebars(term[[j]])
+    term
+}
+
+
+order_bars_hierarchy <- function(bars)
+{
+    bars_char <- Map(function(bar) as.character(bar)[3], bars)
+    # remove parenthesis
+    bars_char <- Map(gsub, bars_char, pattern = c("[\\(, \\)]"),
+                     replacement = "")
+    bars_groups <- Map(function(x) unlist(strsplit(x, split = ":")), bars_char)
+
+    sorted_group_counts <- sort(table(unlist(bars_groups)), decreasing = TRUE)
+    if (!all(sorted_group_counts == rev(seq_along(sorted_group_counts))))
+        stop("random effects formula misspecified ")
+
+    # TODO: KS 2017-05-17
+    # do we want y ~ 1 + (1|g1) + (1|g2:g1) + (1|g3:g2:g1) to be right but
+    # y ~ 1 + (1|g1) + (1|g1:g2) + (1|g1:g2:g3) wrong? it's probably esthetic
+    #
+    # after thinking about it, I think both are probably fine, although the
+    # first is preferred.
+    #
+    # if we do want the second formula to cause an exception, we should use the
+    # following code.
+    #
+    # # check each bar is in order
+    # bar_groups_ordered <- Map(bars_groups, f = function(group)
+    #     rev(group) == names(sorted_group_counts)[seq_along(group)])
+    # if (!all(unlist(bar_groups_ordered)))
+    #     stop("random effects formula misspecified ")
+
+    # return bars properly ordered
+    bars[order(sapply(bars_groups, length))]
 }

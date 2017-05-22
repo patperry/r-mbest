@@ -16,7 +16,7 @@
 # fit rank-deficient generalized linear model
 rdglm.fit <- function(x, y, weights = rep(1, nobs), start = NULL,
                       etastart = NULL, mustart = NULL, offset = rep(0, nobs),
-                      family = gaussian(), control = list(),
+                      family = gaussian(), control = list(), 
                       method = "firthglm.fit", intercept = TRUE)
 {
     # method
@@ -59,7 +59,7 @@ rdglm.fit <- function(x, y, weights = rep(1, nobs), start = NULL,
     if (family$family %in% c("poisson", "binomial")) {
         dispersion <- 1
     } else if (df.residual > 0) {
-        dispersion <- (sum((fit$weights * fit$residuals ^ 2)[fit$weights > 0])
+        dispersion <- (sum((fit$weights * fit$residuals^2)[fit$weights > 0])
                        / df.residual)
     } else {
         dispersion <- 0

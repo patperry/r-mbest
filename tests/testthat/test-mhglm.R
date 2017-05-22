@@ -40,7 +40,6 @@ test_that("succeeds on sleepstudy", {
     expect_equal_tol1(as.matrix(ranef(model)[["Subject"]]), ranef0)
 })
 
-
 test_that("succeeds on sleepstudy in parallel", {
     model <- mhglm(Reaction ~ Days + (Days | Subject), data = sleepstudy)
     model_p <- mhglm(Reaction ~ Days + (Days | Subject), data = sleepstudy,
@@ -54,8 +53,10 @@ test_that("succeeds on sleepstudy in parallel", {
 
 
 test_that("succeeds on cbpp", {
-    formula <- cbind(incidence, size - incidence) ~ period + (period | herd)
-    model <- mhglm(formula, data = cbpp, family = binomial)
+    suppressWarnings({
+        model <- mhglm(cbind(incidence, size - incidence) ~ period + (period | herd),
+                       data=cbpp, family=binomial)
+    })
 
     # fixef
     fixef0 <- c("(Intercept)" = -1.2, "period2" = -0.8, "period3" = -0.9,
@@ -84,31 +85,34 @@ test_that("succeeds on cbpp", {
     expect_equal_tol1(varcor, varcor0)
 
     # ranef
-    ranef0 <- matrix(c(-0.1, -0.4,  0.5,  0.1,  0.3, -0.2,  0.9,  0.5,  0.0,
-                       -0.7, -0.7,  0.0, -0.8,  1.2, -0.7,  0.8,  0.2, -0.6,
-                        0.2, -0.8, -0.1, -0.6, -0.5, -0.2,  0.3,  1.0,  0.1,
-                        0.7, -1.1,  0.7,  1.5, -0.1, -0.6,  0.5, -1.2, -0.5,
-                        0.2, -0.3, -0.3, -0.2,  1.1,  0.1,  0.2, -0.7,  0.5,
-                       -0.3,  0.3, -0.3, -0.2,  0.1,  0.3, -0.8, -0.3,  0.1,
-                        0.6,  0.2,  0.0,  0.6, -0.7,  0.4), 15, 4)
+    ranef0 <- matrix(c(-0.1, -0.4,  0.5,  0.1,  0.3, -0.2,  0.9,  0.5,  0.0, -0.7,
+                       -0.7,  0.0, -0.8,  1.2, -0.7,
+                        0.8,  0.2, -0.6,  0.2, -0.8, -0.1, -0.6, -0.5, -0.2,  0.3,
+                        1.0,  0.1,  0.7, -1.1,  0.7,
+                        1.5, -0.1, -0.6,  0.5, -1.2, -0.5,  0.2, -0.3, -0.3, -0.2,
+                        1.1,  0.1,  0.2, -0.7,  0.5,
+                       -0.3,  0.3, -0.3, -0.2,  0.1,  0.3, -0.8, -0.3,  0.1,  0.6,
+                        0.2,  0.0,  0.6, -0.7,  0.4),
+                     15, 4)
     rownames(ranef0) <- as.character(1:15)
     colnames(ranef0) <- c("(Intercept)", "period2", "period3", "period4")
     expect_equal_tol1(as.matrix(ranef(model)[["herd"]]), ranef0)
 })
 
-
 test_that("succeeds on cbpp in parallel", {
-    formula <- cbind(incidence, size - incidence) ~ period + (period | herd)
-    model <- mhglm(formula, data = cbpp, family = binomial)
-    model_p <- mhglm(formula, data = cbpp, family = binomial,
-                     control = list(parallel = TRUE))
+    suppressWarnings({
+        model <- mhglm(cbind(incidence, size - incidence) ~ period + (period | herd),
+                       data = cbpp, family = binomial)
+        model_p <- mhglm(cbind(incidence, size - incidence) ~ period + (period | herd),
+                         data = cbpp, family = binomial,
+                         control = list(parallel = TRUE))
+    })
 
     expect_equal(fixef(model_p), fixef(model))
     expect_equal(vcov(model_p), vcov(model))
     expect_equal(VarCorr(model_p), VarCorr(model))
     expect_equal(ranef(model_p), ranef(model))
 })
-
 
 test_that("success using diagonal covariance", {
     model <- mhglm(Reaction ~ Days + (Days | Subject), data = sleepstudy,

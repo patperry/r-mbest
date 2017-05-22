@@ -16,7 +16,7 @@
 proj.psd <- function(x)
 {
     modified <- FALSE
-    e <- eigen(x, symmetric = TRUE)
+    e <- eigen(x, symmetric=TRUE)
     l <- e$values
     u <- e$vectors
 
@@ -32,13 +32,17 @@ proj.psd <- function(x)
 }
 
 
+
+
+
+
+
 pseudo.solve <- function(a, b)
 {
     withCallingHandlers({
-        a.chol <- chol(a, pivot = TRUE, tol = 1e-7)
+        a.chol <- chol(a, pivot=TRUE, tol = 1e-7)
     }, warning = function(w) {
-        if (conditionMessage(w) == 
-            "the matrix is either rank-deficient or indefinite")
+        if (conditionMessage(w) == "the matrix is either rank-deficient or indefinite")
             invokeRestart("muffleWarning")
     })
 
@@ -53,30 +57,30 @@ pseudo.solve <- function(a, b)
     if (!deficient) {
         if (missing(b)) {
             x <- matrix(0, n, n)
-            x[pivot, pivot] <- chol2inv(R)
+            x[pivot,pivot] <- chol2inv(R)
         } else {
             if (is.matrix(b)) {
-                y <- b[pivot, , drop = FALSE]
+                y <- b[pivot,,drop=FALSE]
                 x <- matrix(0, n, ncol(b))
-                x[pivot, ] <- backsolve(R, backsolve(R, y, transpose = TRUE))
+                x[pivot,] <- backsolve(R, backsolve(R, y, transpose=TRUE))
             } else  {
                 y <- b[pivot]
                 x <- numeric(n)
-                x[pivot] <- backsolve(R, backsolve(R, y, transpose = TRUE))
+                x[pivot] <- backsolve(R, backsolve(R, y, transpose=TRUE))
             }
         }
     } else {
-        a.eigen <- eigen(a, symmetric = TRUE)
+        a.eigen <- eigen(a, symmetric=TRUE)
 
         # don't use rank from chol
-        rank <- min(sum(a.eigen$values > 1e-7), rank)
-        u <- a.eigen$vectors[, seq_len(rank), drop = FALSE]
+        rank <- min(sum(a.eigen$values>1e-7),rank)
+        u <- a.eigen$vectors[,seq_len(rank),drop=FALSE]
         l <- a.eigen$values[seq_len(rank)]
 
         if (missing(b)) {
-            x <- u %*% t(u) / l
+            x <- u %*% (t(u) / l)
         } else {
-            x <- u %*% (t(u) %*% b) / l
+            x <- u %*% ((t(u) %*% b) / l)
         }
     }
 

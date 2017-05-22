@@ -15,9 +15,9 @@
 
 firthglm.family <- function(family)
 {
-    supported_families <- c("binomial", "gaussian", "Gamma", "inverse.gaussian",
-                            "poisson", "quasibinomial", "quasipoisson")
-    if (!(family$family %in% supported_families)) {
+    if (!(family$family %in% c("binomial", "gaussian", "Gamma",
+                               "inverse.gaussian", "poisson",
+                               "quasibinomial", "quasipoisson"))) {
         print(family)
         stop("'family' not supported")
     }
@@ -40,7 +40,7 @@ firthglm.family <- function(family)
         if (family$link == "logit") {
             family$linkinv <- function(eta) {
                 eta.min <- log(.Machine$double.xmin)
-                eta.max <- log(2 ^ (.Machine$double.digits) - 1)
+                eta.max <- log(2^(.Machine$double.digits) - 1)
 
                 eta <- pmin(pmax(eta, eta.min), eta.max)
                 tmp <- exp(eta)
@@ -48,7 +48,7 @@ firthglm.family <- function(family)
             }
             family$mu.eta <- function(eta) {
                 eta.min <- log(.Machine$double.xmin)
-                eta.max <- log(2 ^ (.Machine$double.digits) - 1)
+                eta.max <- log(2^(.Machine$double.digits) - 1)
 
                 eta <- pmin(pmax(eta, eta.min), eta.max)
                 opexp <- 1 + exp(eta)
@@ -62,7 +62,7 @@ firthglm.family <- function(family)
             (1 - 6 * mu * (1 - mu)) / (mu * (1 - mu))
         }
         family$entropy <- function(mu) {
-            ifelse(mu == 0 | mu == 1, 0, mu * log(mu) + (1 - mu) * log(1 - mu))
+            ifelse(mu == 0 | mu == 1, 0, mu * log(mu) + (1 - mu) * log(1-mu))
         }
     } else if (family$family == "gaussian") {
         family$skewness <- function(mu) {
@@ -72,7 +72,7 @@ firthglm.family <- function(family)
             (mu[!is.na(mu)] <- 0)
         }
         family$entropy <- function(mu) {
-            mu ^ 2 / 2
+            mu^2 / 2
         }
     } else if (family$family == "Gamma") {
         family$skewness <- function(mu) {
@@ -96,10 +96,10 @@ firthglm.family <- function(family)
         }
     } else if (family$family == "poisson" || family$family == "quasipoisson") {
         family$skewness <- function(mu) {
-            1 / sqrt(mu)
+            1/sqrt(mu)
         }
         family$kurtosis <- function(mu) {
-            1 / mu
+            1/mu
         }
         family$entropy <- function(mu) {
             ifelse(mu == 0, 0, mu * log(mu) - mu)
@@ -111,3 +111,5 @@ firthglm.family <- function(family)
 
     family
 }
+
+

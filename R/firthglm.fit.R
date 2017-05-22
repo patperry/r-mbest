@@ -43,7 +43,7 @@ firthglm.control <- function(epsilon = 1e-8, maxit = 25, qr.tol = 1e-7,
 
 firthglm.eval <- function(coefficients, x, y, weights, offset, family, control)
 {
-    ret <- list(indomain = FALSE) # default return value
+    ret <- list(indomain=FALSE) # default return value
 
     # model parameters
     eta <- drop(offset + x %*% coefficients)
@@ -62,9 +62,9 @@ firthglm.eval <- function(coefficients, x, y, weights, offset, family, control)
     skewmu <- family$skewness(mu)
 
     # qr decomposition
-    wt <- weights * mu.eta ^ 2 / varmu
+    wt <- weights * mu.eta^2 / varmu
     xw <- x * sqrt(wt)
-    qr <- qr(xw, LAPACK = TRUE)
+    qr <- qr(xw, LAPACK=TRUE)
     R <- qr.R(qr)
     q <- qr.Q(qr)
     rownames(R) <- colnames(R)
@@ -72,10 +72,10 @@ firthglm.eval <- function(coefficients, x, y, weights, offset, family, control)
     # deviance, score, residuals, hat
     dev <- sum(family$dev.resids(y, mu, weights))
 
-    residuals <- (y - mu) / mu.eta
+    residuals <- (y - mu)/mu.eta
     score <- drop(t(xw) %*% (sqrt(wt) * residuals))
-
-    hat <- rowSums(q ^ 2)
+    #hat <- colSums(backsolve(R, t(xw[,qr$pivot]), transpose=TRUE)^2)
+    hat <- rowSums(q^2)
     names(hat) <- names(y)
 
     # penalty
@@ -94,6 +94,21 @@ firthglm.eval <- function(coefficients, x, y, weights, offset, family, control)
     indomain <- (is.finite(dev.modified)
                  && all(is.finite(score.modified)))
 
+    ## Hessian, sandwich covariance estimator
+    ## kurtmu <- family$kurtosis(mu)
+    ## kq <- t(q) %*% (ifelse(weights == 0, 0, kurtmu * hat / weights) * q)
+    ## q2 <- do.call(cbind, lapply(seq_len(ncol(q)), function(i) q[,i] * q))
+    ## sq2 <- ifelse(weights == 0, 0, skewmu / sqrt(weights)) * q2
+    ## H <- diag(ncol(q)) - 0.5 * (kq - tcrossprod(t(q) %*% sq2))
+    ##
+    ## x.modified <- q %*% (H %*% R[,order(qr$pivot),drop=FALSE])
+    ## rownames(x.modified) <- rownames(x)
+    ## colnames(x.modified) <- colnames(x)
+    ##
+    ## qr.modified <- qr(x.modified, LAPACK=TRUE)
+    ## R.modified <- qr.R(qr.modified)
+    ## rownames(R.modified) <- colnames(R.modified)
+
     list(eta = eta, mu = mu,
          residuals = residuals, residuals.modified = residuals.modified,
          R = R, rank = qr$rank, qr = qr,
@@ -104,10 +119,10 @@ firthglm.eval <- function(coefficients, x, y, weights, offset, family, control)
 }
 
 
-firthglm.fit <- function(x, y, weights = rep(1, nobs), start = NULL,
-                         etastart = NULL, mustart = NULL, offset = rep(0, nobs),
-                         family = gaussian(), control = list(...),
-                         intercept = TRUE, singular.ok = TRUE, ...)
+firthglm.fit <-
+    function(x, y, weights = rep(1, nobs), start = NULL, etastart = NULL,
+             mustart = NULL, offset = rep(0, nobs), family = gaussian(),
+             control = list(...), intercept = TRUE, singular.ok = TRUE, ...)
 {
     # control
     control <- do.call("firthglm.control", control)
@@ -115,6 +130,7 @@ firthglm.fit <- function(x, y, weights = rep(1, nobs), start = NULL,
     # design matrix, dimensions
     x <- as.matrix(x)
     xnames <- dimnames(x)[[2L]]
+    ynames <- if(is.matrix(y)) rownames(y) else names(y)
     nobs <- NROW(y)
     nvar <- ncol(x)
 
@@ -126,6 +142,10 @@ firthglm.fit <- function(x, y, weights = rep(1, nobs), start = NULL,
 
     # family
     family <- firthglm.family(family)
+
+    # determine valid range of eta values
+    etamax <- .Machine$double.xmax
+    etamin <- -(etamax)
 
     # initial parameters
     n <- NULL # this gets overwritten by eval(family$initizlize)
@@ -148,9 +168,9 @@ firthglm.fit <- function(x, y, weights = rep(1, nobs), start = NULL,
         varmu <- numeric()
         mu.eta <- numeric()
     }
-    wt <- weights * mu.eta ^ 2 / varmu
+    wt <- weights * mu.eta^2 / varmu
 
-    qr <- qr(x * sqrt(wt), tol = control$qr.tol)
+    qr <- qr(x * sqrt(wt), tol=control$qr.tol)
     rank <- qr$rank
     pivot <- qr$pivot
 
@@ -159,8 +179,8 @@ firthglm.fit <- function(x, y, weights = rep(1, nobs), start = NULL,
         if (length(start) != nvar) {
             stop(gettextf(paste("length of 'start' should equal %d",
                                 "and correspond to initial coefs for %s"),
-                          nvar, paste(deparse(xnames), collapse = ", ")),
-                 domain = NA)
+                          nvar, paste(deparse(xnames), collapse=", ")),
+                 domain=NA)
         }
     } else {
         if (is.null(etastart)) {
@@ -175,11 +195,12 @@ firthglm.fit <- function(x, y, weights = rep(1, nobs), start = NULL,
     }
 
     # check for rank-deficiency
+    xorig <- x
     if (rank < nvar) {
         if (!singular.ok)
             stop("singular fit encountered")
-        xdrop <- x[, pivot[(rank + 1L):nvar], drop = FALSE]
-        x <- x[, pivot[seq_len(rank)], drop = FALSE]
+        xdrop <- x[,pivot[(rank+1L):nvar],drop=FALSE]
+        x <- x[,pivot[seq_len(rank)],drop=FALSE]
         start <- start[pivot[seq_len(rank)]]
     }
 
@@ -194,7 +215,7 @@ firthglm.fit <- function(x, y, weights = rep(1, nobs), start = NULL,
         dev <- sum(family$dev.resids(y, mu, weights))
         nulldev <- dev
         aic <- family$aic(y, n, mu, weights, dev)
-        residuals <- (y - mu) / mu.eta
+        residuals <- (y - mu)/mu.eta
 
         return(list(coefficients = coefficients,
              residuals = residuals,
@@ -229,10 +250,10 @@ firthglm.fit <- function(x, y, weights = rep(1, nobs), start = NULL,
 
         eta0 <- obj0$eta
         val0 <- 0.5 * (obj0$deviance.modified)
-        grad0 <- -obj0$score.modified
+        grad0 <- -(obj0$score.modified)
         search <- numeric(rank)
         search[obj0$qr$pivot] <-
-            backsolve(obj0$R, backsolve(obj0$R, transpose = TRUE,
+            backsolve(obj0$R, backsolve(obj0$R, transpose=TRUE,
                                         obj0$score.modified[obj0$qr$pivot]))
         # This is mathematically equivalent, but (apparently) less stable:
         #   search <- qr.coef(obj0$qr,
@@ -241,13 +262,13 @@ firthglm.fit <- function(x, y, weights = rep(1, nobs), start = NULL,
         search.eta <- drop(x %*% search)
 
         # Test for convergence
-        if (deriv0 ^ 2 <= 2 * control$epsilon) {
+        if ((deriv0)^2 <= 2 * control$epsilon) {
             conv <- TRUE
             break
         }
 
         # Fall back to gradient descent if Hessian is ill-conditioned
-        if (deriv0 >= 0 || .kappa_tri(obj0$R, LINPACK = FALSE) >= 1e8) {
+        if (deriv0 >= 0 || .kappa_tri(obj0$R, LINPACK=FALSE) >= 1e8) {
             search <- -grad0
             deriv0 <- sum(search * grad0)
             search.eta <- drop(x %*% search)
@@ -280,7 +301,7 @@ firthglm.fit <- function(x, y, weights = rep(1, nobs), start = NULL,
 
             step.max <- step0
             if (step0 < 0.01) {
-                step0 <- 2 ^ (0.5 * log2(step.min) + 0.5 * log2(step.max))
+                step0 <- 2^(0.5 * log2(step.min) + 0.5 * log2(step.max))
             } else {
                 step0 <- step.min + 0.5 * (step.max - step.min)
             }
@@ -307,7 +328,7 @@ firthglm.fit <- function(x, y, weights = rep(1, nobs), start = NULL,
 
         for (lsiter in seq_len(control$linesearch.maxit)) {
             val <- 0.5 * (obj$deviance.modified)
-            grad <- -obj$score.modified
+            grad <- -(obj$score.modified)
             deriv <- sum(search * grad)
 
             ls <- update(ls, val, deriv)
@@ -350,26 +371,29 @@ firthglm.fit <- function(x, y, weights = rep(1, nobs), start = NULL,
     # qr.  This is tricky; we can't just call qr(sqrt(wt) * xorig), because
     # we need control of the pivoting
     qr1 <- obj0$qr
-
+    ## qr1 <- obj0$qr.modified
     if (rank < nvar) {
         useLAPACK <- attr(qr1, "useLAPACK")
         i1 <- seq_len(rank)
         i2 <- rank + seq_len(nobs - rank)
         j1 <- seq_len(rank)
-        j2 <- (rank + 1L):nvar
+        j2 <- (rank+1L):nvar
 
         x2 <- qr.qty(qr1, sqrt(wt) * xdrop)
-        x21 <- x2[i1, , drop = FALSE]
-        x22 <- x2[i2, , drop = FALSE]
+        ## q0 <- qr.Q(obj0$qr)
+        ## H <- obj0$H
+        ## x2 <- qr.qty(qr1, q0 %*% (H %*% (t(q0) %*% (sqrt(wt) * xdrop))))
+        x21 <- x2[i1,,drop=FALSE]
+        x22 <- x2[i2,,drop=FALSE]
 
         # LAPACK fails if nrow(x22) == 0
         LAPACK <- !is.null(useLAPACK) && useLAPACK
         if (LAPACK && nrow(x22) == 0L) {
             qr22 <- structure(list(qr = x22, rank = 0L, qraux = numeric(),
                                    pivot = seq_len(ncol(x22))),
-                              useLAPACK = TRUE, class = "qr")
+                              useLAPACK=TRUE, class="qr")
         } else {
-            qr22 <- qr(x22, LAPACK = LAPACK)
+            qr22 <- qr(x22, LAPACK=LAPACK)
         }
 
         qr <- list()
@@ -377,9 +401,9 @@ firthglm.fit <- function(x, y, weights = rep(1, nobs), start = NULL,
         qr$qr <- matrix(0, nobs, nvar)
         rownames(qr$qr) <- rownames(qr1$qr)
         colnames(qr$qr) <- c(colnames(qr1$qr), colnames(qr22$qr))
-        qr$qr[, j1] <- qr1$qr
-        qr$qr[i1, j2] <- x21[, qr22$pivot]
-        qr$qr[i2, j2] <- qr22$qr
+        qr$qr[,j1] <- qr1$qr
+        qr$qr[i1,j2] <- x21[,qr22$pivot]
+        qr$qr[i2,j2] <- qr22$qr
 
         qr$rank <- rank
         qr$qraux <- c(qr1$qraux, qr22$qraux)
@@ -403,7 +427,7 @@ firthglm.fit <- function(x, y, weights = rep(1, nobs), start = NULL,
 
     # null deviance
     wtdmu <- if (intercept)
-        sum(weights * y) / sum(weights)
+        sum(weights * y)/sum(weights)
     else family$linkinv(offset)
     nulldev <- sum(family$dev.resids(y, wtdmu, weights))
 
