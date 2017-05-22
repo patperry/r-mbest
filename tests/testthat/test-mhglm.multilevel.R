@@ -126,7 +126,7 @@ test_that("succeeds on simdata for two levels", {
                 "26:6", "27:6", "28:6", "29:6", "30:6", "31:7", "32:7", "33:7",
                 "34:7", "35:7", "36:8", "37:8", "38:8", "39:8", "40:8", "41:9",
                 "42:9", "43:9", "44:9", "45:9", "46:10", "47:10", "48:10",
-                "49:10","50:10"
+                "49:10", "50:10"
             ),
             class = "data.frame")),
         .Names = c("g1", "g2:g1"),
@@ -161,14 +161,16 @@ test_that("succeeds on multiple 2-level formula permutations", {
 })
 
 test_that("fails on misspecified 2-level formulas", {
-    expect_error(mhglm_ml(y ~ 1 + x + (1 + x | g1) + (1 + x | g2),
-                          data = g_data))
-    expect_error(mhglm_ml(y ~ 1 + x + (1 + x | g2) + (1 + x | g1),
-                          data = g_data))
-    expect_error(mhglm_ml(y ~ 1 + x + (1 + x | g1) + (1 + x | g1:g2) + (1 + x | g2),
-                          data = g_data))
-    expect_error(mhglm_ml(y ~ 1 + x + (1 + x | g1) + (1 + x | g1:g2) + (1 + x | g2:g1),
-                          data = g_data))
+    expect_error(
+        mhglm_ml(y ~ 1 + x + (1 + x | g1) + (1 + x | g2), data = g_data))
+    expect_error(
+        mhglm_ml(y ~ 1 + x + (1 + x | g2) + (1 + x | g1), data = g_data))
+    expect_error(
+        mhglm_ml(y ~ 1 + x + (1 + x | g1) + (1 + x | g1:g2) + (1 + x | g2),
+                 data = g_data))
+    expect_error(
+        mhglm_ml(y ~ 1 + x + (1 + x | g1) + (1 + x | g1:g2) + (1 + x | g2:g1),
+                 data = g_data))
 })
 
 test_that("succeeds on multiple 3-level formula permutations", {
@@ -329,7 +331,7 @@ test_that("succeeds on simdata for two levels, binomial", {
                     )
                 ),
                 .Names = c("(Intercept)", "x"),
-                row.names = c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10"),
+                row.names = as.character(1:10),
                 class = "data.frame"
             ),
             `g2:g1` = structure(
@@ -363,7 +365,8 @@ test_that("succeeds on simdata for two levels, binomial", {
                     "23:5", "24:5", "25:5", "26:6", "27:6", "28:6", "29:6",
                     "30:6", "31:7", "32:7", "33:7", "34:7", "35:7", "36:8",
                     "37:8", "38:8", "39:8", "40:8", "41:9", "42:9", "43:9",
-                    "44:9", "45:9", "46:10", "47:10", "48:10", "49:10", "50:10"),
+                    "44:9", "45:9", "46:10", "47:10", "48:10", "49:10", "50:10"
+                ),
                 class = "data.frame")
             ),
         .Names = c("g1", "g2:g1"))

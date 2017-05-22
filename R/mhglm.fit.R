@@ -37,8 +37,8 @@ mhglm.fit <- function(x, z, y, group, weights = rep(1, nobs),
         if (length(start) != nfixed) {
             stop(gettextf(paste0("length of 'start' should equal %d",
                                  " and correspond to initial coefs for %s"),
-                          nfixed, paste(deparse(xnames), collapse=", ")),
-                 domain=NA)
+                          nfixed, paste(deparse(xnames), collapse = ", ")),
+                 domain = NA)
         }
         start <- c(start, numeric(nrandom))
     }
@@ -55,7 +55,7 @@ mhglm.fit <- function(x, z, y, group, weights = rep(1, nobs),
     ngroups <- m$ngroups
 
     # compute pooled dispersion estimates
-    if(is.null(dispersion)){
+    if (is.null(dispersion)) {
         dispersion.tot <- dispersion.pooled(m$dispersion, m$df.residual)
     } else {
         dispersion.tot <- dispersion
@@ -63,21 +63,18 @@ mhglm.fit <- function(x, z, y, group, weights = rep(1, nobs),
     df.residual.tot <- sum(m$df.residual)
     dispersion <- rep(dispersion.tot, ngroups)
 
-    #    if (dispersion.tot == 0)
-    #        stop("cannot estimate dispersion (no residual degrees of freedom)")
-
     # compute group-sqecific precision square root (unpivoted)
-    Rp <- as.list(rep(NULL, ngroups))
+    Rp <- list()
 
-    if(control$parallel) {
+    if (control$parallel) {
         Rp <- foreach(i = seq_len(ngroups)) %dopar% {
             qr.i <- m$qr[[i]]
-            return(unpivotRp(qr.i,nvars))
+            return(unpivotRp(qr.i, nvars))
         }
     } else {
-        for(i in seq_len(ngroups)) {
+        for (i in seq_len(ngroups)) {
             qr.i <- m$qr[[i]]
-            Rp[[i]] <- unpivotRp(qr.i,nvars)
+            Rp[[i]] <- unpivotRp(qr.i, nvars)
         }
     }
     names(Rp) <- names(m$qr)
@@ -86,28 +83,28 @@ mhglm.fit <- function(x, z, y, group, weights = rep(1, nobs),
     if (control$standardize) {
         # compute averge precision of estimates
 
-        if(control$diagcov){
+        if (control$diagcov) {
             # if assuming independent covariates,
             # standardize each column separately.
             prec.avg <- rep(0, nvars)
             for (i in seq_len(ngroups)) {
-                scale.i <- sqrt(1/dispersion[i])
-                prec.avg <- prec.avg + apply((scale.i * Rp[[i]])^2, 2,sum)
+                scale.i <- sqrt(1 / dispersion[i])
+                prec.avg <- prec.avg + apply( (scale.i * Rp[[i]]) ^ 2, 2, sum)
             }
-            prec.avg <- diag(prec.avg,nrow = nvars)
+            prec.avg <- diag(prec.avg, nrow = nvars)
 
         } else {
 
             prec.avg <- matrix(0, nvars, nvars)
-            if(control$parallel) {
+            if (control$parallel) {
                 prec.avg <- foreach(i = seq_len(ngroups)) %dopar% {
-                    scale.i <- sqrt(1/dispersion[i])
+                    scale.i <- sqrt(1 / dispersion[i])
                     return(crossprod(scale.i * Rp[[i]]))
                 }
-                prec.avg <- Reduce('+', prec.avg)
+                prec.avg <- Reduce("+", prec.avg)
             } else {
                 for (i in seq_len(ngroups)) {
-                    scale.i <- sqrt(1/dispersion[i])
+                    scale.i <- sqrt(1 / dispersion[i])
                     prec.avg <- prec.avg + crossprod(scale.i * Rp[[i]])
                 }
             }
@@ -119,16 +116,9 @@ mhglm.fit <- function(x, z, y, group, weights = rep(1, nobs),
         # cov(R x) = R cov(x) R^T
         # [cov(R x)]^{-1} = R^{-T} [cov(x)]^{-1} R^{-1}
         suppressWarnings({
-            R.fixed <- chol(prec.avg[fixed,fixed], pivot = TRUE)
-            R.random <- chol(prec.avg[random,random], pivot = TRUE)
+            R.fixed <- chol(prec.avg[fixed, fixed], pivot = TRUE)
+            R.random <- chol(prec.avg[random, random], pivot = TRUE)
         })
-
-        #pivot <- attr(R, "pivot")
-        #rank <- attr(R, "rank")
-        #r1.fixed <- seq_len(attr(R.fixed, "rank"))
-        #r1.random <- seq_len(attr(R.random, "rank"))
-        #R.fixed <- R.fixed[r1.fixed,r1.fixed,drop=FALSE]
-        #R.random <- R.random[r1.random,r1.random,drop=FALSE]
     }
     else { # control.standardize==FALSE
         R.fixed <- diag(nfixed)
@@ -137,10 +127,6 @@ mhglm.fit <- function(x, z, y, group, weights = rep(1, nobs),
         R.random <- diag(nrandom)
         attr(R.random, "pivot") <- seq_len(nrandom)
         attr(R.random, "rank") <- nrandom
-
-        #pivot <- seq_len(nvars)
-        #rank <- nvars
-        #r1 <- seq_len(rank)
     }
 
     rank.fixed <- attr(R.fixed, "rank")
@@ -162,35 +148,35 @@ mhglm.fit <- function(x, z, y, group, weights = rep(1, nobs),
      <- R.random[r1.random, r1.random])
 
     # compute standardized coeficients:
-    #   coef[i,] <- R %*% m$coefficients[i,pivot[r1]]
-    coef <- m$coefficients[,pivot[r1],drop=FALSE] %*% t(R)
+    coef <- m$coefficients[, pivot[r1], drop = FALSE] %*% t(R)
 
     # compute group-specific subspace and precisions
-    if(control$parallel) {
+    if (control$parallel) {
         results <- foreach(i = seq_len(ngroups)) %dopar% {
             if (nrow(Rp[[i]]) > 0L) {
-                prec.sqrt <- backsolve(R, t(Rp[[i]][,pivot[r1],drop=FALSE]),
-                                       transpose=TRUE)
+                prec.sqrt <- backsolve(R, t(Rp[[i]][, pivot[r1], drop = FALSE]),
+                                       transpose = TRUE)
                 prec.sqrt.svd <- svd(prec.sqrt)
-                return(list(subspace=prec.sqrt.svd$u,
-                            precision=(prec.sqrt.svd$d)^2))
+                return(list(subspace = prec.sqrt.svd$u,
+                            precision = (prec.sqrt.svd$d) ^ 2))
             } else {
-                return(list(subspace=matrix(0, rank, 0), precision=numeric()))
+                return(list(subspace = matrix(0, rank, 0),
+                            precision = numeric()))
             }
         }
-        subspace <- lapply(results, function(x) x[['subspace']])
-        precision <- lapply(results, function(x) x[['precision']])
+        subspace <- lapply(results, function(x) x[["subspace"]])
+        precision <- lapply(results, function(x) x[["precision"]])
         rm(results)
     } else {
-        subspace <- as.list(rep(NULL, ngroups))
-        precision <- as.list(rep(NULL, ngroups))
+        subspace <- list()
+        precision <- list()
         for (i in seq_len(ngroups)) {
             if (nrow(Rp[[i]]) > 0L) {
-                prec.sqrt <- backsolve(R, t(Rp[[i]][,pivot[r1],drop=FALSE]),
-                                       transpose=TRUE)
+                prec.sqrt <- backsolve(R, t(Rp[[i]][, pivot[r1], drop = FALSE]),
+                                       transpose = TRUE)
                 prec.sqrt.svd <- svd(prec.sqrt)
                 subspace[[i]] <- prec.sqrt.svd$u
-                precision[[i]] <- (prec.sqrt.svd$d)^2
+                precision[[i]] <- (prec.sqrt.svd$d) ^ 2
             } else {
                 subspace[[i]] <- matrix(0, rank, 0)
                 precision[[i]] <- numeric()
@@ -202,24 +188,24 @@ mhglm.fit <- function(x, z, y, group, weights = rep(1, nobs),
 
     # compute coefficient mean and covariance estimates
     logging::loginfo("Computing mean and covariance estimates",
-                     logger="mbest.mhglm.fit")
+                     logger = "mbest.mhglm.fit")
     est0 <- NULL
     suppressWarnings({
         for (s in seq_len(control$steps)) {
-            est0 <- moment.est(coef, nfixed=rank.fixed, subspace, precision,
-                               dispersion, start.cov=est0$cov,
-                               parallel=control$parallel,
+            est0 <- moment.est(coef, nfixed = rank.fixed, subspace, precision,
+                               dispersion, start.cov = est0$cov,
+                               parallel = control$parallel,
                                diagcov = control$diagcov,
                                fixef.rank.warn = control$fixef.rank.warn,
                                cov.rank.warn = control$cov.rank.warn,
                                cov.psd.warn = control$cov.psd.warn)
             logging::loginfo("Refining mean and covariance estimates",
-                             logger="mbest.mhglm.fit")
+                             logger = "mbest.mhglm.fit")
         }
     })
-    est <- moment.est(coef, nfixed=rank.fixed, subspace, precision, dispersion,
-                      start.cov=est0$cov, parallel=control$parallel,
-                      diagcov = control$diagcov,
+    est <- moment.est(coef, nfixed = rank.fixed, subspace, precision,
+                      dispersion, start.cov = est0$cov,
+                      parallel = control$parallel, diagcov = control$diagcov,
                       fixef.rank.warn = control$fixef.rank.warn,
                       cov.rank.warn = control$cov.rank.warn,
                       cov.psd.warn = control$cov.psd.warn)
@@ -259,6 +245,7 @@ mhglm.fit <- function(x, z, y, group, weights = rep(1, nobs),
     fit
 }
 
+
 construct.reg <- function
 ## This is a unit function.
 ## This function takes in a list of mhglm fit objects,
@@ -269,39 +256,44 @@ construct.reg <- function
 ## ranef_i ~ N(0,Sigma), i.i.d
 (fit.list, ##<< a list of objects returned by mhglm.fit
  nrandom ##<< number of random effects' covariates
- ){
+ ) {
 
     ngroups <- length(fit.list)
 
     # add a small positive number 1e-7 to singular values
-    newdata <- lapply(fit.list,function(x){
+    newdata <- lapply(fit.list, function(x) {
                           omega <- x$mean.info[[1]]$weight11.sum
                           omegasvd <- svd(omega)
                           omegasvd$d <- pmax(1e-7, omegasvd$d)
-                          omega_sqrt <- omegasvd$v %*% diag(sqrt(omegasvd$d), nrow = nrow(omega)) %*% t(omegasvd$v)
+                          omega_sqrt <- (omegasvd$v %*%
+                              diag(sqrt(omegasvd$d), nrow = nrow(omega)) %*%
+                              t(omegasvd$v))
 
                           newy <- omega_sqrt %*% x$coefficient.mean
                           newxz <- omega_sqrt
 
                           colnames(newxz) <- names(x$coefficient.mean)
-                          list(newy = newy, newxz = newxz) })
+                          list(newy = newy, newxz = newxz)
+                      })
 
     nfixed <- length(newdata[[1]]$newy) - nrandom
 
     # concatenate all ys
-    newy <- Reduce("c",lapply(newdata, function(x) x$newy))
+    newy <- Reduce("c", lapply(newdata, function(x) x$newy))
 
     # first nfixed columns are 'fixed effects covariates'
-    newx <- Reduce("rbind",lapply(newdata, function(x) x$newxz[,(1:nfixed),drop = FALSE]))
+    newx <- Reduce("rbind", lapply(newdata,
+        function(x) x$newxz[, (1:nfixed), drop = FALSE]))
 
     # last nrandom columns are 'random effects covariates'
-    newz <- Reduce("rbind",lapply(newdata, function(x) x$newxz[,(nfixed + (1:nrandom)),drop = FALSE]))
+    newz <- Reduce("rbind", lapply(newdata,
+        function(x) x$newxz[, (nfixed + (1:nrandom)), drop = FALSE]))
 
     # generate group indicator and turn into factors
     levels <- names(fit.list)
-    newgroup <- gl(ngroups, (nfixed + nrandom),labels = levels)
+    newgroup <- gl(ngroups, (nfixed + nrandom), labels = levels)
 
-    return(list(y = newy, x = newx, z = newz,group = newgroup))
+    list(y = newy, x = newx, z = newz, group = newgroup)
 }
 
 
@@ -315,19 +307,20 @@ fit.recursive <- function
 ## In order to process n-levels hierachical structure, one need to call this n-1 times.
 ## Example: suppose the nested group is g1/g2/g3, then this is a 3-levels model and we
 ## call the function 2 times.
-(fit.tree,##<< a tree-structured list of mhglm fit objects
+(fit.tree, ##<< a tree-structured list of mhglm fit objects
  nrandom, ##<< number of random effects' covariates
  control ##<< control parameter from the main function call
- ){
-    if(class(fit.tree) == 'mhglmfit'){
+ ) {
+    if (class(fit.tree) == "mhglmfit") {
         return(fit.tree)
-    } else if(class(fit.tree[[1]]) != 'mhglmfit'){
+    } else if (class(fit.tree[[1]]) != "mhglmfit") {
         # Need to go one level down
-        fit.tree <- lapply(fit.tree, function(x) fit.recursive(x, nrandom, control))
+        fit.tree <- lapply(fit.tree,
+                           function(x) fit.recursive(x, nrandom, control))
     } else {
         # Reach the right level.
         # construct new regression problem
-        newdata <- construct.reg(fit.tree,nrandom)
+        newdata <- construct.reg(fit.tree, nrandom)
 
         # Fit standard mhglm to it.
         # Note
@@ -337,14 +330,16 @@ fit.recursive <- function
                          y = newdata$y, group = newdata$group,
                          family = gaussian(), control = control,
                          dispersion = 1)
-        fit.tree <- c(fit.tree,ret)
+        fit.tree <- c(fit.tree, ret)
 
         # Set the flag so next time the function is called,
         # it will work on the parent node.
-        class(fit.tree) <- 'mhglmfit'
+        class(fit.tree) <- "mhglmfit"
     }
-    return(fit.tree)
+
+    fit.tree
 }
+
 
 avg.coef.cov <- function
 ## This is a recursive function.
@@ -355,19 +350,21 @@ avg.coef.cov <- function
 (fit.tree, ##<< a tree-structured list of mhglm fit objects
  r ##<< for which level to compute the ranef covariance estimate.
  ### 1 <= r <= n-1, where n is the number of levels
- ){
-
-    if(r==1){
+ ) {
+    if (r == 1) {
         ngroups <- length(fit.tree$subspace)
         coefficient.cov.weighted <- ngroups * fit.tree$coefficient.cov
-        ret <- list(ngroups = ngroups, coefficient.cov.weighted = coefficient.cov.weighted)
+        ret <- list(ngroups = ngroups,
+                    coefficient.cov.weighted = coefficient.cov.weighted)
         return(ret)
-    } else if (r>1) {
-        ret<- lapply(Filter(function(x) class(x) == 'mhglmfit', fit.tree),
-                     function(x) avg.coef.cov(x,r-1))
-        ngroups <- Reduce("+", lapply(ret,function(x) x$ngroups))
-        coefficient.cov.weighted <- Reduce("+", lapply(ret,function(x) x$coefficient.cov.weighted))
-        ret2 <- list(ngroups = ngroups, coefficient.cov.weighted = coefficient.cov.weighted)
+    } else if (r > 1) {
+        ret <- lapply(Filter(function(x) class(x) == "mhglmfit", fit.tree),
+                     function(x) avg.coef.cov(x, r - 1))
+        ngroups <- Reduce("+", lapply(ret, function(x) x$ngroups))
+        coefficient.cov.weighted <- Reduce("+",
+            lapply(ret, function(x) x$coefficient.cov.weighted))
+        ret2 <- list(ngroups = ngroups,
+                     coefficient.cov.weighted = coefficient.cov.weighted)
         return(ret2)
     } else {
         stop("Unvalid r.")
@@ -381,15 +378,16 @@ avg.dispersion <- function
 (fit.tree, ##<< a tree-structured list of mhglm fit objects
  r ##<< for which level to compute the ranef covariance estimate.
  ### 1 <= r <= n-1, where n is the number of levels
- ){
-    if(r==1){
-        return(c(fit.tree$df.residual, fit.tree$df.residual * fit.tree$dispersion))
-    } else if (r>1) {
-        ret <- lapply(Filter(function(x) class(x) == 'mhglmfit', fit.tree),
-                      function(x) avg.dispersion(x,r-1))
+ ) {
+    if (r == 1) {
+        return(c(fit.tree$df.residual,
+                 fit.tree$df.residual * fit.tree$dispersion))
+    } else if (r > 1) {
+        ret <- lapply(Filter(function(x) class(x) == "mhglmfit", fit.tree),
+                      function(x) avg.dispersion(x, r - 1))
 
-        df.residual.tot <- Reduce("+", lapply(ret,function(x) x[1]))
-        dispersion.tot <- Reduce("+", lapply(ret,function(x) x[2]))
+        df.residual.tot <- Reduce("+", lapply(ret, function(x) x[1]))
+        dispersion.tot <- Reduce("+", lapply(ret, function(x) x[2]))
         return(c(df.residual.tot, dispersion.tot))
     } else {
         stop("Unvalid r.")
@@ -405,54 +403,57 @@ mhglm.fit.bottom <- function
  start = NULL, etastart = NULL, mustart = NULL,
  offset = rep(0, nobs), family = gaussian(),
  control = list(), intercept = TRUE
- ){
+ ) {
 
     control <- do.call("mhglm.control", control)
     x <- as.matrix(x)
     z <- lapply(z, as.matrix)
     ngroupslevel <- length(group)
 
-    if(ngroupslevel ==1){
-        m <- mhglm.fit(x = x, z = z[[1]], y = y, group = group[[1]], weights = weights,
-                       start = start, etastart = etastart, mustart = mustart,
-                       offset = offset, family = family,
+    if (ngroupslevel == 1) {
+        m <- mhglm.fit(x = x, z = z[[1]], y = y, group = group[[1]],
+                       weights = weights, start = start, etastart = etastart,
+                       mustart = mustart, offset = offset, family = family,
                        control = control, intercept = intercept)
-        class(m) <- 'mhglmfit'
+        class(m) <- "mhglmfit"
         return(m)
 
     } else {
-
         ngroups <- nlevels(group[[1]])
         levels <- levels(group[[1]])
-        fit.bottom <- as.list(rep(NULL, ngroups))
-        subsets <- .Call(C_group_subsets, group[[1]], ngroups) # group => indices
+        fit.bottom <- list()
 
-        for(i in seq_len(ngroups)) {
+        # group => indices
+        subsets <- .Call(C_group_subsets, group[[1]], ngroups)
+
+        for (i in seq_len(ngroups)) {
             j <- subsets[[i]]
-            yj <- if (is.matrix(y)) y[j,,drop=FALSE] else y[j]
-            xj <- cbind(x[j,,drop = FALSE],
-                        (z[[1]])[j,,drop = FALSE])
+            yj <- if (is.matrix(y)) y[j, , drop = FALSE] else y[j]
+            xj <- cbind(x[j, , drop = FALSE],
+                        (z[[1]])[j, , drop = FALSE])
 
             groupj <- list()
             zj <- list()
-            for(r in seq_len(ngroupslevel-1)){
-                groupj[[r]] <- droplevels(group[[r+1]][j])
-                zj[[r]] <- z[[r+1]][j,,drop = FALSE]
+            for (r in seq_len(ngroupslevel - 1)) {
+                groupj[[r]] <- droplevels(group[[r + 1]][j])
+                zj[[r]] <- z[[r + 1]][j, , drop = FALSE]
             }
 
-            m <- mhglm.fit.bottom(x=xj, z = zj, y = yj,
+            m <- mhglm.fit.bottom(x = xj, z = zj, y = yj,
                                   group = groupj, weights = weights[j],
-                                  start = start, etastart = etastart, mustart = mustart,
-                                  offset = offset[j], family = family,
-                                  control = control, intercept = intercept)
-            fit.bottom[[i]]<- m
+                                  start = start, etastart = etastart,
+                                  mustart = mustart, offset = offset[j],
+                                  family = family, control = control,
+                                  intercept = intercept)
+            fit.bottom[[i]] <- m
         }
 
         names(fit.bottom) <- levels
-        return(fit.bottom)
 
+        return(fit.bottom)
     }
 }
+
 
 mhglm.fit.multilevel <- function
 ## This is the main function.
@@ -465,60 +466,57 @@ mhglm.fit.multilevel <- function
  start = NULL, etastart = NULL, mustart = NULL,
  offset = rep(0, nobs), family = gaussian(),
  control = list(), intercept = TRUE
- ){
+ ) {
 
     control <- do.call("mhglm.control", control)
     x <- as.matrix(x)
     z <- lapply(z, as.matrix)
     xnames <- dimnames(x)[[2L]]
-    znames <- lapply(z,function(x){dimnames(x)[[2L]]})
+    znames <- lapply(z, function(x) dimnames(x)[[2L]])
 
     nobs <- NROW(y)
-    nfixed <- ncol(x)
-    nrandom <- lapply(z,ncol)
-    ngroupslevel <- if(is.list(z)){length(z)} else 0
+    nrandom <- lapply(z, ncol)
+    ngroupslevel <- if (is.list(z)) length(z) else 0
 
     #----------
     # 'group' input needs special care.
     # Turn it into a list of factors
-    if(!is.list(group)){
-        stop('group must be a data.frame')
+    if (!is.list(group)) {
+        stop("group must be a data.frame")
     } else{
-        group <- lapply(group,factor)
+        group <- lapply(group, factor)
     }
 
 
     #----------
     # run black box algorithm on groups
-    fit.bottom <- mhglm.fit.bottom(x = x, z = z, y = y, group = group, weights = weights,
-                                   start = start, etastart = etastart, mustart = mustart,
+    fit.bottom <- mhglm.fit.bottom(x = x, z = z, y = y, group = group,
+                                   weights = weights, start = start,
+                                   etastart = etastart, mustart = mustart,
                                    offset = offset, family = family,
                                    control = control, intercept = intercept)
 
     #----------
     # recursively regress group specific estimate on true fixef and raneef
     r <- ngroupslevel
-    while ( r>1){
-        fit.bottom <- fit.recursive(fit.bottom, nrandom[[r-1]],control)
-        r <- r-1
+    while (r > 1) {
+        fit.bottom <- fit.recursive(fit.bottom, nrandom[[r - 1]], control)
+        r <- r - 1
     }
 
     #----------
     # pool dispersion together
-    dispersion.info <- avg.dispersion(fit.bottom,ngroupslevel)
-    dispersion <- dispersion.info[2]/dispersion.info[1]
+    dispersion.info <- avg.dispersion(fit.bottom, ngroupslevel)
+    dispersion <- dispersion.info[2] / dispersion.info[1]
 
-    #----------
     # Take average of estimated coefficient.cov
-    coef.cov <- as.list(rep(NULL,ngroupslevel))
-    for(r in seq_len(ngroupslevel)){
-        coef.cov.info <- avg.coef.cov(fit.bottom,r)
-        coef.cov[[r]] <- coef.cov.info[[2]]/coef.cov.info[[1]]
+    coef.cov <- list()
+    for (r in seq_len(ngroupslevel)) {
+        coef.cov.info <- avg.coef.cov(fit.bottom, r)
+        coef.cov[[r]] <- coef.cov.info[[2]] / coef.cov.info[[1]]
         dimnames(coef.cov[[r]]) <- list(znames[[r]], znames[[r]])
     }
 
-
-    #----------
     # Set coordinate names
     names(fit.bottom$coefficient.mean) <- xnames
     dimnames(fit.bottom$coefficient.mean.cov) <- list(xnames, xnames)
@@ -532,7 +530,3 @@ mhglm.fit.multilevel <- function
 
     fit
 }
-
-
-
-

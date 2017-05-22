@@ -16,14 +16,7 @@
 # Perform a "blind" linesearch: don't check any curvature or
 # sufficient decrease conditions; always declare the search to have
 # converged after one iteration.
-#
-
-
-# default search parameters
-blindsearch.control <- function()
-{
-    list()
-}
+blindsearch.control <- function() list()
 
 
 # Start a line search, given initial value, derivative and step size.
@@ -42,8 +35,8 @@ blindsearch <- function(value, deriv, step, control = list())
 
     best <- NULL
 
-    z <- list(step = step, value0 = value, deriv0 = deriv, 
-              best = best, converged = FALSE, control=control)
+    z <- list(step = step, value0 = value, deriv0 = deriv,
+              best = best, converged = FALSE, control = control)
     class(z) <- "blindsearch"
     z
 }
@@ -54,10 +47,10 @@ print.blindsearch <- function(x, digits = max(3L, getOption("digits") - 3L),
 {
     if (x$converged) {
         cat("Converged blind linesearch (step = ",
-            format(x$step, digits), ")\n", sep="")
+            format(x$step, digits), ")\n", sep = "")
     } else {
         cat("Blind search in progress; next step = ",
-            format(x$step, digits), "\n", sep="")
+            format(x$step, digits), "\n", sep = "")
     }
 }
 
@@ -65,10 +58,6 @@ print.blindsearch <- function(x, digits = max(3L, getOption("digits") - 3L),
 # update search with new value and derivative
 update.blindsearch <- function(object, value, deriv, ...)
 {
-    step <- object$step
-
-    converged <- FALSE
-
     if (is.na(value))
         stop("function value is NA")
     if (is.na(deriv))

@@ -39,18 +39,19 @@ rdglm.group.fit <- function(x, y, group, weights = rep(1, nobs), start = NULL,
     rank <- rep(as.integer(NA), ngroups)
     qr <- as.list(rep(NULL, ngroups))
 
-    if(parallel) {
-        logging::loginfo("Fitting models in parallel", logger="mbest.mhglm.fit")
+    if (parallel) {
+        logging::loginfo("Fitting models in parallel",
+                         logger = "mbest.mhglm.fit")
 
-        x <- bigmemory::as.big.matrix(x, shared=TRUE)
+        x <- bigmemory::as.big.matrix(x, shared = TRUE)
 
-        results <- foreach(i=seq_len(ngroups)) %dopar% {
+        results <- foreach(i = seq_len(ngroups)) %dopar% {
             j <- subsets[[i]]
             yj <- if (is.matrix(y))
-                y[j,,drop=FALSE]
+                y[j, , drop = FALSE]
             else y[j]
 
-            model <- rdglm.fit(x = x[j,,drop=FALSE], y = yj,
+            model <- rdglm.fit(x = x[j, , drop = FALSE], y = yj,
                                weights = weights[j], start = start,
                                etastart = etastart[j], mustart = mustart[j],
                                offset = offset[j], family = family,
@@ -71,23 +72,24 @@ rdglm.group.fit <- function(x, y, group, weights = rep(1, nobs), start = NULL,
         qr <- lapply(results, function(x) x[[5]])
         rm(results)
     } else {
-        logging::loginfo("Fitting models in sequence", logger="mbest.mhglm.fit")
+        logging::loginfo("Fitting models in sequence",
+                         logger = "mbest.mhglm.fit")
 
         x <- as.matrix(x)
 
-        for(i in seq_len(ngroups)) {
+        for (i in seq_len(ngroups)) {
             j <- subsets[[i]]
             yj <- if (is.matrix(y))
-                y[j,,drop=FALSE]
+                y[j, , drop = FALSE]
             else y[j]
 
-            model <- rdglm.fit(x = x[j,,drop=FALSE], y = yj,
+            model <- rdglm.fit(x = x[j, , drop = FALSE], y = yj,
                                weights = weights[j], start = start,
                                etastart = etastart[j], mustart = mustart[j],
                                offset = offset[j],
                                family = family, control = control,
                                method = method, intercept = intercept)
-            coefficients[i,] <- model$coefficients
+            coefficients[i, ] <- model$coefficients
             dispersion[i] <- model$dispersion
             df.residual[i] <- model$df.residual
             rank[[i]] <- model$rank
@@ -103,4 +105,3 @@ rdglm.group.fit <- function(x, y, group, weights = rep(1, nobs), start = NULL,
          dispersion = dispersion, df.residual = df.residual, rank = rank,
          qr = qr)
 }
-

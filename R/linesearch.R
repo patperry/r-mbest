@@ -15,7 +15,7 @@
 
 # Perform a one-dimensional line search to find a step length satisfying
 # the strong Wolfe conditions (sufficient decrease and curvature condition).
-# Useful as part of a function minimization algorithm.  
+# Useful as part of a function minimization algorithm.
 #
 # This module implements the algorithm described by More and Thuente (1994),
 # which is guaranteed to converge after a finite number of iterations.
@@ -92,7 +92,7 @@ linesearch <- function(value, deriv, step, control = list())
     z <- list(step = step, value0 = value, deriv0 = deriv, ftest = ftest,
               gtest = gtest, bracket = FALSE, auxfun = TRUE, lower = lower,
               upper = upper, interval = interval, old.width1 = Inf,
-              old.width2 = Inf, converged = FALSE, control=control)
+              old.width2 = Inf, converged = FALSE, control = control)
     class(z) <- "linesearch"
     z
 }
@@ -102,10 +102,10 @@ print.linesearch <- function(x, digits = max(3L, getOption("digits") - 3L), ...)
 {
     if (x$converged) {
         cat("Converged linesearch (step = ",
-            format(x$step, digits), ")\n", sep="")
+            format(x$step, digits), ")\n", sep = "")
     } else {
         cat("Linesearch in progress; next step = ",
-            format(x$step, digits), "\n", sep="")
+            format(x$step, digits), "\n", sep = "")
     }
 }
 
@@ -127,7 +127,7 @@ update.linesearch <- function(object, value, deriv, ...)
     if (is.na(deriv))
         stop("function derivative is NA")
 
-    if (value <= ftest && abs(deriv) <= -(control$deriv.tol * object$deriv0)) {
+    if (value <= ftest && abs(deriv) <= -control$deriv.tol * object$deriv0) {
         converged <- TRUE
     } else if (object$bracket && step <= interval[1] || step >= interval[2]) {
         warning("lack of numerical precision prevents further progress")
@@ -203,7 +203,6 @@ update.linesearch.step <- function(object, test)
 
     maybe.bisect(object)
 }
-
 
 
 # If the length of the interval doesn't decrease by delta after two

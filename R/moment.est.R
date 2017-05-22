@@ -13,17 +13,14 @@
 # limitations under the License.
 
 
-
 # Compute 'sufficient statitics' for estimating fixed coef mean using moment method.
 # Usually it will be used separately on each cores.
-moment.est.mean.mapper <- function(coefficients, nfixed, subspace, precision, dispersion, start.cov = NULL)
+moment.est.mean.mapper <- function(coefficients, nfixed, subspace, precision,
+                                   dispersion, start.cov = NULL)
 {
-
-
     ngroups <- nrow(coefficients)
     dim <- ncol(coefficients)
     nrandom <- dim - nfixed
-    names <- colnames(coefficients)
 
     fixed <- seq_len(nfixed)
     random  <- nfixed + seq_len(nrandom)
@@ -37,8 +34,6 @@ moment.est.mean.mapper <- function(coefficients, nfixed, subspace, precision, di
 
     for (i in seq_len(ngroups)) {
         u <- subspace[[i]]
-        u1 <- u[fixed,,drop=FALSE]
-        u2 <- u[random,,drop=FALSE]
         l <- precision[[i]]
 
         sigma2 <- dispersion[i]
@@ -50,51 +45,44 @@ moment.est.mean.mapper <- function(coefficients, nfixed, subspace, precision, di
 
         s <- sqrt(l)
         us <- u %*% diag(s, r, r)
-        u1s <- us[fixed,,drop=FALSE]
-        u2s <- us[random,,drop=FALSE]
+        u1s <- us[fixed, , drop = FALSE]
+        u2s <- us[random, , drop = FALSE]
 
         cov22 <- t(u2s) %*% start.cov %*% u2s
         w.inv <- cov22 + diag(sigma2, r, r)
-        #    R.w.inv <- chol(w.inv)
-        #    R.u1s.t <- backsolve(R.w.inv, t(u1s), transpose=TRUE)
-        #    R.u2s.t <- backsolve(R.w.inv, t(u2s), transpose=TRUE)
-        #    w11 <- t(R.u1s.t) %*% R.u1s.t
-        #    w12 <- t(R.u1s.t) %*% R.u2s.t
 
         # pseudo.solve is more robust against 0 eigenvalues
-        w11 <- u1s %*% pseudo.solve(w.inv,t(u1s))
-        w12 <- u1s %*% pseudo.solve(w.inv,t(u2s))
+        w11 <- u1s %*% pseudo.solve(w.inv, t(u1s))
+        w12 <- u1s %*% pseudo.solve(w.inv, t(u2s))
 
 
-        w1b <- (w11 %*% coefficients[i,fixed]
-                + w12 %*% coefficients[i,random])
+        w1b <- (w11 %*% coefficients[i, fixed]
+                + w12 %*% coefficients[i, random])
 
-        if(max(abs(w1b))>100){stop}
+        stopifnot(max(abs(w1b)) <= 100)
+
         weight11.sum <- weight11.sum + w11
         weight1.coef.sum <- weight1.coef.sum + w1b
     }
 
-    return(list(ngroups = ngroups,
-                weight11.sum  = weight11.sum ,
-                weight1.coef.sum  = weight1.coef.sum ))
+    list(ngroups = ngroups, weight11.sum  = weight11.sum,
+         weight1.coef.sum  = weight1.coef.sum )
 
 }
+
 
 # Estimate fixed effect's coefficient.
 # Usually used as the 'combine' function in foreach function.
 moment.est.mean.reducer <- function(ret, fixef.rank.warn)
 {
-
-    #  ret <- list(...)
-    if(length(ret)==0)
+    if (length(ret) == 0)
         stop("The input is empty.")
-
 
     ngroups <- 0
     wtot <- 0
     meanSum <- 0
 
-    for(i in seq_len(length(ret))){
+    for (i in seq_len(length(ret))) {
         ngroups <- ngroups + ret[[i]]$ngroups
         wtot <- wtot + ret[[i]]$weight11.sum
         meanSum <- meanSum + ret[[i]]$weight1.coef.sum
@@ -104,34 +92,32 @@ moment.est.mean.reducer <- function(ret, fixef.rank.warn)
 
     mean <- pseudo.solve(wtot, meanSum)
     if (attr(mean, "deficient") & fixef.rank.warn) {
-        warning("cannot solve fixed effect moment equation due to rank deficiency")
+        warning(paste("cannot solve fixed effect moment equation due to rank",
+                      "deficiency"))
     }
     mean.cov <- pseudo.solve(wtot) / ngroups
     attr(mean, "deficient") <- attr(mean.cov, "deficient") <- NULL
 
-    est.mean <- list(mean = mean, mean.cov = mean.cov)
-    return(est.mean)
+    list(mean = mean, mean.cov = mean.cov)
 }
 
 # Compute 'sufficient statitics' for estimating ranef cov using moment method.
 # Usually it will be used separately on each cores.
-moment.est.cov.mapper <- function(coefficients, nfixed, subspace, precision, dispersion,
-                                  start.cov = NULL, diagcov = FALSE, mean)
+moment.est.cov.mapper <- function(coefficients, nfixed, subspace, precision,
+                                  dispersion, start.cov = NULL, diagcov = FALSE,
+                                  mean)
 {
-
     dim <- ncol(coefficients)
     ngroups <- nrow(coefficients)
     nrandom <- dim - nfixed
     fixed <- seq_len(nfixed)
     random  <- nfixed + seq_len(nrandom)
 
-    names <- colnames(coefficients)
-
     if (is.null(start.cov))
         start.cov <- diag(nrandom)
 
     # compute mean estimate and covariance bias correction
-    if(diagcov){
+    if (diagcov) {
         bias.sum <- matrix(0, nrandom, 1)
         weight22.2.sum <- matrix(0,  nrandom, nrandom)
         weight22.coef.2.sum <- matrix(0, nrandom, 1)
@@ -141,61 +127,46 @@ moment.est.cov.mapper <- function(coefficients, nfixed, subspace, precision, dis
         weight22.coef.2.sum <- matrix(0,  nrandom, nrandom)
     }
 
-
-    VWV12 <- as.list(rep(NULL,ngroups))
-    VWV22 <- as.list(rep(NULL,ngroups))
+    VWV12 <- list()
+    VWV22 <- list()
 
     for (i in seq_len(ngroups)) {
         u <- subspace[[i]]
-        u1 <- u[fixed,,drop=FALSE]
-        u2 <- u[random,,drop=FALSE]
         l <- precision[[i]]
 
         sigma2 <- dispersion[i]
         r <- length(l)
 
-        if (r == 0L) {
-            next
-        }
+        if (r == 0L) next
 
         s <- sqrt(l)
         us <- u %*% diag(s, r, r)
-        u1s <- us[fixed,,drop=FALSE]
-        u2s <- us[random,,drop=FALSE]
+        u1s <- us[fixed, , drop = FALSE]
+        u2s <- us[random, , drop = FALSE]
 
         cov22 <- t(u2s) %*% start.cov %*% u2s
         w.inv <- cov22 + diag(sigma2, r, r)
-        #    R.w.inv <- chol(w.inv)
-        #    R.u1s.t <- backsolve(R.w.inv, t(u1s), transpose=TRUE)
-        #    R.u2s.t <- backsolve(R.w.inv, t(u2s), transpose=TRUE)
-        #    w12 <- t(R.u1s.t) %*% R.u2s.t
-        #    w22 <- t(R.u2s.t) %*% R.u2s.t
 
         # pseudo.solve is more robust against 0 eigenvalues
-        w12 <- u1s %*% pseudo.solve(w.inv,t(u2s))
-        w22 <- u2s %*% pseudo.solve(w.inv,t(u2s))
+        w12 <- u1s %*% pseudo.solve(w.inv, t(u2s))
+        w22 <- u2s %*% pseudo.solve(w.inv, t(u2s))
 
+        R2.u2s.t <- pseudo.solve(w.inv, t(u2s))
 
-        #    R2.u2s.t <- backsolve(R.w.inv, R.u2s.t)
-        R2.u2s.t <- pseudo.solve(w.inv,t(u2s))
-
-        if(diagcov)
-            B <- sigma2 * apply((R2.u2s.t)^2,2,sum)
+        if (diagcov)
+            B <- sigma2 * apply(R2.u2s.t ^ 2, 2, sum)
         else
             B <- sigma2 * t(R2.u2s.t) %*% R2.u2s.t
 
         bias.sum <- bias.sum + B
 
+        if (diagcov) {
+            diff <- (t(w12) %*% (coefficients[i, fixed] - mean)
+                     + w22 %*% coefficients[i, random])
 
-
-        if(diagcov){
-            diff <- (t(w12) %*% (coefficients[i,fixed] - mean)
-                     + w22 %*% coefficients[i,random])
-
-            weight22.2.sum <- weight22.2.sum + w22^2
-            weight22.coef.2.sum  <- weight22.coef.2.sum + diff^2
+            weight22.2.sum <- weight22.2.sum + w22 ^ 2
+            weight22.coef.2.sum  <- weight22.coef.2.sum + diff ^ 2
         } else {
-
             weight22.2.sum <- weight22.2.sum + kronecker(w22, w22)
 
             diff <- (t(w12) %*% (coefficients[i,fixed] - mean)
@@ -207,12 +178,9 @@ moment.est.cov.mapper <- function(coefficients, nfixed, subspace, precision, dis
         VWV22[[i]] <- w22
     }
 
-    ret <- list(ngroups = ngroups,
-                weight22.2.sum = weight22.2.sum,
-                weight22.coef.2.sum = weight22.coef.2.sum,
-                bias.sum = bias.sum, VWV12 = VWV12, VWV22 = VWV22)
-    return(ret)
-
+    list(ngroups = ngroups, weight22.2.sum = weight22.2.sum,
+         weight22.coef.2.sum = weight22.coef.2.sum, bias.sum = bias.sum,
+         VWV12 = VWV12, VWV22 = VWV22)
 }
 
 
@@ -220,9 +188,7 @@ moment.est.cov.mapper <- function(coefficients, nfixed, subspace, precision, dis
 # Usually used as the 'combine' function in foreach function.
 moment.est.cov.reducer <- function(ret, diagcov, cov.rank.warn, cov.psd.warn)
 {
-
-    #  ret <- list(...)
-    if(length(ret)==0)
+    if (length(ret) == 0)
         stop("The input is empty.")
 
     ngroups <- 0
@@ -230,7 +196,7 @@ moment.est.cov.reducer <- function(ret, diagcov, cov.rank.warn, cov.psd.warn)
     wt.cov <- 0
     wt.bias <- 0
 
-    for(i in seq_len(length(ret))){
+    for (i in seq_len(length(ret))) {
         ngroups <- ngroups + ret[[i]]$ngroups
         wtot2 <- wtot2 + ret[[i]]$weight22.2.sum
         wt.cov <- wt.cov + ret[[i]]$weight22.coef.2.sum
@@ -239,38 +205,36 @@ moment.est.cov.reducer <- function(ret, diagcov, cov.rank.warn, cov.psd.warn)
 
     nrandom <- nrow(wt.bias)
 
-    if(diagcov){
+    if (diagcov) {
         LHSinv <- pseudo.solve(wtot2)
         diag_1 <- LHSinv %*% wt.cov
         diag_2 <- LHSinv %*% wt.bias
 
         idx.use <- diag_2 !=0
-        if( any(idx.use)){
-            gamma <- min(min(diag_1[idx.use] / diag_2[idx.use]),1)
+        if ( any(idx.use)) {
+            gamma <- min(min(diag_1[idx.use] / diag_2[idx.use]), 1)
         } else {
             gamma <- 0
         }
 
-        #  cov <- diag( c(diag_1 -  diag_2) , nrow = nrandom)
-        cov.adj <- diag( c(diag_1 - gamma * diag_2) , nrow = nrandom)
-
+        cov.adj <- diag(c(diag_1 - gamma * diag_2), nrow = nrandom)
     } else {
         # construct an orthonormal basis for the space of symmetric
         # matrices
         q <- nrandom
-        F <- matrix(0, q^2, q * (q + 1) / 2)
+        F <- matrix(0, q ^ 2, q * (q + 1) / 2)
         j <- 0
         for (k in seq_len(q)) {
             for (l in seq_len(k)) {
                 j <- j + 1
                 f <- matrix(0, q, q)
                 if (k == l) {
-                    f[k,l] <- 1
+                    f[k, l] <- 1
                 } else {
-                    f[k,l] <- 1/sqrt(2)
-                    f[l,k] <- 1/sqrt(2)
+                    f[k, l] <- 1 / sqrt(2)
+                    f[l, k] <- 1 / sqrt(2)
                 }
-                F[,j] <- as.vector(f)
+                F[, j] <- as.vector(f)
             }
         }
 
@@ -280,7 +244,8 @@ moment.est.cov.reducer <- function(ret, diagcov, cov.rank.warn, cov.psd.warn)
         bias.vec <- pseudo.solve(tF.wtot2.F, t(F) %*% as.vector(wt.bias))
 
         if (attr(cov.vec, "deficient") & cov.rank.warn) {
-            warning("cannot solve covariance moment equation due to rank deficiency")
+            warning(paste("cannot solve covariance moment equation due to rank",
+                          "deficiency"))
         }
 
         # change back to original space
@@ -291,19 +256,19 @@ moment.est.cov.reducer <- function(ret, diagcov, cov.rank.warn, cov.psd.warn)
         cov <- 0.5 * (cov + t(cov))
         bias <- 0.5 * (bias + t(bias))
 
-        eigen.cov <- eigen(cov, symmetric=TRUE)
+        eigen.cov <- eigen(cov, symmetric = TRUE)
         l <- eigen.cov$values
-        u <- eigen.cov$vectors[,l > 0, drop=FALSE]
+        u <- eigen.cov$vectors[, l > 0, drop = FALSE]
         l <- l[l > 0]
 
-        if(length(l)==0){
-            cov.adj <- diag(0,nrow = nrandom)
+        if (length(l) == 0) {
+            cov.adj <- diag(0, nrow = nrandom)
         } else {
             s <- sqrt(l)
             s.u.t <- t(u) * s
             sinv.u.t <- t(u) / s
             cov.bias <- sinv.u.t %*% bias %*% t(sinv.u.t)
-            eigen.cov.bias <- eigen(cov.bias, symmetric=TRUE)
+            eigen.cov.bias <- eigen(cov.bias, symmetric = TRUE)
             l.bias <- eigen.cov.bias$values
             u.bias.t <- t(eigen.cov.bias$vectors) %*% s.u.t
             scale <- max(1, l.bias[1])
@@ -315,74 +280,73 @@ moment.est.cov.reducer <- function(ret, diagcov, cov.rank.warn, cov.psd.warn)
 
     cov <- proj.psd(cov.adj)  # ensure positive definite
     if (attr(cov, "modified") & cov.psd.warn)
-        warning(paste("moment-based covariance matrix estimate is not positive"
-                      , " semi-definite; using projection"
-                      , sep=""))
+        warning(paste("moment-based covariance matrix estimate is not positive",
+                      "semi-definite; using projection"))
     attr(cov, "modified") <- NULL
 
-    return(cov)
+    cov
 
 }
+
 
 moment.est <- function(coefficients, nfixed, subspace, precision, dispersion,
                        start.cov = NULL, parallel = FALSE, diagcov = FALSE,
                        fixef.rank.warn = FALSE, cov.rank.warn,
                        cov.psd.warn = TRUE)
 {
-
-    logging::loginfo("Estimating moments", logger="mbest.mhglm.fit")
+    logging::loginfo("Estimating moments", logger = "mbest.mhglm.fit")
     ngroups <- nrow(coefficients)
     dim <- ncol(coefficients)
     names <- colnames(coefficients)
-    if (ngroups == 0L || dim == 0L){
+    if (ngroups == 0L || dim == 0L) {
         cov <- matrix(0, dim, dim)
         dimnames(cov) <- list(names, names)
         return(cov)
     }
 
 
-    logging::loginfo("Computing mean estimate", logger="mbest.mhglm.fit")
+    logging::loginfo("Computing mean estimate", logger = "mbest.mhglm.fit")
     i <- NULL
 
     # fixef
-    if(parallel){
-        #    est.mean <- foreach(i=seq_len(ngroups), .combine = 'moment.est.mean.reducer', .multicombine=TRUE ) %dopar% {
-        mean.info <- foreach(i=seq_len(ngroups)) %dopar% {
-            moment.est.mean.mapper(coefficients[i,,drop = FALSE], nfixed,
-                                   list(subspace[[i]]),list(precision[[i]]),
+    if (parallel) {
+        mean.info <- foreach(i = seq_len(ngroups)) %dopar% {
+            moment.est.mean.mapper(coefficients[i, , drop = FALSE], nfixed,
+                                   list(subspace[[i]]), list(precision[[i]]),
                                    dispersion[i], start.cov = start.cov)
         }
 
     } else {
-        mean.info <- list(moment.est.mean.mapper(coefficients, nfixed, subspace,precision,
-                                                 dispersion, start.cov = start.cov))
+        mean.info <- list(
+            moment.est.mean.mapper(coefficients, nfixed, subspace, precision,
+                                   dispersion, start.cov = start.cov))
     }
 
     est.mean <- moment.est.mean.reducer(mean.info, fixef.rank.warn)
 
 
     # ranef
-    logging::loginfo("Computing covariance estimate", logger="mbest.mhglm.fit")
-    if(parallel){
-        #      est.cov <- foreach(i=seq_len(ngroups), .combine = 'moment.est.cov.reducer.exact', .multicombine = TRUE) %dopar%{
-        #      est.cov <- foreach(i=seq_len(ngroups), .combine = 'moment.est.cov.reducer.diag', .multicombine = TRUE) %dopar%{
-        cov.info <- foreach(i=seq_len(ngroups)) %dopar%{
-            moment.est.cov.mapper(coefficients[i,,drop = FALSE], nfixed,
-                                  list(subspace[[i]]),list(precision[[i]]),dispersion[i],
+    logging::loginfo("Computing covariance estimate",
+                     logger = "mbest.mhglm.fit")
+    if (parallel) {
+        cov.info <- foreach(i = seq_len(ngroups)) %dopar% {
+            moment.est.cov.mapper(coefficients[i, , drop = FALSE], nfixed,
+                                  list(subspace[[i]]), list(precision[[i]]),
+                                  dispersion[i],
                                   start.cov = start.cov, diagcov = diagcov,
-                                  est.mean$mean) }
+                                  est.mean$mean)
+            }
     } else {
         cov.info <- list(moment.est.cov.mapper(coefficients, nfixed,
-                                               subspace,precision,dispersion,
-                                               start.cov = start.cov, diagcov = diagcov,
+                                               subspace, precision, dispersion,
+                                               start.cov = start.cov,
+                                               diagcov = diagcov,
                                                est.mean$mean))
     }
 
-    est.cov <- moment.est.cov.reducer(cov.info, diagcov, cov.rank.warn, cov.psd.warn)
+    est.cov <- moment.est.cov.reducer(cov.info, diagcov, cov.rank.warn,
+                                      cov.psd.warn)
 
-    list(mean=est.mean$mean, mean.cov=est.mean$mean.cov, cov=est.cov, mean.info = mean.info, cov.info = cov.info)
-
-
+    list(mean = est.mean$mean, mean.cov = est.mean$mean.cov, cov = est.cov,
+         mean.info = mean.info, cov.info = cov.info)
 }
-
-

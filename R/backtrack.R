@@ -60,7 +60,7 @@ backtrack <- function(value, deriv, step, control = list())
     best <- list(position = 0, value = value, deriv = deriv)
 
     z <- list(step = step, value0 = value, deriv0 = deriv, ftest = ftest,
-              gtest = gtest, best = best, converged = FALSE, control=control)
+              gtest = gtest, best = best, converged = FALSE, control = control)
     class(z) <- "backtrack"
     z
 }
@@ -70,10 +70,10 @@ print.backtrack <- function(x, digits = max(3L, getOption("digits") - 3L), ...)
 {
     if (x$converged) {
         cat("Converged backtracking linesearch (step = ",
-            format(x$step, digits), ")\n", sep="")
+            format(x$step, digits), ")\n", sep = "")
     } else {
         cat("Backtracking linesearch in progress; next step = ",
-            format(x$step, digits), "\n", sep="")
+            format(x$step, digits), "\n", sep = "")
     }
 }
 
@@ -83,7 +83,6 @@ update.backtrack <- function(object, value, deriv, ...)
 {
     control <- object$control
     ftest <- object$ftest
-    gtest <- object$gtest
     step <- object$step
 
     converged <- FALSE

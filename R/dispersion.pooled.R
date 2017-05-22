@@ -13,7 +13,6 @@
 # limitations under the License.
 
 
-# compute pooled dispersion estimates
 dispersion.pooled <- function(dispersion, df.residual)
 {
     df.residual.tot <- sum(df.residual)
@@ -22,4 +21,3 @@ dispersion.pooled <- function(dispersion, df.residual)
     else mean(dispersion)
     dispersion.tot
 }
-
