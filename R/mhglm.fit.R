@@ -47,7 +47,7 @@ mhglm.fit <- function(x, z, y, group, weights = rep(1, nobs),
     m <- rdglm.group.fit(x = cbind(x, z), y = y, group = group,
                          weights = weights, start = start,
                          etastart = etastart, mustart = mustart,
-                         offset = offset, family = family, 
+                         offset = offset, family = family,
                          parallel = control$parallel,
                          control = control$fit.control,
                          method = control$fit.method,
@@ -207,14 +207,23 @@ mhglm.fit <- function(x, z, y, group, weights = rep(1, nobs),
     suppressWarnings({
         for (s in seq_len(control$steps)) {
             est0 <- moment.est(coef, nfixed=rank.fixed, subspace, precision,
-                               dispersion, start.cov=est0$cov, 
-                               parallel=control$parallel,diagcov = control$diagcov)
+                               dispersion, start.cov=est0$cov,
+                               parallel=control$parallel,
+                               diagcov = control$diagcov,
+                               fixef.rank.warn = control$fixef.rank.warn,
+                               cov.rank.warn = control$cov.rank.warn,
+                               cov.psd.warn = control$cov.psd.warn)
             logging::loginfo("Refining mean and covariance estimates",
                              logger="mbest.mhglm.fit")
         }
     })
     est <- moment.est(coef, nfixed=rank.fixed, subspace, precision, dispersion,
-                      start.cov=est0$cov, parallel=control$parallel, diagcov = control$diagcov)
+                      start.cov=est0$cov, parallel=control$parallel,
+                      diagcov = control$diagcov,
+                      fixef.rank.warn = control$fixef.rank.warn,
+                      cov.rank.warn = control$cov.rank.warn,
+                      cov.psd.warn = control$cov.psd.warn)
+
     mean <- est$mean
     mean.cov <- est$mean.cov
     cov <- est$cov
@@ -253,10 +262,10 @@ mhglm.fit <- function(x, z, y, group, weights = rep(1, nobs),
 construct.reg <- function
 ## This is a unit function.
 ## This function takes in a list of mhglm fit objects,
-## return a new data set (y,x,z) to be fit by the following 
+## return a new data set (y,x,z) to be fit by the following
 ## hglm two-level model:
 ## y ~ x * beta + z * ranef_i + eps
-## eps ~ N(0,I), i.i.d. 
+## eps ~ N(0,I), i.i.d.
 ## ranef_i ~ N(0,Sigma), i.i.d
 (fit.list, ##<< a list of objects returned by mhglm.fit
  nrandom ##<< number of random effects' covariates
@@ -272,7 +281,7 @@ construct.reg <- function
                           omega_sqrt <- omegasvd$v %*% diag(sqrt(omegasvd$d), nrow = nrow(omega)) %*% t(omegasvd$v)
 
                           newy <- omega_sqrt %*% x$coefficient.mean
-                          newxz <- omega_sqrt 
+                          newxz <- omega_sqrt
 
                           colnames(newxz) <- names(x$coefficient.mean)
                           list(newy = newy, newxz = newxz) })
@@ -302,10 +311,10 @@ fit.recursive <- function
 ## - 1. go to the nodes where its children has mhglm fit objects,
 ## - 2. construct a new regression problem by collecting information from its children,
 ## - 3. fit mhglm to the newly constructed regression problem.
-## One call to the function will only go one level up. 
-## In order to process n-levels hierachical structure, one need to call this n-1 times. 
-## Example: suppose the nested group is g1/g2/g3, then this is a 3-levels model and we 
-## call the function 2 times. 
+## One call to the function will only go one level up.
+## In order to process n-levels hierachical structure, one need to call this n-1 times.
+## Example: suppose the nested group is g1/g2/g3, then this is a 3-levels model and we
+## call the function 2 times.
 (fit.tree,##<< a tree-structured list of mhglm fit objects
  nrandom, ##<< number of random effects' covariates
  control ##<< control parameter from the main function call
@@ -320,31 +329,31 @@ fit.recursive <- function
         # construct new regression problem
         newdata <- construct.reg(fit.tree,nrandom)
 
-        # Fit standard mhglm to it. 
-        # Note 
-        # - family = gaussian(), regardless of what family the main model is. 
+        # Fit standard mhglm to it.
+        # Note
+        # - family = gaussian(), regardless of what family the main model is.
         # - set dispersion to a small constant to ensure positive semi-definite.
-        ret <- mhglm.fit(x = newdata$x, z = newdata$z, 
-                         y = newdata$y, group = newdata$group, 
-                         family = gaussian(), control = control, 
+        ret <- mhglm.fit(x = newdata$x, z = newdata$z,
+                         y = newdata$y, group = newdata$group,
+                         family = gaussian(), control = control,
                          dispersion = 1)
         fit.tree <- c(fit.tree,ret)
 
         # Set the flag so next time the function is called,
-        # it will work on the parent node. 
+        # it will work on the parent node.
         class(fit.tree) <- 'mhglmfit'
     }
     return(fit.tree)
 }
 
 avg.coef.cov <- function
-## This is a recursive function. 
+## This is a recursive function.
 ## This function takes in a tree-structured list of mhglm fit objects,
 ## returns the estimated ranef covariance for the given level.
-## It weights the random effects covariance estimate by number of subgroups, 
+## It weights the random effects covariance estimate by number of subgroups,
 ## and sum over all the nodes on that level.
 (fit.tree, ##<< a tree-structured list of mhglm fit objects
- r ##<< for which level to compute the ranef covariance estimate. 
+ r ##<< for which level to compute the ranef covariance estimate.
  ### 1 <= r <= n-1, where n is the number of levels
  ){
 
@@ -370,7 +379,7 @@ avg.dispersion <- function
 ## This function is similar to avg.coef.cov, but to compute dispersion.
 ## Also it will only be used to computes dispersion for the bottom level.
 (fit.tree, ##<< a tree-structured list of mhglm fit objects
- r ##<< for which level to compute the ranef covariance estimate. 
+ r ##<< for which level to compute the ranef covariance estimate.
  ### 1 <= r <= n-1, where n is the number of levels
  ){
     if(r==1){
@@ -390,7 +399,7 @@ avg.dispersion <- function
 
 mhglm.fit.bottom <- function
 ## This is a recursive function.
-## It takes in data and fit mhglm to the lowest level of grouping. 
+## It takes in data and fit mhglm to the lowest level of grouping.
 ## It returns a tree-structured list of mhglm fit objects.
 (x, z, y, group, weights = rep(1, nobs),
  start = NULL, etastart = NULL, mustart = NULL,
@@ -404,9 +413,9 @@ mhglm.fit.bottom <- function
     ngroupslevel <- length(group)
 
     if(ngroupslevel ==1){
-        m <- mhglm.fit(x = x, z = z[[1]], y = y, group = group[[1]], weights = weights, 
+        m <- mhglm.fit(x = x, z = z[[1]], y = y, group = group[[1]], weights = weights,
                        start = start, etastart = etastart, mustart = mustart,
-                       offset = offset, family = family, 
+                       offset = offset, family = family,
                        control = control, intercept = intercept)
         class(m) <- 'mhglmfit'
         return(m)
@@ -421,7 +430,7 @@ mhglm.fit.bottom <- function
         for(i in seq_len(ngroups)) {
             j <- subsets[[i]]
             yj <- if (is.matrix(y)) y[j,,drop=FALSE] else y[j]
-            xj <- cbind(x[j,,drop = FALSE], 
+            xj <- cbind(x[j,,drop = FALSE],
                         (z[[1]])[j,,drop = FALSE])
 
             groupj <- list()
@@ -431,10 +440,10 @@ mhglm.fit.bottom <- function
                 zj[[r]] <- z[[r+1]][j,,drop = FALSE]
             }
 
-            m <- mhglm.fit.bottom(x=xj, z = zj, y = yj, 
+            m <- mhglm.fit.bottom(x=xj, z = zj, y = yj,
                                   group = groupj, weights = weights[j],
                                   start = start, etastart = etastart, mustart = mustart,
-                                  offset = offset[j], family = family, 
+                                  offset = offset[j], family = family,
                                   control = control, intercept = intercept)
             fit.bottom[[i]]<- m
         }
@@ -447,11 +456,11 @@ mhglm.fit.bottom <- function
 
 mhglm.fit.multilevel <- function
 ## This is the main function.
-## This function fit multilevel GLM with more than 2 levels. 
+## This function fit multilevel GLM with more than 2 levels.
 ## TODO: can it fit two-level model?
 ## All the arguments except 'group' is same as original function.
 ## The 'group' argument must be a data frame (not necessarily consists
-## of factors). But it will be turned into data frame of factors for later use. 
+## of factors). But it will be turned into data frame of factors for later use.
 (x, z, y, group, weights = rep(1, nobs),
  start = NULL, etastart = NULL, mustart = NULL,
  offset = rep(0, nobs), family = gaussian(),
@@ -481,9 +490,9 @@ mhglm.fit.multilevel <- function
 
     #----------
     # run black box algorithm on groups
-    fit.bottom <- mhglm.fit.bottom(x = x, z = z, y = y, group = group, weights = weights, 
+    fit.bottom <- mhglm.fit.bottom(x = x, z = z, y = y, group = group, weights = weights,
                                    start = start, etastart = etastart, mustart = mustart,
-                                   offset = offset, family = family, 
+                                   offset = offset, family = family,
                                    control = control, intercept = intercept)
 
     #----------
@@ -514,7 +523,7 @@ mhglm.fit.multilevel <- function
     names(fit.bottom$coefficient.mean) <- xnames
     dimnames(fit.bottom$coefficient.mean.cov) <- list(xnames, xnames)
 
-    fit <- list(family = family, 
+    fit <- list(family = family,
                 df.residual = dispersion.info[1],
                 dispersion = dispersion,
                 prior.weights = weights,

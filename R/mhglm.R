@@ -14,10 +14,10 @@
 
 
 
-mhglm.control <- function(standardize = TRUE, steps = 1,
-                          parallel = FALSE, diagcov = FALSE,
-                          fit.method = "firthglm.fit",
-                          fit.control = list(...), ...)
+mhglm.control <- function(standardize = TRUE, steps = 1, parallel = FALSE,
+                          diagcov = FALSE, fit.method = "firthglm.fit",
+                          fixef.rank.warn = FALSE, cov.rank.warn = FALSE,
+                          cov.psd.warn = TRUE, fit.control = list(...), ...)
 {
     if (!is.logical(standardize) || is.na(standardize))
         stop("value of 'standardize' must be TRUE or FALSE")
@@ -35,34 +35,20 @@ mhglm.control <- function(standardize = TRUE, steps = 1,
     if (identical(fit.method, "glm.fit"))
         fit.control <- do.call("glm.control", fit.control)
 
-    list(standardize = standardize, steps = steps, parallel = parallel, diagcov = diagcov,
-         fit.method = fit.method, fit.control = fit.control)
+    list(standardize = standardize, steps = steps, parallel = parallel,
+         diagcov = diagcov, fit.method = fit.method, fit.control = fit.control,
+         fixef.rank.warn = fixef.rank.warn, cov.rank.warn = cov.rank.warn,
+         cov.psd.warn = cov.psd.warn)
 }
 
-mhglm_ml.control <- function(standardize = FALSE, steps = 1,
-                          parallel = FALSE, diagcov = FALSE,
-                          fit.method = "firthglm.fit",
-                          fit.control = list(...), ...)
+mhglm_ml.control <- function(standardize = FALSE, steps = 1, parallel = FALSE,
+                          diagcov = FALSE, fit.method = "firthglm.fit",
+                          fixef.rank.warn = FALSE, cov.rank.warn = FALSE,
+                          cov.psd.warn = FALSE, fit.control = list(...), ...)
 {
-    # difference: standardize default to FALSE
-    if (!is.logical(standardize) || is.na(standardize))
-        stop("value of 'standardize' must be TRUE or FALSE")
-    if (!is.numeric(steps) || steps < 0)
-        stop("number of steps must be >= 0")
-    if (!is.logical(parallel) || is.na(parallel))
-        stop("value of 'parallel' must be TRUE or FALSE")
-    if (!is.logical(diagcov) || is.na(diagcov))
-        stop("value of 'diagcov' must be TRUE or FALSE")
-
-    if (!is.character(fit.method) && !is.function(fit.method))
-        stop("invalid 'fit.method' argument")
-    if (identical(fit.method, "firthglm.fit"))
-        fit.control <- do.call("firthglm.control", fit.control)
-    if (identical(fit.method, "glm.fit"))
-        fit.control <- do.call("glm.control", fit.control)
-
-    list(standardize = standardize, steps = steps, parallel = parallel, diagcov = diagcov,
-         fit.method = fit.method, fit.control = fit.control)
+    mhglm.control(standardize, steps, parallel, diagcov, fit.method,
+                  fixef.rank.warn, cov.rank.warn, cov.psd.warn, fit.control,
+                  ...)
 }
 
 mhglm <- function(formula, family = gaussian, data, weights, subset,
@@ -95,7 +81,14 @@ mhglm <- function(formula, family = gaussian, data, weights, subset,
     mf <- mf[c(1L, m)]
     mf$drop.unused.levels <- TRUE
     mf[[1L]] <- quote(stats::model.frame)
-    mf$formula <- lme4::subbars(mf$formula)
+    form_env <- if (is.environment(data)) {
+        data
+    }
+    else {
+        list2env(data)
+    }
+    formula <- as.formula(formula, env = form_env)
+    mf$formula <- lme4::subbars(formula)
     mf <- eval(mf, parent.frame())
 
     # method
@@ -135,8 +128,7 @@ mhglm <- function(formula, family = gaussian, data, weights, subset,
       control$diagcov <- FALSE
     }
 
-#    bars <- lme4::findbars(formula)
-    bars <- findbars(formula)
+    bars <- lme4::findbars(formula)
 
     if (length(bars) >= 2L)
         stop("Can specify at most one random effect term")
@@ -256,6 +248,13 @@ mhglm_ml <- function(formula, family = gaussian, data, weights, subset,
     mf <- mf[c(1L, m)]
     mf$drop.unused.levels <- TRUE
     mf[[1L]] <- quote(stats::model.frame)
+    form_env <- if (is.environment(data)) {
+        data
+    }
+    else {
+        list2env(data)
+    }
+    formula <- as.formula(formula, env = form_env)
     mf$formula <- lme4::subbars(eval(mf$formula))
     mf <- eval(mf, parent.frame())
 
@@ -289,10 +288,9 @@ mhglm_ml <- function(formula, family = gaussian, data, weights, subset,
     logging::loginfo("Grouping factor and random effect design matrix",
                      logger="mbest.mhglm")
 
-    ## use customized findbars
-    # so (1|a/b) -> (1|a) + (1|b:a)
-    # lme::findbars: (1|a/b) -> (1|b:a) + (1|a)·
-    bars <- findbars(formula)
+    bars <- lme4::findbars(formula)
+    bars <- order_bars_hierarchy(bars)
+
     if (length(bars) >= 1L) {
       Z <- list()
       Group <- list()
@@ -1078,51 +1076,34 @@ singlebars <- function(term)
 }
 
 
-findbars <- function(term)
+order_bars_hierarchy <- function(bars)
 {
-    fb <- function(term) {
-        if (is.name(term) || !is.language(term))
-            return(NULL)
-        if (term[[1]] == as.name("("))
-            return(fb(term[[2]]))
-        stopifnot(is.call(term))
-        if (term[[1]] == as.name("|"))
-            return(term)
-        if (length(term) == 2)
-            return(fb(term[[2]]))
-        c(fb(term[[2]]), fb(term[[3]]))
-    }
-    expandSlash <- function(bb) {
-        makeInteraction <- function(x) {
-            if (length(x) < 2)
-                return(x)
-            trm1 <- makeInteraction(x[[1]])
-            trm11 <- if (is.list(trm1)) trm1[[1]] else trm1
-            list(substitute(foo:bar, list(foo = x[[2]], bar = trm11)), trm1)
-        }
-        slashTerms <- function(x) {
-            if (!("/" %in% all.names(x)))
-                return(x)
-            if (x[[1]] != as.name("/"))
-                stop("unparseable formula for grouping factor",
-                  call. = FALSE)
-            list(slashTerms(x[[2]]), slashTerms(x[[3]]))
-        }
-        if (!is.list(bb))
-            expandSlash(list(bb))
-        else unlist(lapply(bb, function(x) {
-            if (length(x) > 2 && is.list(trms <- slashTerms(x[[3]])))
-                # reverse the result of makeInteraction·
-                # so (1|a/b) -> (1|a) + (1|b:a)
-                # originally: (1|a/b) -> (1|b:a) + (1|a)·
-                lapply(rev(unlist(makeInteraction(trms))), function(trm) substitute(foo |
-                  bar, list(foo = x[[2]], bar = trm)))
-            else x
-        }))
-    }
+    bars_char <- Map(function(bar) as.character(bar)[3], bars)
+    # remove parenthesis
+    bars_char <- Map(gsub, bars_char, pattern = c("[\\(, \\)]"),
+                     replacement = "")
+    bars_groups <- Map(function(x) unlist(strsplit(x, split = ":")), bars_char)
 
-    modterm <- lme4::expandDoubleVerts(if (is(term, "formula"))
-        term[[length(term)]]
-    else term)
-    expandSlash(fb(modterm))
+    sorted_group_counts <- sort(table(unlist(bars_groups)), decreasing = TRUE)
+    if (!all(sorted_group_counts == rev(seq_along(sorted_group_counts))))
+        stop("random effects formula misspecified ")
+
+    # TODO: KS 2017-05-17
+    # do we want y ~ 1 + (1|g1) + (1|g2:g1) + (1|g3:g2:g1) to be right but
+    # y ~ 1 + (1|g1) + (1|g1:g2) + (1|g1:g2:g3) wrong? it's probably esthetic
+    #
+    # after thinking about it, I think both are probably fine, although the
+    # first is preferred.
+    #
+    # if we do want the second formula to cause an exception, we should use the
+    # following code.
+    #
+    # # check each bar is in order
+    # bar_groups_ordered <- Map(bars_groups, f = function(group)
+    #     rev(group) == names(sorted_group_counts)[seq_along(group)])
+    # if (!all(unlist(bar_groups_ordered)))
+    #     stop("random effects formula misspecified ")
+
+    # return bars properly ordered
+    bars[order(sapply(bars_groups, length))]
 }

@@ -74,15 +74,15 @@ moment.est.mean.mapper <- function(coefficients, nfixed, subspace, precision, di
         weight1.coef.sum <- weight1.coef.sum + w1b
     }
 
-    return(list(ngroups = ngroups, 
+    return(list(ngroups = ngroups,
                 weight11.sum  = weight11.sum ,
                 weight1.coef.sum  = weight1.coef.sum ))
 
 }
 
-# Estimate fixed effect's coefficient. 
+# Estimate fixed effect's coefficient.
 # Usually used as the 'combine' function in foreach function.
-moment.est.mean.reducer <- function(ret)
+moment.est.mean.reducer <- function(ret, fixef.rank.warn)
 {
 
     #  ret <- list(...)
@@ -103,7 +103,7 @@ moment.est.mean.reducer <- function(ret)
     meanSum <- meanSum / ngroups
 
     mean <- pseudo.solve(wtot, meanSum)
-    if (attr(mean, "deficient")) {
+    if (attr(mean, "deficient") & fixef.rank.warn) {
         warning("cannot solve fixed effect moment equation due to rank deficiency")
     }
     mean.cov <- pseudo.solve(wtot) / ngroups
@@ -181,7 +181,7 @@ moment.est.cov.mapper <- function(coefficients, nfixed, subspace, precision, dis
 
         if(diagcov)
             B <- sigma2 * apply((R2.u2s.t)^2,2,sum)
-        else 
+        else
             B <- sigma2 * t(R2.u2s.t) %*% R2.u2s.t
 
         bias.sum <- bias.sum + B
@@ -208,7 +208,7 @@ moment.est.cov.mapper <- function(coefficients, nfixed, subspace, precision, dis
     }
 
     ret <- list(ngroups = ngroups,
-                weight22.2.sum = weight22.2.sum, 
+                weight22.2.sum = weight22.2.sum,
                 weight22.coef.2.sum = weight22.coef.2.sum,
                 bias.sum = bias.sum, VWV12 = VWV12, VWV22 = VWV22)
     return(ret)
@@ -218,7 +218,7 @@ moment.est.cov.mapper <- function(coefficients, nfixed, subspace, precision, dis
 
 # Estimate ranef covariance matrix, if control$diagcov is TRUE, i.e. only estimate diagonal element in covariance matrix.
 # Usually used as the 'combine' function in foreach function.
-moment.est.cov.reducer <- function(ret, diagcov)
+moment.est.cov.reducer <- function(ret, diagcov, cov.rank.warn, cov.psd.warn)
 {
 
     #  ret <- list(...)
@@ -279,7 +279,7 @@ moment.est.cov.reducer <- function(ret, diagcov)
         cov.vec <- pseudo.solve(tF.wtot2.F, t(F) %*% as.vector(wt.cov))
         bias.vec <- pseudo.solve(tF.wtot2.F, t(F) %*% as.vector(wt.bias))
 
-        if (attr(cov.vec, "deficient")) {
+        if (attr(cov.vec, "deficient") & cov.rank.warn) {
             warning("cannot solve covariance moment equation due to rank deficiency")
         }
 
@@ -314,7 +314,7 @@ moment.est.cov.reducer <- function(ret, diagcov)
     }
 
     cov <- proj.psd(cov.adj)  # ensure positive definite
-    if (attr(cov, "modified") )
+    if (attr(cov, "modified") & cov.psd.warn)
         warning(paste("moment-based covariance matrix estimate is not positive"
                       , " semi-definite; using projection"
                       , sep=""))
@@ -325,7 +325,9 @@ moment.est.cov.reducer <- function(ret, diagcov)
 }
 
 moment.est <- function(coefficients, nfixed, subspace, precision, dispersion,
-                       start.cov = NULL, parallel = FALSE, diagcov = FALSE)
+                       start.cov = NULL, parallel = FALSE, diagcov = FALSE,
+                       fixef.rank.warn = FALSE, cov.rank.warn,
+                       cov.psd.warn = TRUE)
 {
 
     logging::loginfo("Estimating moments", logger="mbest.mhglm.fit")
@@ -346,9 +348,9 @@ moment.est <- function(coefficients, nfixed, subspace, precision, dispersion,
     if(parallel){
         #    est.mean <- foreach(i=seq_len(ngroups), .combine = 'moment.est.mean.reducer', .multicombine=TRUE ) %dopar% {
         mean.info <- foreach(i=seq_len(ngroups)) %dopar% {
-            moment.est.mean.mapper(coefficients[i,,drop = FALSE], nfixed, 
+            moment.est.mean.mapper(coefficients[i,,drop = FALSE], nfixed,
                                    list(subspace[[i]]),list(precision[[i]]),
-                                   dispersion[i], start.cov = start.cov) 
+                                   dispersion[i], start.cov = start.cov)
         }
 
     } else {
@@ -356,7 +358,7 @@ moment.est <- function(coefficients, nfixed, subspace, precision, dispersion,
                                                  dispersion, start.cov = start.cov))
     }
 
-    est.mean <- moment.est.mean.reducer(mean.info)
+    est.mean <- moment.est.mean.reducer(mean.info, fixef.rank.warn)
 
 
     # ranef
@@ -365,18 +367,18 @@ moment.est <- function(coefficients, nfixed, subspace, precision, dispersion,
         #      est.cov <- foreach(i=seq_len(ngroups), .combine = 'moment.est.cov.reducer.exact', .multicombine = TRUE) %dopar%{
         #      est.cov <- foreach(i=seq_len(ngroups), .combine = 'moment.est.cov.reducer.diag', .multicombine = TRUE) %dopar%{
         cov.info <- foreach(i=seq_len(ngroups)) %dopar%{
-            moment.est.cov.mapper(coefficients[i,,drop = FALSE], nfixed, 
+            moment.est.cov.mapper(coefficients[i,,drop = FALSE], nfixed,
                                   list(subspace[[i]]),list(precision[[i]]),dispersion[i],
-                                  start.cov = start.cov, diagcov = diagcov, 
+                                  start.cov = start.cov, diagcov = diagcov,
                                   est.mean$mean) }
     } else {
         cov.info <- list(moment.est.cov.mapper(coefficients, nfixed,
                                                subspace,precision,dispersion,
-                                               start.cov = start.cov, diagcov = diagcov, 
+                                               start.cov = start.cov, diagcov = diagcov,
                                                est.mean$mean))
     }
 
-    est.cov <- moment.est.cov.reducer(cov.info, diagcov = diagcov)
+    est.cov <- moment.est.cov.reducer(cov.info, diagcov, cov.rank.warn, cov.psd.warn)
 
     list(mean=est.mean$mean, mean.cov=est.mean$mean.cov, cov=est.cov, mean.info = mean.info, cov.info = cov.info)
 

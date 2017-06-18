@@ -8,7 +8,7 @@ importFrom("stats", .checkMFClasses, .getXlevels, coef, delete.response,
     update, vcov, weights)
 
 ## Recommended packages
-importFrom("lme4",  nobars, subbars) #,findbars) 
+importFrom("lme4",  nobars, subbars, findbars)
 importFrom("nlme", fixef, ranef, VarCorr)
 
 ## S3 generic for sigma():
@@ -36,7 +36,6 @@ export(mhglm.control)
 export(mhglm.fit)
 export(ranef.mhglm)
 export(sigma.mhglm)
-export(findbars)
 
 export(VarCorr.mhglm_ml)
 export(fixef.mhglm_ml)
