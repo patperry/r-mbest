@@ -480,6 +480,14 @@ mhglm_ml.fit <- function
     ngroupslevel <- if(is.list(z)){length(z)} else 0
 
     #----------
+    # Right now we do not support control$standardize = TRUE
+    if (control$standardize == TRUE){
+        print('control$standardize = TRUE is currently not allowed. Set standardize to FALSE')
+        control$standardize = FALSE
+    }
+
+
+    #----------
     # 'group' input needs special care.
     # Turn it into a list of factors
     if(!is.list(group)){

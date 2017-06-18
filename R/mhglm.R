@@ -266,6 +266,13 @@ mhglm_ml <- function(formula, family = gaussian, data, weights, subset,
     if (identical(method, "mhglm_ml.fit"))
         control <- do.call("mhglm_ml.control", control)
 
+
+    # TODO(ningshan): right now mhglm_ml does not support standardize = TRUE
+    if (control$standardize == TRUE){
+        print('control$standardize = TRUE is currently not allowed. Set standardize to FALSE')
+        control$standardize  = FALSE
+    }
+
     # terms
     mt <- attr(mf, "terms")
 
