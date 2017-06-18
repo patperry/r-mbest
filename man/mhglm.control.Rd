@@ -1,5 +1,6 @@
 \name{mhglm.control}
 \alias{mhglm.control}
+\alias{mhglm_ml.control}
 \title{
 Auxiliary for Controlling Moment Heirarchical GLM Fitting
 }
@@ -11,6 +12,10 @@ control argument to either function.
 \usage{
 mhglm.control(standardize = TRUE, steps = 1, parallel = FALSE, diagcov = FALSE,
               fit.method = "firthglm.fit", fit.control = list(...), ...)
+
+mhglm_ml.control(standardize = FALSE, steps = 1, parallel = FALSE, diagcov = FALSE,
+              fit.method = "firthglm.fit", fit.control = list(...), ...)
+
 }
 \arguments{
   \item{standardize}{
@@ -40,6 +45,7 @@ mhglm.control(standardize = TRUE, steps = 1, parallel = FALSE, diagcov = FALSE,
 \details{
 Setting \code{standardize = TRUE} ensures that the procedure is equivariant,
 and generally leads to better estimation performance.
+Right now \code{standardize = TRUE} is not allowed for \code{mhglm_ml}.
 
 The \code{steps} argument gives the number of refinement steps for the moment
 based parameters.  In each step, the previous fixed effect and random effect

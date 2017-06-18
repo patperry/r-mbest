@@ -3,11 +3,15 @@
 \name{mhglm}
 \alias{mhglm}
 \alias{mhglm.fit}
+\alias{mhglm_ml}
+\alias{mhglm_ml.fit}
 \title{
 Fitting Moment Hierarchical Generalized Linear Models
 }
 \description{
-\code{mhglm} is used to fit a moment hierarchical generalized linear model.
+\code{mhglm} is used to fit a moment hierarchical generalized linear model of one level.
+\code{mhglm_ml} is used to fit a moment hierarchical generalized linear model of arbitrary number of levels 
+(including one level).
 }
 \usage{
 mhglm(formula, family = gaussian, data, weights, subset,
@@ -20,7 +24,20 @@ mhglm.fit(x, z, y, group, weights = rep(1, nobs),
           start = NULL, etastart = NULL, mustart = NULL,
           offset = rep(0, nobs), family = gaussian(), 
           control = list(), intercept = TRUE)
+
+mhglm_ml(formula, family = gaussian, data, weights, subset,
+         na.action, start = NULL, etastart, mustart, offset,
+         control = list(), model = TRUE, method = "mhglm_ml.fit",
+         x = FALSE, z = FALSE, y = TRUE, group = TRUE,
+         contrasts = NULL)
+
+mhglm_ml.fit(x, z, y, group, weights = rep(1, nobs),
+             start = NULL, etastart = NULL, mustart = NULL,
+             offset = rep(0, nobs), family = gaussian(), 
+             control = list(), intercept = TRUE)
+
 }
+
 \arguments{
   \item{formula, family, data, weights, subset, na.action, start, etastart,
     mustart, offset, model, contrasts, intercept}{These arguments
@@ -38,16 +55,26 @@ mhglm.fit(x, z, y, group, weights = rep(1, nobs),
     and does no fitting.
   }
 
-  \item{x, z, y, group}{For \code{mhglm}:
-    logical values indicating whether the response vector, model matrices,
-    and grouping factor used in the fitting process should be returned as
-    components of the returned value.
+  \item{x, z, y, group}{ For \code{mhglm} and \code{mhglm_ml}:
+      logical values indicating whether the response vector, model matrices,
+      and grouping factor used in the fitting process should be returned as
+      components of the returned value.
 
     For \code{mhglm.fit}: \code{x} is a fixed effect design matrix of
     dimension \code{n * p}, \code{z} is a random effect design matrix of
     dimension \code{n * q}, \code{y} is a vector of observations of length
     \code{n}, and \code{group} is a grouping factor vector of length
     \code{n}.
+
+    For \code{mhglm_ml.fit}: \code{x} is a fixed effect design matrix of
+    dimension \code{n * p}, \code{z} is a list of L elements, with L
+    the depth of nested hierarchies, each element of \code{z} 
+    is a random effect design matrix of dimension \code{n * q_i}, with
+    q_i the feature dimension on tree depth i, 
+    \code{y} is a vector of observations of length \code{n}, 
+    and \code{group} is a list of L elements (same L as \code{z}), 
+    each element of \code{group} is a grouping factor vector of length \code{n}.
+
   }
 }
 \details{
@@ -61,12 +88,14 @@ mhglm.fit(x, z, y, group, weights = rep(1, nobs),
   coefficients (effects), and \code{group} is a grouping factor; observations
   with the same grouping factor share the same random effects.
 
-  Currently, only one random effect term is allowed, along with a single
-  level of hierarchy; random effect terms of the form
-  \code{reterms | g1/.../gQ} are not supported.
+  \code{mhglm} and \code{mhglm.fit} only allow one random effect term,
+  along with a single level of hierarchy.
+  \code{mghlm_ml} and \code{mhglm_ml.fit} allow multiple random effect terms of the form
+  \code{reterms1 | g1 + reterms2 | g1/g2 + ...}.
 }
 \value{
   \code{mhglm} returns an object of class inheriting from \code{"mhglm"}.
+  \code{mhglm_ml} returns an object of class inheriting from \code{"mhglm_ml"}.
 
   The function \code{\link{summary}} can be used to obtain or print a summary
   of the results.
@@ -74,7 +103,7 @@ mhglm.fit(x, z, y, group, weights = rep(1, nobs),
   The generic accessor functions \code{\link{fixef}}, \code{\link{ranef}},
   \code{\link{VarCorr}}, \code{\link{sigma}}, \code{fitted.values} and
   \code{residuals} can be used to extract various useful features of the
-  value returned by \code{mhglm}.
+  value returned by \code{mhglm} or \code{mhglm_ml}.
 }
 \seealso{
   \code{\link{terms.mhglm}}, \code{\link{model.matrix.mhglm}}, and
