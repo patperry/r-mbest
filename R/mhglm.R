@@ -220,7 +220,7 @@ mhglm <- function(formula, family = gaussian, data, weights, subset,
 ## mhglm for multilevel
 mhglm_ml <- function(formula, family = gaussian, data, weights, subset,
                   na.action, start = NULL, etastart, mustart, offset,
-                  control = list(), model = TRUE, method = "mhglm.fit.multilevel",
+                  control = list(), model = TRUE, method = "mhglm_ml.fit",
                   x = FALSE, z = FALSE, y = TRUE, group = TRUE,
                   contrasts = NULL)
 {
@@ -263,7 +263,7 @@ mhglm_ml <- function(formula, family = gaussian, data, weights, subset,
         return(mf)
     if (!is.character(method) && !is.function(method))
         stop("invalid 'method' argument")
-    if (identical(method, "mhglm.fit.multilevel"))
+    if (identical(method, "mhglm_ml.fit"))
         control <- do.call("mhglm_ml.control", control)
 
     # terms

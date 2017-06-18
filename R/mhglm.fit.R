@@ -454,7 +454,8 @@ mhglm.fit.bottom <- function
     }
 }
 
-mhglm.fit.multilevel <- function
+mhglm_ml.fit <- function
+#mhglm.fit.multilevel <- function
 ## This is the main function.
 ## This function fit multilevel GLM with more than 2 levels.
 ## TODO: can it fit two-level model?
