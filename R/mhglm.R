@@ -1093,23 +1093,7 @@ order_bars_hierarchy <- function(bars)
 
     sorted_group_counts <- sort(table(unlist(bars_groups)), decreasing = TRUE)
     if (!all(sorted_group_counts == rev(seq_along(sorted_group_counts))))
-        stop("random effects formula misspecified ")
-
-    # TODO: KS 2017-05-17
-    # do we want y ~ 1 + (1|g1) + (1|g2:g1) + (1|g3:g2:g1) to be right but
-    # y ~ 1 + (1|g1) + (1|g1:g2) + (1|g1:g2:g3) wrong? it's probably esthetic
-    #
-    # after thinking about it, I think both are probably fine, although the
-    # first is preferred.
-    #
-    # if we do want the second formula to cause an exception, we should use the
-    # following code.
-    #
-    # # check each bar is in order
-    # bar_groups_ordered <- Map(bars_groups, f = function(group)
-    #     rev(group) == names(sorted_group_counts)[seq_along(group)])
-    # if (!all(unlist(bar_groups_ordered)))
-    #     stop("random effects formula misspecified ")
+        stop("random effects formula misspecified, see help(mhglm_ml)")
 
     # return bars properly ordered
     bars[order(sapply(bars_groups, length))]
