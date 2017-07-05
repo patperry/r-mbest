@@ -122,10 +122,15 @@ mhglm <- function(formula, family = gaussian, data, weights, subset,
                      logger="mbest.mhglm")
 
     if(lme4::expandDoubleVerts(formula) != formula){
-      control$diagcov <- TRUE
-      formula <- singlebars(formula)
-    } else {
-      control$diagcov <- FALSE
+        if (!control$diagcov ){
+            warning("The formula uses `||`, thus set diagcov = TRUE.")
+        }
+        control$diagcov <- TRUE
+        formula <- singlebars(formula)
+    } else { 
+        if (control$diagcov ){
+            warning("Please use `||` in the formula instead of diagcov = TRUE.")
+        }
     }
 
     bars <- lme4::findbars(formula)
