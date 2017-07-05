@@ -90,8 +90,14 @@ mhglm_ml.fit(x, z, y, group, weights = rep(1, nobs),
 
   \code{mhglm} and \code{mhglm.fit} only allow one random effect term,
   along with a single level of hierarchy.
-  \code{mghlm_ml} and \code{mhglm_ml.fit} allow multiple random effect terms of the form
-  \code{reterms1 | g1 + reterms2 | g1/g2 + ...}.
+  \code{mghlm_ml} and \code{mhglm_ml.fit} allow multiple random effect terms so 
+  long as levels of random effects are hierarchically nested. If the random 
+  effect design matrices are the same for each level, a predictor has the form
+  \code{response ~ terms + (reterms | g1/.../gQ)}. If the random effects design
+  matrices differ from level to level, colons are used to delineate the nesting
+  structure; for example, 
+  \code{response ~ fe + (re1 | g1) + (re2 | g2:g1) + (re3 | g3:g2:g1)}.
+
 }
 \value{
   \code{mhglm} returns an object of class inheriting from \code{"mhglm"}.
@@ -139,6 +145,15 @@ library(lme4)
 
 (gm <- mhglm(cbind(incidence, size - incidence) ~ period + (1 | herd),
              data = cbpp, family = binomial))
+
+## The following examples are for multilevel models
+g_data <- simdata(n = 30, m_per_level = c(10, 5, 2), sd_intercept = c(1, 1, 1),
+                  sd_slope = c(1, 1, 1), family = "gaussian", seed = 12345)
+
+(m1 <- mhglm_ml(y ~ 1 + x + (1 + x | g1/g2/g3), gaussian, g_data))
+# or equivalent
+(m2 <- mhglm_ml(y ~ 1 + x + (1 + x | g1) + (1 + x | g2:g1) + (1 + x | g3:g2:g1),
+                gaussian, g_data))
 }
 \keyword{models}
 \keyword{regression}
