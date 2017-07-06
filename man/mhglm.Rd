@@ -89,7 +89,7 @@ mhglm_ml.fit(x, z, y, group, weights = rep(1, nobs),
   with the same grouping factor share the same random effects.
 
   \code{mhglm} and \code{mhglm.fit} only allow one random effect term,
-  along with a single level of hierarchy.
+  along with a single level of hierarchy. 
   \code{mghlm_ml} and \code{mhglm_ml.fit} allow multiple random effect terms so 
   long as levels of random effects are hierarchically nested. If the random 
   effect design matrices are the same for each level, a predictor has the form
@@ -98,7 +98,14 @@ mhglm_ml.fit(x, z, y, group, weights = rep(1, nobs),
   structure; for example, 
   \code{response ~ fe + (re1 | g1) + (re2 | g2:g1) + (re3 | g3:g2:g1)}.
 
+  \code{mhglm} allows \code{||} in the formula
+  \code{response ~ terms + (reterms || group)} to indicate that random effects
+  are independent, that is the random effects covariance matrix has non-zero 
+  value only on its diagonal.
+  \code{mhglm_ml} currently does not support \code{||}, to indicate indpenedent
+  random effects, set \code{control=list(diagcov = TRUE)}.
 }
+
 \value{
   \code{mhglm} returns an object of class inheriting from \code{"mhglm"}.
   \code{mhglm_ml} returns an object of class inheriting from \code{"mhglm_ml"}.
@@ -142,6 +149,8 @@ mhglm_ml.fit(x, z, y, group, weights = rep(1, nobs),
 library(lme4)
 ## The following examples are adapted from lme4:
 (fm1 <- mhglm(Reaction ~ Days + (Days | Subject), gaussian, sleepstudy))
+
+(fm2 <- mhglm(Reaction ~ Days + (Days || Subject), gaussian, sleepstudy))
 
 (gm <- mhglm(cbind(incidence, size - incidence) ~ period + (1 | herd),
              data = cbpp, family = binomial))
