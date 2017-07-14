@@ -1,4 +1,4 @@
-\newcommand{\CRANpkg}{\href{http://CRAN.R-project.org/package=#1}{\pkg{#1}}}
+\newcommand{\CRANpkg}{\href{https://CRAN.R-project.org/package=#1}{\pkg{#1}}}
 
 \name{mhglm}
 \alias{mhglm}
@@ -23,7 +23,7 @@ mhglm(formula, family = gaussian, data, weights, subset,
 mhglm.fit(x, z, y, group, weights = rep(1, nobs),
           start = NULL, etastart = NULL, mustart = NULL,
           offset = rep(0, nobs), family = gaussian(), 
-          control = list(), intercept = TRUE)
+          control = list(), intercept = TRUE, dispersion = NULL)
 
 mhglm_ml(formula, family = gaussian, data, weights, subset,
          na.action, start = NULL, etastart, mustart, offset,
@@ -76,6 +76,11 @@ mhglm_ml.fit(x, z, y, group, weights = rep(1, nobs),
     each element of \code{group} is a grouping factor vector of length \code{n}.
 
   }
+
+  \item{dispersion}{If \code{NULL}, will estimate from data; otherwise use this argument as 
+      dispersion parameter.}
+
+
 }
 \details{
   These functions are analogues of \code{\link{glm}} and

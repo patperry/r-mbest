@@ -11,10 +11,12 @@ control argument to either function.
 }
 \usage{
 mhglm.control(standardize = TRUE, steps = 1, parallel = FALSE, diagcov = FALSE,
-              fit.method = "firthglm.fit", fit.control = list(...), ...)
+        fit.method = "firthglm.fit", fixef.rank.warn = FALSE, cov.rank.warn = FALSE,
+        cov.psd.warn = TRUE, fit.control = list(...), ...)
 
 mhglm_ml.control(standardize = FALSE, steps = 1, parallel = FALSE, diagcov = FALSE,
-              fit.method = "firthglm.fit", fit.control = list(...), ...)
+              fit.method = "firthglm.fit", fixef.rank.warn = FALSE, cov.rank.warn = FALSE,
+              cov.psd.warn = FALSE, fit.control = list(...), ...)
 
 }
 \arguments{
@@ -33,6 +35,16 @@ mhglm_ml.control(standardize = FALSE, steps = 1, parallel = FALSE, diagcov = FAL
 }
   \item{fit.method}{
     method for obtaining group-specific effect estimates
+}
+  \item{fixef.rank.warn}{
+    if TRUE, print warnings when fixef is unidentifiable
+}
+  \item{cov.rank.warn}{
+    if TRUE, print warnings when covariance matrix is unidentifiable
+}
+  \item{cov.psd.warn}{
+    if TRUE, print warnings when moment based estimates of covariance matrix is 
+    not positive semi-definite
 }
   \item{fit.control}{
     control parameters for \code{fit.method}
