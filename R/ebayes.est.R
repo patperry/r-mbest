@@ -240,7 +240,6 @@ ebayes.est.print<- function
         coef.eb <- Reduce('rbind',estlist)
 
         if(condVar){
-            require(abind,quietly=TRUE)
             ret <- lapply(estlist,function(x){attr(x,'postVar')})
             cov.eb <- Reduce('abind',ret)
             attr(coef.eb, "postVar") <- cov.eb

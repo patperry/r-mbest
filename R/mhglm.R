@@ -859,7 +859,7 @@ ranef.mhglm <- function(object, condVar = FALSE, ...)
     re
 }
 
-ranef.mhglm_ml <- function (object, condVar = FALSE) {
+ranef.mhglm_ml <- function (object, condVar = FALSE, ...) {
     coef.mean <- object$fit$coefficient.mean
     dispersion <- object$dispersion
 
