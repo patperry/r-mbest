@@ -115,7 +115,7 @@ test_that("succeeds on cbpp in parallel", {
 })
 
 test_that("success using diagonal covariance", {
-    model <- mhglm(Reaction ~ Days + (Days | Subject), data = sleepstudy,
+    model <- mhglm(Reaction ~ Days + (Days || Subject), data = sleepstudy,
                    control = mhglm.control(diagcov = TRUE))
     varcor <- VarCorr(model)[["Subject"]]
     expect_equal(varcor[1, 2], 0)
