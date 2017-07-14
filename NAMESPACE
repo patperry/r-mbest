@@ -5,7 +5,7 @@ importFrom("stats", .checkMFClasses, .getXlevels, coef, delete.response,
     family, fitted, gaussian, is.empty.model, model.extract, model.frame,
     model.offset, model.matrix, model.response, model.weights, na.pass,
     naresid, nobs, pnorm, predict, printCoefmat, pt, residuals, terms,
-    update, vcov, weights)
+    update, vcov, weights, as.formula, setNames, rnorm,  runif, plogis)
 
 ## Recommended packages
 importFrom("lme4",  nobars, subbars, findbars)

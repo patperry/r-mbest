@@ -1,6 +1,6 @@
 Package: mbest
 Version: 0.5
-Date: 2016-03-07
+Date: 2017-07-07
 Title: Moment-Based Estimation for Hierarchical Models
 Authors@R: c(person(c("Patrick", "O."), "Perry", role = c("aut", "cre"),
             email = "pperry@stern.nyu.edu"),
@@ -16,7 +16,8 @@ Imports:
     bigmemory,
     foreach,
     doParallel,
-    logging
+    logging,
+    abind
 Suggests:
     testthat
 LazyData: Yes
