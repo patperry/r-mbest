@@ -32,10 +32,15 @@ proj.psd <- function(x)
 }
 
 
+
+
+
+
+
 pseudo.solve <- function(a, b)
 {
     withCallingHandlers({
-        a.chol <- chol(a, pivot=TRUE)
+        a.chol <- chol(a, pivot=TRUE, tol = 1e-7)
     }, warning = function(w) {
         if (conditionMessage(w) == "the matrix is either rank-deficient or indefinite")
             invokeRestart("muffleWarning")
@@ -66,8 +71,12 @@ pseudo.solve <- function(a, b)
         }
     } else {
         a.eigen <- eigen(a, symmetric=TRUE)
+
+        # don't use rank from chol
+        rank <- min(sum(a.eigen$values>1e-7),rank)
         u <- a.eigen$vectors[,seq_len(rank),drop=FALSE]
         l <- a.eigen$values[seq_len(rank)]
+
         if (missing(b)) {
             x <- u %*% (t(u) / l)
         } else {
@@ -78,4 +87,3 @@ pseudo.solve <- function(a, b)
     attr(x, "deficient") <- deficient
     x
 }
-

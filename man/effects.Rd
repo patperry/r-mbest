@@ -1,13 +1,17 @@
-\newcommand{\CRANpkg}{\href{http://CRAN.R-project.org/package=#1}{\pkg{#1}}}
+\newcommand{\CRANpkg}{\href{https://CRAN.R-project.org/package=#1}{\pkg{#1}}}
 
 \name{effects}
 \alias{fixef}
 \alias{fixef.mhglm}
+\alias{fixef.mhglm_ml}
 \alias{ranef}
 \alias{ranef.mhglm}
+\alias{ranef.mhglm_ml}
 \alias{VarCorr}
 \alias{VarCorr.mhglm}
+\alias{VarCorr.mhglm_ml}
 \alias{vcov.mhglm}
+\alias{vcov.mhglm_ml}
 \title{
 Mixed Effects
 }
@@ -23,6 +27,15 @@ effect estimates.
 \method{vcov}{mhglm}(object, ...)
 
 \method{VarCorr}{mhglm}(x, sigma = 1, ...)
+
+\method{fixef}{mhglm_ml}(object, ...)
+
+\method{ranef}{mhglm_ml}(object, condVar = FALSE, ...) 
+
+\method{vcov}{mhglm_ml}(object, ...)
+
+\method{VarCorr}{mhglm_ml}(x, sigma = 1, ...)
+
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
