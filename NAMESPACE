@@ -5,10 +5,10 @@ importFrom("stats", .checkMFClasses, .getXlevels, coef, delete.response,
     family, fitted, gaussian, is.empty.model, model.extract, model.frame,
     model.offset, model.matrix, model.response, model.weights, na.pass,
     naresid, nobs, pnorm, predict, printCoefmat, pt, residuals, terms,
-    update, vcov, weights)
+    update, vcov, weights, as.formula, setNames, rnorm,  runif, plogis)
 
 ## Recommended packages
-importFrom("lme4", findbars, nobars, subbars)
+importFrom("lme4",  nobars, subbars, findbars)
 importFrom("nlme", fixef, ranef, VarCorr)
 
 ## S3 generic for sigma():
@@ -27,6 +27,8 @@ importFrom("foreach", foreach, "%dopar%")
 
 
 ## Exports
+export(simdata)
+
 export(VarCorr.mhglm)
 export(firthglm.control)
 export(firthglm.fit)
@@ -36,6 +38,15 @@ export(mhglm.control)
 export(mhglm.fit)
 export(ranef.mhglm)
 export(sigma.mhglm)
+
+export(VarCorr.mhglm_ml)
+export(fixef.mhglm_ml)
+export(mhglm_ml)
+export(mhglm.control)
+export(mhglm.fit)
+export(ranef.mhglm_ml)
+export(sigma.mhglm_ml)
+
 
 ## Methods
 S3method(coef,mhglm)
@@ -56,3 +67,21 @@ S3method(terms,mhglm)
 S3method(VarCorr,mhglm)
 S3method(vcov,mhglm)
 S3method(weights,mhglm)
+
+S3method(coef,mhglm_ml)
+S3method(family,mhglm_ml)
+S3method(fixef,mhglm_ml)
+S3method(fitted,mhglm_ml)
+S3method(model.frame,mhglm_ml)
+S3method(model.matrix,mhglm_ml)
+S3method(predict,mhglm_ml)
+S3method(print,mhglm_ml)
+S3method(ranef,mhglm_ml)
+S3method(residuals,mhglm_ml)
+S3method(sigma,mhglm_ml)
+S3method(summary,mhglm_ml)
+S3method(terms,mhglm_ml)
+S3method(VarCorr,mhglm_ml)
+S3method(vcov,mhglm_ml)
+S3method(weights,mhglm_ml)
+

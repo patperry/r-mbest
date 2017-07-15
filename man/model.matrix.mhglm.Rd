@@ -1,6 +1,8 @@
 \name{model.matrix.mhglm}
 \alias{model.matrix.mhglm}
+\alias{model.matrix.mhglm_ml}
 \alias{terms.mhglm}
+\alias{terms.mhglm_ml}
 \title{
 Terms and Model Matrix
 }
@@ -9,8 +11,10 @@ Get the terms or model matrix from an \code{mhglm} object.
 }
 \usage{
   \method{model.matrix}{mhglm}(object, type = c("fixed", "random"), ...)
+  \method{model.matrix}{mhglm_ml}(object, type = c("fixed", "random"), ...)
 
   \method{terms}{mhglm}(x, type = c("fixed", "random"), ...)
+  \method{terms}{mhglm_ml}(x, type = c("fixed", "random"), ...)
 }
 \arguments{
   \item{object, x}{

@@ -1,9 +1,11 @@
-\newcommand{\CRANpkg}{\href{http://CRAN.R-project.org/package=#1}{\pkg{#1}}}
+\newcommand{\CRANpkg}{\href{https://CRAN.R-project.org/package=#1}{\pkg{#1}}}
 
 \name{predict}
 \alias{predict.mhglm}
+\alias{predict.mhglm_ml}
 \alias{sigma}
 \alias{sigma.mhglm}
+\alias{sigma.mhglm_ml}
 \title{
 Prediction
 }
@@ -16,6 +18,7 @@ Prediction
       se.fit = FALSE, na.action = na.pass, ...)
 
 \method{sigma}{mhglm}(object, ...)
+
 }
 \arguments{
   \item{object}{
