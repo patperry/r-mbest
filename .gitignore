@@ -1,5 +1,9 @@
+*.Rproj
+*.a
+*.o
+*.so
 .Rapp.history
 .Rhistory
 .Rproj.user
 .RData
-*.Rproj
+dist/

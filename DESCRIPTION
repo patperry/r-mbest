@@ -1,14 +1,20 @@
 Package: mbest
-Version: 0.5
-Date: 2017-07-07
+Version: 0.6
+Date: 2017-07-15
 Title: Moment-Based Estimation for Hierarchical Models
 Authors@R: c(person(c("Patrick", "O."), "Perry", role = c("aut", "cre"),
-            email = "pperry@stern.nyu.edu"),
-        person("Timothy", "Sweetser", role = "ctb",
-            email = "tsweetser@stitchfix.com"))
+                    email = "pperry@stern.nyu.edu"),
+             person("Timothy", "Sweetser", role = "ctb"),
+             person("Kyle", "Schmaus", role = "ctb"),
+             person("Ningshan", "Zhang", role = c("aut", "ctb")))
 Maintainer: Patrick O. Perry <pperry@stern.nyu.edu>
-Description: Implements methods from the paper
-    "Fast Moment-Based Estimation for Hierarchical Models," by Perry (2016).
+Description: Fast moment-based hierarchical model fitting. Implements
+    methods from the papers
+    "Fast Moment-Based Estimation for Hierarchical Models," by Perry (2017)
+    and
+    "Fitting Deeply Nessted Hierarchical Models to a Large Book Review
+    Dataset Using Moment-Based Estimators," by Zhang, Schmaus, and Perry
+    (2017).
 Depends:
     nlme (>= 3.1-124)
 Imports:
