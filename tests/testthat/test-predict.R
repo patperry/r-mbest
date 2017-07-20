@@ -1,17 +1,14 @@
-context("mhglm")
+context("mhglm-parallel")
 
-library("lme4")
-library(logging)
-
-test_that("sleepstudy predictions regression test", {
-    m_seq <- mhglm(Reaction ~ Days + (Days | Subject), data=sleepstudy,
+test_that("lme4::sleepstudy predictions regression test", {
+    m_seq <- mhglm(Reaction ~ Days + (Days | Subject), data=lme4::sleepstudy,
                  control=list(parallel=FALSE))
-    basicConfig("INFO")
-    m_par <- mhglm(Reaction ~ Days + (Days | Subject), data=sleepstudy,
+    #basicConfig("INFO")
+    m_par <- mhglm(Reaction ~ Days + (Days | Subject), data=lme4::sleepstudy,
                  control=list(parallel=TRUE))
     
-    sequential_predictions <- predict(m_seq, sleepstudy, se.fit=TRUE)
-    parallel_predictions <- predict(m_par, sleepstudy, se.fit=TRUE)
+    sequential_predictions <- predict(m_seq, lme4::sleepstudy, se.fit=TRUE)
+    parallel_predictions <- predict(m_par, lme4::sleepstudy, se.fit=TRUE)
     
     expect_equal(sequential_predictions[['fit']], 
                  parallel_predictions[['fit']])
@@ -35,15 +32,17 @@ test_that("Simulated data predictions regression test", {
     
     test.df <- train.df
     test.df$y <- 1 + test.df$x * test.df$beta + .75*rnorm(n = J*N)
-    
-    mhglm(y ~ x + (1+x|unit), data = train.df,
-          control=list(parallel=TRUE))
   
-    m_seq <- mhglm(y ~ 1 + x + (1+x|unit), data = train.df,
-                   control=list(parallel=FALSE))
-    basicConfig("INFO")
-    m_par <- mhglm(y ~ 1 + x + (1 + x | unit), data=train.df,
-                   control=list(parallel=TRUE))
+    suppressWarnings({
+        m_seq <- mhglm(y ~ 1 + x + (1+x|unit), data = train.df,
+                       control=list(parallel=FALSE))
+    })
+
+    #basicConfig("INFO")
+    suppressWarnings({
+        m_par <- mhglm(y ~ 1 + x + (1 + x | unit), data=train.df,
+                       control=list(parallel=TRUE))
+    })
     
     sequential_predictions <- predict(m_seq, test.df, se.fit=TRUE)
     parallel_predictions <- predict(m_par, test.df, se.fit=TRUE)

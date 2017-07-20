@@ -1,5 +1,4 @@
 context("mhglm_ml")
-library("lme4")
 
 g_data <- simdata(n = 30, m_per_level = c(10, 5, 2), sd_intercept = c(1, 1, 1),
                   sd_slope = c(1, 1, 1), family = "gaussian", seed = 12345)
@@ -8,9 +7,9 @@ b_data <- simdata(n = 30, m_per_level = c(10, 5, 2), sd_intercept = c(1, 1, 1),
 
 expect_equal_tol4 <- function(...) expect_equal(..., tolerance = 1e-4)
 
-test_that("same results for mhglm and mhglm_ml on sleepstudy", {
-    model <- mhglm(Reaction ~ Days + (Days | Subject), data = sleepstudy)
-    model_ml <- mhglm_ml(Reaction ~ Days + (Days | Subject), data = sleepstudy)
+test_that("same results for mhglm and mhglm_ml on lme4::sleepstudy", {
+    model <- mhglm(Reaction ~ Days + (Days | Subject), data = lme4::sleepstudy)
+    model_ml <- mhglm_ml(Reaction ~ Days + (Days | Subject), data = lme4::sleepstudy)
 
     expect_equal(family(model_ml), family(model))
     expect_equal(fitted(model_ml), fitted(model))
@@ -28,10 +27,10 @@ test_that("same results for mhglm and mhglm_ml on sleepstudy", {
     expect_equivalent(ranef(model_ml), ranef(model)) # class is different
 })
 
-test_that("same results for mhglm and mhglm_ml on sleepstudy, in parallel", {
-    model <- mhglm(Reaction ~ Days + (Days | Subject), data = sleepstudy,
+test_that("same results for mhglm and mhglm_ml on lme4::sleepstudy, in parallel", {
+    model <- mhglm(Reaction ~ Days + (Days | Subject), data = lme4::sleepstudy,
                    control = list(parallel = TRUE))
-    model_ml <- mhglm_ml(Reaction ~ Days + (Days | Subject), data = sleepstudy,
+    model_ml <- mhglm_ml(Reaction ~ Days + (Days | Subject), data = lme4::sleepstudy,
                          control = list(parallel = TRUE))
 
     expect_equal(family(model_ml), family(model))

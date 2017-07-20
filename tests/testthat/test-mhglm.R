@@ -1,10 +1,9 @@
 context("mhglm")
-library("lme4")
 
 expect_equal_tol1 <- function(...) expect_equal(..., tolerance = 1e-1)
 
 test_that("succeeds on sleepstudy", {
-    model <- mhglm(Reaction ~ Days + (Days | Subject), data = sleepstudy)
+    model <- mhglm(Reaction ~ Days + (Days | Subject), data = lme4::sleepstudy)
 
     # fixef
     fixef0 <- c("(Intercept)" = 251.4, "Days" = 10.5)
@@ -41,8 +40,8 @@ test_that("succeeds on sleepstudy", {
 })
 
 test_that("succeeds on sleepstudy in parallel", {
-    model <- mhglm(Reaction ~ Days + (Days | Subject), data = sleepstudy)
-    model_p <- mhglm(Reaction ~ Days + (Days | Subject), data = sleepstudy,
+    model <- mhglm(Reaction ~ Days + (Days | Subject), data = lme4::sleepstudy)
+    model_p <- mhglm(Reaction ~ Days + (Days | Subject), data = lme4::sleepstudy,
                      control = list(parallel = TRUE))
 
     expect_equal(fixef(model_p), fixef(model))
@@ -55,7 +54,7 @@ test_that("succeeds on sleepstudy in parallel", {
 test_that("succeeds on cbpp", {
     suppressWarnings({
         model <- mhglm(cbind(incidence, size - incidence) ~ period + (period | herd),
-                       data=cbpp, family=binomial)
+                       data=lme4::cbpp, family=binomial)
     })
 
     # fixef
@@ -102,9 +101,9 @@ test_that("succeeds on cbpp", {
 test_that("succeeds on cbpp in parallel", {
     suppressWarnings({
         model <- mhglm(cbind(incidence, size - incidence) ~ period + (period | herd),
-                       data = cbpp, family = binomial)
+                       data = lme4::cbpp, family = binomial)
         model_p <- mhglm(cbind(incidence, size - incidence) ~ period + (period | herd),
-                         data = cbpp, family = binomial,
+                         data = lme4::cbpp, family = binomial,
                          control = list(parallel = TRUE))
     })
 
@@ -118,10 +117,10 @@ test_that("formula parameter takes character or variable input", {
     formula_var <- Reaction ~ Days + (Days | Subject)
     formula_char_vac <- "Reaction ~ Days + (Days | Subject)"
 
-    model <- mhglm(Reaction ~ Days + (Days | Subject), data=sleepstudy)
-    model_char <- mhglm("Reaction ~ Days + (Days | Subject)", data=sleepstudy)
-    model_var <- mhglm(formula_var, data=sleepstudy)
-    model_var_char <- mhglm(formula_char_vac, data=sleepstudy)
+    model <- mhglm(Reaction ~ Days + (Days | Subject), data=lme4::sleepstudy)
+    model_char <- mhglm("Reaction ~ Days + (Days | Subject)", data=lme4::sleepstudy)
+    model_var <- mhglm(formula_var, data=lme4::sleepstudy)
+    model_var_char <- mhglm(formula_char_vac, data=lme4::sleepstudy)
 
     expect_equal(fixef(model), fixef(model_char))
     expect_equal(fixef(model), fixef(model_var))
@@ -133,11 +132,11 @@ test_that("formula parameter takes character or variable input", {
 })
 
 test_that("fit model with no data parameter", {
-    Reaction <- sleepstudy$Reaction
-    Days <- sleepstudy$Days
-    Subject <- sleepstudy$Subject
+    Reaction <- lme4::sleepstudy$Reaction
+    Days <- lme4::sleepstudy$Days
+    Subject <- lme4::sleepstudy$Subject
 
-    model <- mhglm(Reaction ~ Days + (Days | Subject), data=sleepstudy)
+    model <- mhglm(Reaction ~ Days + (Days | Subject), data=lme4::sleepstudy)
     model_no_data <- mhglm(Reaction ~ Days + (Days | Subject))
 
     expect_equal(fixef(model), fixef(model_no_data))
@@ -145,7 +144,7 @@ test_that("fit model with no data parameter", {
 })
 
 test_that("success using diagonal covariance", {
-    model <- mhglm(Reaction ~ Days + (Days || Subject), data = sleepstudy,
+    model <- mhglm(Reaction ~ Days + (Days || Subject), data = lme4::sleepstudy,
                    control = mhglm.control(diagcov = TRUE))
     varcor <- VarCorr(model)[["Subject"]]
     expect_equal(varcor[1, 2], 0)
