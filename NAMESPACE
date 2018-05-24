@@ -24,6 +24,7 @@ if(getRversion() >= "3.3.0") {
 importFrom("bigmemory", as.big.matrix)
 importFrom("logging", loginfo)
 importFrom("foreach", foreach, "%dopar%")
+importFrom("abind", abind)
 
 
 ## Exports
