@@ -137,11 +137,11 @@ mhglm_ml.fit(x, z, y, group, weights = rep(1, nobs),
   fitting generalized linear mixed models with likelihood-based estimates.
 }
 \references{
-  P. O. Perry (2017)
-  "Fast moment-based estimation for hierarchical models."
+P. O. Perry (2017)
+"Fast moment-based estimation for hierarchical models."
 
-  N. Zhang, K. Schmaus, and P. O. Perry (2018)
-  "Fitting deeply-nested hierarchical models to a large book review dataset using moment-based estimatos."
+N. Zhang, K. Schmaus, and P. O. Perry (2018)
+"Fitting deeply-nested hierarchical models to a large book review dataset using moment-based estimators."
 }
 \note{
   If the moment-based random effect covariance is not positive-semidefinite, then

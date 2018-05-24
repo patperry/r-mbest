@@ -3,27 +3,24 @@
 \alias{mbest}
 \docType{package}
 \title{
-  Fast Moment-Based Estimation for Hierarchical Models
+\packageTitle{mbest}
 }
 \description{
-  This package implements moment-based fitting methods for
-  hierarchical models described in the paper
-  "Fast Moment-Based Estimation for Hierarchical Models"
-  (Perry, 2015).
+\packageDescription{mbest}
 }
 \details{
-    \tabular{ll}{
-    Package: \tab mbest\cr
-    Type: \tab Package\cr
-    Version: \tab 0.3\cr
-    Date: \tab 2015-04-20\cr
-    License: \tab Apache License, Version 2.0\cr
-    }
+\packageDESCRIPTION{mbest}
+\packageIndices{mbest}
     
-    Basic usage is to call \code{\link{mhglm}}.
+Basic usage is to call \code{\link{mhglm}}.
 }
+\references{
+P. O. Perry (2017)
+"Fast moment-based estimation for hierarchical models."
 
-\author{Patrick O. Perry}
+N. Zhang, K. Schmaus, and P. O. Perry (2018)
+"Fitting deeply-nested hierarchical models to a large book review dataset using moment-based estimators."
+}
 
 \keyword{package}
 \seealso{
@@ -31,5 +28,5 @@
     \code{\link{fixef.mhglm}},
     \code{\link{ranef.mhglm}},
     \code{\link{VarCorr.mhglm}},
-    \code{\link{predict.mhglm}}
+    \code{\link{predict.mhglm}}.
 }
