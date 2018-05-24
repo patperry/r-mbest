@@ -4,6 +4,21 @@ cache: packages
 r_github_packages:
   - jimhester/covr
 
+matrix:
+  include:
+    - os: linux
+      r: 3.1
+    - os: linux
+      r: 3.2
+    - os: linux
+      r: oldrel
+    - os: linux
+      dist: trusty
+      r: release
+      env: R_CODECOV=true
+    - os: linux
+      r: devel
+
 after_success:
   - export LC_ALL="C"
-  - Rscript -e 'covr::codecov()'
+  - if [[ "${R_CODECOV}" ]]; then Rscript -e 'covr::codecov()'; fi
