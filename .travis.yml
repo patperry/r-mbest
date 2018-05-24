@@ -7,12 +7,6 @@ r_github_packages:
 matrix:
   include:
     - os: linux
-      r: 3.1
-    - os: linux
-      r: 3.2
-    - os: linux
-      r: oldrel
-    - os: linux
       dist: trusty
       r: release
       env: R_CODECOV=true
