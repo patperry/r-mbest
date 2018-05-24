@@ -3,18 +3,18 @@ Version: 0.6
 Date: 2018-05-24
 Title: Moment-Based Estimation for Hierarchical Models
 Authors@R: c(person(c("Patrick", "O."), "Perry", role = c("aut", "cre"),
-                    email = "pperry@stern.nyu.edu"),
+                    email = "patperry@gmail.com"),
              person("Timothy", "Sweetser", role = "ctb"),
              person("Kyle", "Schmaus", role = "ctb"),
              person("Ningshan", "Zhang", role = c("aut", "ctb")))
-Maintainer: Patrick O. Perry <pperry@stern.nyu.edu>
+Maintainer: Patrick O. Perry <patperry@gmail.com>
 Description: Fast moment-based hierarchical model fitting. Implements
     methods from the papers
     "Fast Moment-Based Estimation for Hierarchical Models," by Perry (2017)
     and
-    "Fitting Deeply Nessted Hierarchical Models to a Large Book Review
-    Dataset Using Moment-Based Estimators," by Zhang, Schmaus, and Perry
-    (2017).
+    "Fitting a Deeply Nessted Hierarchical Model to a Large Book Review
+    Dataset Using a Moment-Based Estimator," by Zhang, Schmaus, and Perry
+    (2018).
 Depends:
     nlme (>= 3.1-124)
 Imports:
