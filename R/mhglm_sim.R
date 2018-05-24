@@ -1,4 +1,4 @@
-simdata <- function(n, m_per_level, sd_intercept, sd_slope,
+mhglm_sim <- function(n, m_per_level, sd_intercept, sd_slope,
                     family = c("gaussian", "binomial"), seed) {
     set.seed(seed)
     total_n <- n * prod(m_per_level)

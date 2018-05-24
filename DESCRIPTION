@@ -1,6 +1,6 @@
 Package: mbest
 Version: 0.6
-Date: 2017-07-15
+Date: 2018-05-24
 Title: Moment-Based Estimation for Hierarchical Models
 Authors@R: c(person(c("Patrick", "O."), "Perry", role = c("aut", "cre"),
                     email = "pperry@stern.nyu.edu"),
@@ -30,4 +30,3 @@ LazyData: Yes
 License: Apache License (== 2.0) | file LICENSE
 URL: https://github.com/patperry/r-mbest
 Encoding: UTF-8
-RoxygenNote: 6.0.1

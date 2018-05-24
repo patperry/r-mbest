@@ -1,8 +1,8 @@
 context("mhglm_ml")
 
-g_data <- simdata(n = 30, m_per_level = c(10, 5, 2), sd_intercept = c(1, 1, 1),
+g_data <- mhglm_sim(n = 30, m_per_level = c(10, 5, 2), sd_intercept = c(1, 1, 1),
                   sd_slope = c(1, 1, 1), family = "gaussian", seed = 12345)
-b_data <- simdata(n = 30, m_per_level = c(10, 5, 2), sd_intercept = c(1, 1, 1),
+b_data <- mhglm_sim(n = 30, m_per_level = c(10, 5, 2), sd_intercept = c(1, 1, 1),
                   sd_slope = c(1, 1, 1), family = "binomial", seed = 12345)
 
 expect_equal_tol4 <- function(...) expect_equal(..., tolerance = 1e-4)
@@ -49,7 +49,7 @@ test_that("same results for mhglm and mhglm_ml on lme4::sleepstudy, in parallel"
     expect_equivalent(ranef(model_ml), ranef(model)) # class is different
 })
 
-test_that("succeeds on simdata for two levels", {
+test_that("succeeds on mhglm_sim for two levels", {
     model <- mhglm_ml(y ~ 1 + x + (1 + x | g1) + (1 + x | g2:g1), data = g_data)
 
     # fixef
@@ -279,7 +279,7 @@ test_that("success using diagonal covariance", {
     expect_equal(varcor[[3]][1, 2], 0)
 })
 
-test_that("succeeds on simdata for two levels, binomial", {
+test_that("succeeds on mhglm_sim for two levels, binomial", {
     model <- mhglm_ml(y ~ 1 + x + (1 + x | g1) + (1 + x | g2:g1), data = b_data)
 
     # fixef

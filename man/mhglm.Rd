@@ -137,12 +137,11 @@ mhglm_ml.fit(x, z, y, group, weights = rep(1, nobs),
   fitting generalized linear mixed models with likelihood-based estimates.
 }
 \references{
-  Perry, P. O. (2015)
-  "Fast Moment-Based Estimation for Hierarchical Models",
-  Preprint.
-}
-\author{
-  Patrick O. Perry
+  P. O. Perry (2017)
+  "Fast moment-based estimation for hierarchical models."
+
+  N. Zhang, K. Schmaus, and P. O. Perry (2018)
+  "Fitting deeply-nested hierarchical models to a large book review dataset using moment-based estimatos."
 }
 \note{
   If the moment-based random effect covariance is not positive-semidefinite, then
@@ -161,8 +160,8 @@ library(lme4)
              data = cbpp, family = binomial))
 
 ## The following examples are for multilevel models
-g_data <- simdata(n = 30, m_per_level = c(10, 5, 2), sd_intercept = c(1, 1, 1),
-                  sd_slope = c(1, 1, 1), family = "gaussian", seed = 12345)
+g_data <- mhglm_sim(n = 30, m_per_level = c(10, 5, 2), sd_intercept = c(1, 1, 1),
+                    sd_slope = c(1, 1, 1), family = "gaussian", seed = 12345)
 
 (m1 <- mhglm_ml(y ~ 1 + x + (1 + x | g1/g2/g3), gaussian, g_data))
 # or equivalent

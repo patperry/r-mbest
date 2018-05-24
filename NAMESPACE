@@ -27,7 +27,7 @@ importFrom("foreach", foreach, "%dopar%")
 
 
 ## Exports
-export(simdata)
+export(mhglm_sim)
 
 export(VarCorr.mhglm)
 export(firthglm.control)
