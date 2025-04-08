@@ -1,21 +1,10 @@
-if(!exists("meta") || is.null(meta))
-    meta <- packageDescription("mbest")
-
-citHeader("To cite package ’mbest’ in publications use:")
-
-title <- paste(meta$Package, meta$Title, sep=": ")
-year <- sub(".*(2[[:digit:]]{3})-.*", "\\1", meta$Date)
-vers <- paste("R package version", meta$Version)
-
-citEntry(entry="Article",
-         author=personList(as.person("Patrick O. Perry")),
-         year="2016",
+bibentry(bibtype="Article",
+         author=c(person(given = c("Patrick", "O."),
+                         family = "Perry")),
+         year="2017",
          title="Fast moment-based estimation for hierarchical models",
-         journal=paste0("Journal of the Royal Statistical Society:",
-                        " Series B (Statistical Methodology)"),
-         note="Forthcoming",
-         textVersion=paste0("P. O. Perry (2016). Fast moment-based",
-                            " estimation for hierarchical models.",
-                            " Journal of the Royal Statistical Society:",
-                            " Series B (Statistical Methodology).",
-                            " Forthcoming."))
+         journal=paste("Journal of the Royal Statistical Society:",
+                       "Series B (Statistical Methodology)"),
+         volume = "79",
+         pages = "267-291",
+         doi = "10.1111/rssb.12165")

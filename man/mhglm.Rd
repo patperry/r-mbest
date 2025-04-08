@@ -133,7 +133,7 @@ mhglm_ml.fit(x, z, y, group, weights = rep(1, nobs),
   \code{\link{VarCorr}}, and \code{\link{sigma}} for features
   related to mixed effect models.
 
-  \code{\link{glmer}} (package \CRANpkg{lme4}) for
+  \code{glmer} (package \CRANpkg{lme4}) for
   fitting generalized linear mixed models with likelihood-based estimates.
 }
 \references{
@@ -150,7 +150,7 @@ N. Zhang, K. Schmaus, and P. O. Perry (2018)
 }
 
 \examples{
-library(lme4)
+if (require("lme4")) {
 ## The following examples are adapted from lme4:
 (fm1 <- mhglm(Reaction ~ Days + (Days | Subject), gaussian, sleepstudy))
 
@@ -168,5 +168,6 @@ g_data <- mhglm_sim(n = 30, m_per_level = c(10, 5, 2), sd_intercept = c(1, 1, 1)
 (m2 <- mhglm_ml(y ~ 1 + x + (1 + x | g1) + (1 + x | g2:g1) + (1 + x | g3:g2:g1),
                 gaussian, g_data))
 }
+} 
 \keyword{models}
 \keyword{regression}

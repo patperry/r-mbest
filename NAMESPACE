@@ -8,17 +8,10 @@ importFrom("stats", .checkMFClasses, .getXlevels, coef, delete.response,
     update, vcov, weights, as.formula, setNames, rnorm,  runif, plogis)
 
 ## Recommended packages
-importFrom("lme4",  nobars, subbars, findbars)
+importFrom("reformulas",  nobars, subbars, findbars, expandDoubleVerts)
 importFrom("nlme", fixef, ranef, VarCorr)
 
-## S3 generic for sigma():
-##   exported from 'stats' for R >= 3.3.0; from 'lme4' for R <= 3.2.x
-if(getRversion() >= "3.3.0") {
-  importFrom("stats", sigma)
-} else {
-  importFrom("lme4", sigma)
-}
-
+importFrom("stats", sigma)
 
 ## Contributed packages
 importFrom("bigmemory", as.big.matrix)
