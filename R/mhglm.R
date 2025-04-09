@@ -83,7 +83,7 @@ mhglm <- function(formula, family = gaussian, data, weights, subset,
     mf[[1L]] <- quote(stats::model.frame)
     form_env <- if (is.environment(data)) data else list2env(data)
     formula <- as.formula(formula, env = form_env)
-    mf$formula <- lme4::subbars(formula)
+    mf$formula <- subbars(formula)
     mf <- eval(mf, parent.frame())
 
     # method
@@ -108,7 +108,7 @@ mhglm <- function(formula, family = gaussian, data, weights, subset,
 
     logging::loginfo("Creating design matrix", logger="mbest.mhglm")
 
-    mt.fixed <- delete.response(terms(lme4::nobars(formula), data=data))
+    mt.fixed <- delete.response(terms(nobars(formula), data=data))
     X <- if (!is.empty.model(mt.fixed))
         model.matrix(mt.fixed, mf, contrasts)
     else matrix(, NROW(Y), 0L)
@@ -116,7 +116,7 @@ mhglm <- function(formula, family = gaussian, data, weights, subset,
     logging::loginfo("Grouping factor and random effect design matrix",
                      logger="mbest.mhglm")
 
-    if(lme4::expandDoubleVerts(formula) != formula){
+    if(expandDoubleVerts(formula) != formula){
         if (!control$diagcov ){
             warning("The formula uses `||`, thus set diagcov = TRUE.")
         }
@@ -128,7 +128,7 @@ mhglm <- function(formula, family = gaussian, data, weights, subset,
         }
     }
 
-    bars <- lme4::findbars(formula)
+    bars <- findbars(formula)
 
     if (length(bars) >= 2L)
         stop("Can specify at most one random effect term")
@@ -255,7 +255,7 @@ mhglm_ml <- function(formula, family = gaussian, data, weights, subset,
         list2env(data)
     }
     formula <- as.formula(formula, env = form_env)
-    mf$formula <- lme4::subbars(eval(mf$formula))
+    mf$formula <- subbars(eval(mf$formula))
     mf <- eval(mf, parent.frame())
 
     # method
@@ -287,7 +287,7 @@ mhglm_ml <- function(formula, family = gaussian, data, weights, subset,
 
     logging::loginfo("Creating design matrix", logger="mbest.mhglm")
 
-    mt.fixed <- delete.response(terms(lme4::nobars(formula), data=data))
+    mt.fixed <- delete.response(terms(nobars(formula), data=data))
     X <- if (!is.empty.model(mt.fixed))
         model.matrix(mt.fixed, mf, contrasts)
     else matrix(, NROW(Y), 0L)
@@ -295,7 +295,7 @@ mhglm_ml <- function(formula, family = gaussian, data, weights, subset,
     logging::loginfo("Grouping factor and random effect design matrix",
                      logger="mbest.mhglm")
 
-    bars <- lme4::findbars(formula)
+    bars <- findbars(formula)
     bars <- order_bars_hierarchy(bars)
 
     if (length(bars) >= 1L) {
@@ -1082,7 +1082,9 @@ singlebars <- function(term)
     term
 }
 
-
+#' bar ordering hierarchy
+#' @param bars set of random effect terms
+#' @export
 order_bars_hierarchy <- function(bars)
 {
     bars_char <- Map(function(bar) as.character(bar)[3], bars)

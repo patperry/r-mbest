@@ -50,7 +50,9 @@ test_that("same results for mhglm and mhglm_ml on lme4::sleepstudy, in parallel"
 })
 
 test_that("succeeds on mhglm_sim for two levels", {
-    model <- mhglm_ml(y ~ 1 + x + (1 + x | g1) + (1 + x | g2:g1), data = g_data)
+    suppressWarnings(
+        model <- mhglm_ml(y ~ 1 + x + (1 + x | g1) + (1 + x | g2:g1), data = g_data)
+    )
 
     # fixef
     fixef0 <- c("(Intercept)" = 0.6947, "x" = 0.8033)
@@ -138,16 +140,20 @@ test_that("succeeds on mhglm_sim for two levels", {
 })
 
 test_that("succeeds on multiple 2-level formula permutations", {
-    model1 <- mhglm_ml(y ~ 1 + x + (1 + x | g1) + (1 + x | g2:g1),
-                       data = g_data)
-    model2 <- mhglm_ml(y ~ 1 + x + (1 + x | g1) + (1 + x | g1:g2),
-                       data = g_data)
-    model3 <- mhglm_ml(y ~ 1 + x + (1 + x | g2:g1) + (1 + x | g1),
-                       data = g_data)
-    model4 <- mhglm_ml(y ~ 1 + x + (1 + x | g1:g2) + (1 + x | g1),
-                       data = g_data)
-    model5 <- mhglm_ml(y ~ 1 + x + (1 + x | g1/g2), data = g_data)
-
+    
+    suppressWarnings({
+        model1 <- mhglm_ml(y ~ 1 + x + (1 + x | g1) + (1 + x | g2:g1),
+                           data = g_data)
+        model2 <- mhglm_ml(y ~ 1 + x + (1 + x | g1) + (1 + x | g1:g2),
+                           data = g_data)
+        model3 <- mhglm_ml(y ~ 1 + x + (1 + x | g2:g1) + (1 + x | g1),
+                           data = g_data)
+        model4 <- mhglm_ml(y ~ 1 + x + (1 + x | g1:g2) + (1 + x | g1),
+                           data = g_data)
+        model5 <- mhglm_ml(y ~ 1 + x + (1 + x | g1/g2), data = g_data)
+    }
+    )
+    
     expect_equal(fixef(model1), fixef(model2))
     expect_equal(fixef(model1), fixef(model3))
     expect_equal(fixef(model1), fixef(model4))
@@ -171,15 +177,18 @@ test_that("fails on misspecified 2-level formulas", {
 })
 
 test_that("succeeds on multiple 3-level formula permutations", {
-    model1 <- mhglm_ml(y ~ x + (x | g1) + (x | g2:g1) + (x | g3:g2:g1),
-                       data = g_data)
-    model2 <- mhglm_ml(y ~ x + (x | g1/g2/g3), data = g_data)
-    model3 <- mhglm_ml(y ~ x + (x | g1/g2) + (x | g3:g2:g1), data = g_data)
-    model4 <- mhglm_ml(y ~ x + (x | g1/g2) + (x | g1:g2:g3), data = g_data)
-    model5 <- mhglm_ml(y ~ x + (x | g1) + (x | g1:g2) + (x | g1:g2:g3),
-                       data = g_data)
-    model6 <- mhglm_ml(y ~ x + (x | g1:g2:g3) + (x | g1:g2) + (x | g1),
-                       data = g_data)
+    
+    suppressWarnings({
+        model1 <- mhglm_ml(y ~ x + (x | g1) + (x | g2:g1) + (x | g3:g2:g1),
+                           data = g_data)
+        model2 <- mhglm_ml(y ~ x + (x | g1/g2/g3), data = g_data)
+        model3 <- mhglm_ml(y ~ x + (x | g1/g2) + (x | g3:g2:g1), data = g_data)
+        model4 <- mhglm_ml(y ~ x + (x | g1/g2) + (x | g1:g2:g3), data = g_data)
+        model5 <- mhglm_ml(y ~ x + (x | g1) + (x | g1:g2) + (x | g1:g2:g3),
+                           data = g_data)
+        model6 <- mhglm_ml(y ~ x + (x | g1:g2:g3) + (x | g1:g2) + (x | g1),
+                           data = g_data)
+    })
 
     expect_equal(fixef(model1), fixef(model2))
     expect_equal(fixef(model1), fixef(model3))
@@ -195,6 +204,8 @@ test_that("succeeds on multiple 3-level formula permutations", {
 })
 
 test_that("test different colon permutations give the same random effects", {
+    
+    suppressWarnings({
     m1 <- mhglm_ml(y ~ 1 + (1|g1) + (1|g2:g1) + (1|g3:g2:g1), data = g_data)
     m2 <- mhglm_ml(y ~ 1 + (1|g1) + (1|g2:g1) + (1|g3:g1:g2), data = g_data)
     m3 <- mhglm_ml(y ~ 1 + (1|g1) + (1|g2:g1) + (1|g1:g2:g3), data = g_data)
@@ -207,7 +218,7 @@ test_that("test different colon permutations give the same random effects", {
     m10 <- mhglm_ml(y ~ 1 + (1|g1) + (1|g1:g2) + (1|g1:g3:g2), data = g_data)
     m11 <- mhglm_ml(y ~ 1 + (1|g1) + (1|g1:g2) + (1|g2:g3:g1), data = g_data)
     m12 <- mhglm_ml(y ~ 1 + (1|g1) + (1|g1:g2) + (1|g2:g1:g3), data = g_data)
-
+    })
     expect_equivalent(ranef(m1), ranef(m2))
     expect_equivalent(ranef(m1), ranef(m3))
     expect_equivalent(ranef(m1), ranef(m4))
@@ -239,7 +250,7 @@ test_that("test order_bars function on properly specified formulas", {
     slash_result <- list(
         quote(1 | g1),
         quote(1 | g2:g1),
-        quote(1 | g3:(g2:g1))
+        quote(1 | g3:g2:g1)
     )
     colon_result <- list(
         quote(1 | g1),

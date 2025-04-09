@@ -75,8 +75,9 @@ A list with components named as the arguments.
 \code{\link{firthglm.fit}}, the default subpopulation-specific fitting method.
 }
 \examples{
-library(lme4) # for cbpp data
+if(requireNamespace("lme4")) { # for cbpp data
 
+ data("cbpp", package = "lme4")
 # The default fitting method uses Firth's bias-corrected estimates
 (gm.firth <- mhglm(cbind(incidence, size - incidence) ~ period + (1 | herd),
                    data = cbpp, family = binomial,
@@ -86,6 +87,7 @@ library(lme4) # for cbpp data
 (gm.ml <- mhglm(cbind(incidence, size - incidence) ~ period + (1 | herd),
                 data = cbpp, family = binomial,
                 control=mhglm.control(fit.method="glm.fit")))
+}
 }
 \keyword{optimize}
 \keyword{models}

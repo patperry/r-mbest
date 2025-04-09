@@ -116,7 +116,8 @@ update.backtrack <- function(object, value, deriv, ...)
 }
 
 
-update.backtrack.step <- function(object, test)
+## ... is to avoid S3 warning/conflict with update method
+update.backtrack.step <- function(object, test, ...)
 {
     control <- object$control
 

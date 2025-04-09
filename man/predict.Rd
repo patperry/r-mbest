@@ -41,8 +41,6 @@ The \code{sigma} function gives the square root of the dispersion parameter
 or the model; for linear models, this is the error standard deviation.
 }
 \seealso{
-\code{\link{predict}}.
-
-\code{\link[lme4]{sigma}}, from package \CRANpkg{lme4}.
+\code{\link{predict}}, \code{\link{sigma}}
 }
 \keyword{models}

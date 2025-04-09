@@ -319,9 +319,9 @@ fit.recursive <- function
  nrandom, ##<< number of random effects' covariates
  control ##<< control parameter from the main function call
  ){
-    if(class(fit.tree) == 'mhglmfit'){
+    if(inherits(fit.tree, 'mhglmfit')) {
         return(fit.tree)
-    } else if(class(fit.tree[[1]]) != 'mhglmfit'){
+    } else if(!inherits(fit.tree[[1]], 'mhglmfit')) {
         # Need to go one level down
         fit.tree <- lapply(fit.tree, function(x) fit.recursive(x, nrandom, control))
     } else {

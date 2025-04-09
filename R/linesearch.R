@@ -156,7 +156,8 @@ update.linesearch <- function(object, value, deriv, ...)
 }
 
 
-update.linesearch.step <- function(object, test)
+## ... is to avoid S3 warning/conflict with update method
+update.linesearch.step <- function(object, test, ...)
 {
     ftest <- object$ftest
     gtest <- object$gtest
@@ -243,7 +244,7 @@ unsafe.step <- function(object, test)
     step <- trial.value(object$interval, lower, upper, test, bracket, control)
 
     # update the search interval
-    upd <- update.interval(lower, upper, test, step, bracket, control)
+    upd <- update_interval(lower, upper, test, step, bracket, control)
 
     # safeguard the step
     step <- max(control$step.min, min(control$step.max, step))
@@ -260,8 +261,9 @@ unsafe.step <- function(object, test)
 }
 
 
-# (Modified) Updating Algorithm (pp. 291, 297-298)
-update.interval <- function(lower, upper, test, step, bracket, control)
+## (Modified) Updating Algorithm (pp. 291, 297-298)
+## change from . to _ to avoid S3 mismatch warning
+update_interval <- function(lower, upper, test, step, bracket, control)
 {
     fl <- lower$value
     gl <- lower$deriv

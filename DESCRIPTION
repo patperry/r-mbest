@@ -1,6 +1,5 @@
 Package: mbest
-Version: 0.6
-Date: 2018-05-24
+Version: 0.6.1
 Title: Moment-Based Estimation for Hierarchical Models
 Authors@R: c(person(c("Patrick", "O."), "Perry", role = c("aut", "cre"),
                     email = "patperry@gmail.com"),
@@ -15,16 +14,9 @@ Description: Fast moment-based hierarchical model fitting. Implements
     "Fitting a Deeply Nested Hierarchical Model to a Large Book Review
     Dataset Using a Moment-Based Estimator," by Zhang, Schmaus, and Perry
     (2018).
-Depends:
-    nlme (>= 3.1-124)
-Imports:
-    abind,
-    bigmemory,
-    foreach,
-    lme4,
-    logging
-Suggests:
-    testthat
+Depends: nlme (>= 3.1-124), R (>= 3.3.0)
+Imports: abind, bigmemory, foreach, reformulas, logging
+Suggests: testthat, lme4
 LazyData: Yes
 License: Apache License (== 2.0) | file LICENSE
 URL: https://github.com/patperry/r-mbest
