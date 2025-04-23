@@ -1,12 +1,12 @@
 Package: mbest
 Version: 0.6.1
 Title: Moment-Based Estimation for Hierarchical Models
-Authors@R: c(person(c("Patrick", "O."), "Perry", role = c("aut", "cre"),
-                    email = "patperry@gmail.com"),
+Authors@R: c(person(c("Patrick", "O."), "Perry", role = "aut"),
              person("Timothy", "Sweetser", role = "ctb"),
              person("Kyle", "Schmaus", role = "ctb"),
-             person("Ningshan", "Zhang", role = c("aut", "ctb")))
-Maintainer: Patrick O. Perry <patperry@gmail.com>
+             person("Ningshan", "Zhang", role = c("aut", "ctb")),
+             person("Ben","Bolker",email="bolker@mcmaster.ca", role=c("cre"),
+             comment=c(ORCID="0000-0002-2127-0443")))
 Description: Fast moment-based hierarchical model fitting. Implements
     methods from the papers
     "Fast Moment-Based Estimation for Hierarchical Models," by Perry (2017)
