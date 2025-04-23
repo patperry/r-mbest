@@ -14,4 +14,4 @@
 ^appveyor[.]yml$
 ^bench$
 ^dist$
-*~
+.*~

@@ -6,6 +6,7 @@ Rd_files <- vignettes <- R_files <- description <-
          dictionaries = c("en_stats", "mbest"))
 ## update word list
 if (FALSE) {
-    saveRDS(c("Schmaus", "Zhang"), file = "mbest.rds")
+    ## version=2 for back-compatibility
+    saveRDS(c("Schmaus", "Zhang"), file = "mbest.rds", version = 2)
 }
 
